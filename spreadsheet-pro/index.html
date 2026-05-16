@@ -1,1 +1,2799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RC Loop — Spreadsheet Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   RC LOOP SPREADSHEET PRO
+   Financial coherence engine — 5-pass analysis
+   Premium positioning. Calm. Intelligent. Minimal.
+============================================================ */
 
+:root {
+  --ink:        #1A1A14;
+  --ink-mid:    #4A4A3E;
+  --ink-muted:  #7A7A6E;
+  --ink-faint:  #A8A89C;
+  --cream:      #FAF8F5;
+  --white:      #FFFFFF;
+  --border:     #E8E5E0;
+  --border-med: #D0CCC4;
+  --surface:    #F4F2EE;
+  --gold:       #A07C2E;
+  --gold-bg:    #FDFAF3;
+  --gold-light: rgba(160,124,46,0.12);
+  --green:      #2D7A5A;
+  --green-bg:   rgba(45,122,90,0.08);
+  --red:        #C83C3C;
+  --red-bg:     rgba(200,60,60,0.07);
+  --amber:      #B87820;
+  --serif:      'DM Serif Display', serif;
+  --sans:       'DM Sans', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 15px; -webkit-font-smoothing: antialiased; }
+
+body {
+  font-family: var(--sans);
+  background: var(--cream);
+  color: var(--ink);
+  min-height: 100vh;
+}
+
+/* NAV */
+nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 32px;
+  border-bottom: 0.5px solid var(--border);
+  background: var(--cream);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.nav-brand {
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink);
+  text-decoration: none;
+}
+.nav-tag {
+  font-size: 0.72rem;
+  color: var(--ink-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.nav-right {
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+.nav-right:hover { color: var(--ink); }
+
+/* PAGES */
+.page { display: none; }
+.page.on { display: block; }
+
+/* WRAP */
+.wrap { max-width: 720px; margin: 0 auto; padding: 48px 24px 80px; }
+.wrap-wide { max-width: 900px; margin: 0 auto; padding: 40px 24px 80px; }
+
+/* INTAKE PAGE */
+.intake-eyebrow {
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 16px;
+}
+.intake-headline {
+  font-family: var(--serif);
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  font-weight: 400;
+  color: var(--ink);
+  line-height: 1.2;
+  margin-bottom: 10px;
+}
+.intake-sub {
+  font-size: 0.9rem;
+  color: var(--ink-muted);
+  line-height: 1.65;
+  max-width: 520px;
+  margin-bottom: 40px;
+}
+
+/* INTENT AREA */
+.intent-section {
+  margin-bottom: 32px;
+}
+.intent-label {
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  margin-bottom: 10px;
+}
+.intent-sub {
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+  margin-bottom: 10px;
+  line-height: 1.55;
+}
+textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 14px 16px;
+  font-family: var(--sans);
+  font-size: 0.88rem;
+  font-weight: 300;
+  color: var(--ink);
+  background: var(--white);
+  border: 0.5px solid var(--border-med);
+  border-radius: 8px;
+  resize: vertical;
+  line-height: 1.65;
+  outline: none;
+  transition: border-color 0.15s;
+}
+textarea:focus { border-color: var(--ink); }
+textarea::placeholder { color: var(--ink-faint); }
+.char-counter {
+  font-size: 0.7rem;
+  color: var(--ink-faint);
+  text-align: right;
+  margin-top: 6px;
+}
+.char-counter.warn { color: var(--gold); }
+
+/* SPELL PANEL */
+.spell-panel {
+  display: none;
+  background: var(--gold-bg);
+  border: 0.5px solid rgba(160,124,46,0.3);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-top: 8px;
+}
+.spell-panel.visible { display: block; }
+.spell-heading {
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+.spell-corrected {
+  font-size: 0.84rem;
+  color: var(--ink-mid);
+  line-height: 1.7;
+  margin-bottom: 10px;
+}
+.spell-corrected mark {
+  background: rgba(160,124,46,0.15);
+  color: var(--gold);
+  border-radius: 2px;
+  padding: 0 2px;
+  font-style: normal;
+}
+.spell-btns { display: flex; gap: 8px; }
+.spell-btn-a {
+  font-family: var(--sans);
+  font-size: 0.76rem;
+  font-weight: 500;
+  padding: 6px 14px;
+  background: var(--ink);
+  color: var(--white);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.spell-btn-i {
+  font-family: var(--sans);
+  font-size: 0.76rem;
+  padding: 6px 14px;
+  background: var(--white);
+  color: var(--ink-muted);
+  border: 0.5px solid var(--border-med);
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* NUMBER GRID */
+.numbers-section { margin-bottom: 28px; }
+.numbers-label {
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  margin-bottom: 14px;
+}
+.numbers-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+@media (max-width: 540px) {
+  .numbers-grid { grid-template-columns: 1fr 1fr; }
+}
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label {
+  font-size: 0.72rem;
+  color: var(--ink-muted);
+  font-weight: 400;
+}
+.field input {
+  padding: 10px 12px;
+  font-family: var(--sans);
+  font-size: 0.88rem;
+  color: var(--ink);
+  background: var(--white);
+  border: 0.5px solid var(--border-med);
+  border-radius: 7px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.field input:focus { border-color: var(--ink); }
+.field input::placeholder { color: var(--ink-faint); }
+
+/* OPTIONAL SECTION */
+.optional-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+  cursor: pointer;
+  padding: 10px 0;
+  margin-bottom: 8px;
+  user-select: none;
+  transition: color 0.15s;
+}
+.optional-toggle:hover { color: var(--ink); }
+.optional-toggle::before {
+  content: '+';
+  width: 18px;
+  height: 18px;
+  border: 0.5px solid var(--border-med);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  transition: all 0.15s;
+  line-height: 18px;
+  text-align: center;
+}
+.optional-toggle.open::before { content: '\2212'; }
+.optional-section {
+  display: none;
+  background: var(--white);
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.optional-section.visible { display: block; }
+.optional-note {
+  font-size: 0.74rem;
+  color: var(--ink-faint);
+  font-style: italic;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+/* PRIMARY CONCERN */
+.concern-section { margin-bottom: 28px; }
+.concern-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.concern-btn {
+  font-family: var(--sans);
+  font-size: 0.76rem;
+  padding: 7px 14px;
+  background: var(--white);
+  color: var(--ink-mid);
+  border: 0.5px solid var(--border-med);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.concern-btn:hover { border-color: var(--ink); color: var(--ink); }
+.concern-btn.sel {
+  background: var(--ink);
+  color: var(--white);
+  border-color: var(--ink);
+}
+
+/* CTA */
+.cta-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  padding-top: 8px;
+}
+.btn-generate {
+  padding: 14px 36px;
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--white);
+  background: var(--ink);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.btn-generate:hover { opacity: 0.82; }
+.btn-generate:active { transform: scale(0.99); }
+.btn-subtle {
+  font-size: 0.76rem;
+  color: var(--ink-faint);
+  cursor: pointer;
+  text-decoration: none;
+}
+.btn-subtle:hover { color: var(--ink-mid); }
+
+/* PROCESSING PAGE */
+.processing-wrap {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 80px 24px;
+  text-align: center;
+}
+.processing-eyebrow {
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 24px;
+}
+.processing-headline {
+  font-family: var(--serif);
+  font-size: 1.6rem;
+  font-weight: 300;
+  color: var(--ink);
+  margin-bottom: 40px;
+  line-height: 1.3;
+}
+.passes {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 40px;
+  text-align: left;
+}
+.pass-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 0.5px solid var(--border);
+  opacity: 0.3;
+  transition: opacity 0.4s ease;
+}
+.pass-item:last-child { border-bottom: none; }
+.pass-item.active { opacity: 1; }
+.pass-item.done { opacity: 0.6; }
+.pass-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border-med);
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+.pass-item.active .pass-dot { background: var(--gold); }
+.pass-item.done .pass-dot { background: var(--green); }
+.pass-name {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--ink);
+  flex: 1;
+}
+.pass-desc {
+  font-size: 0.76rem;
+  color: var(--ink-faint);
+}
+.pass-status {
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+}
+.pass-item.active .pass-status { color: var(--gold); }
+.pass-item.done .pass-status { color: var(--green); }
+.processing-sub {
+  font-size: 0.8rem;
+  color: var(--ink-faint);
+  line-height: 1.6;
+}
+
+/* OUTPUT PAGE */
+.output-intent {
+  font-family: var(--serif);
+  font-size: 0.95rem;
+  font-style: italic;
+  color: var(--ink-muted);
+  border-left: 2px solid var(--border-med);
+  padding-left: 14px;
+  margin-bottom: 24px;
+  line-height: 1.65;
+}
+
+/* PREVIEW CARDS (free) */
+.preview-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+@media (max-width: 540px) { .preview-grid { grid-template-columns: 1fr; } }
+
+.preview-card {
+  background: var(--white);
+  border: 0.5px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 20px;
+}
+.preview-card-label {
+  font-size: 0.64rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 10px;
+}
+.score-display {
+  font-family: var(--serif);
+  font-size: 3rem;
+  font-weight: 300;
+  color: var(--ink);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.score-display span { font-size: 1.1rem; color: var(--ink-faint); }
+.score-cat {
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 20px;
+  display: inline-block;
+  margin-bottom: 8px;
+}
+.score-bar-track {
+  height: 5px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 6px;
+}
+.score-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--gold);
+  transition: width 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.contradiction-item {
+  font-size: 0.82rem;
+  color: var(--ink-mid);
+  line-height: 1.65;
+  padding: 10px 12px;
+  background: var(--gold-bg);
+  border-left: 2px solid rgba(160,124,46,0.35);
+  border-radius: 0 6px 6px 0;
+  margin-bottom: 8px;
+}
+.rec-preview-item {
+  padding: 12px 14px;
+  background: var(--surface);
+  border-radius: 7px;
+  margin-bottom: 8px;
+}
+.rec-preview-num {
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 4px;
+}
+.rec-preview-title {
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+.rec-preview-body {
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+  line-height: 1.6;
+}
+
+/* UNLOCK CARD */
+.unlock-card {
+  background: var(--ink);
+  border-radius: 12px;
+  padding: 32px 28px;
+  text-align: center;
+  margin-bottom: 14px;
+}
+.unlock-heading {
+  font-family: var(--serif);
+  font-size: 1.4rem;
+  font-weight: 300;
+  color: var(--white);
+  line-height: 1.25;
+  margin-bottom: 8px;
+}
+.unlock-sub {
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.42);
+  margin-bottom: 20px;
+  line-height: 1.65;
+  max-width: 380px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.unlock-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-bottom: 22px;
+}
+.unlock-feature {
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.45);
+  background: rgba(255,255,255,0.07);
+  border-radius: 20px;
+  padding: 3px 11px;
+}
+.unlock-btn {
+  padding: 14px 36px;
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: var(--white);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.unlock-btn:hover { opacity: 0.9; }
+.unlock-price {
+  display: block;
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.25);
+  margin-top: 10px;
+  letter-spacing: 0.04em;
+}
+.dev-pill {
+  display: inline-block;
+  background: rgba(45,122,90,0.15);
+  border: 0.5px solid rgba(45,122,90,0.3);
+  border-radius: 4px;
+  padding: 3px 10px;
+  font-size: 0.68rem;
+  color: #2D7A5A;
+  letter-spacing: 0.06em;
+  margin-bottom: 16px;
+}
+
+/* LOADING */
+.ai-loader {
+  background: var(--white);
+  border: 0.5px solid var(--border);
+  border-radius: 10px;
+  padding: 32px;
+  text-align: center;
+  display: none;
+  margin-bottom: 14px;
+}
+.ai-spinner {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--border-med);
+  border-top-color: var(--ink);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+  margin-bottom: 12px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.ai-loader-msg { font-size: 0.82rem; color: var(--ink-mid); }
+
+/* FULL OUTPUT */
+.full-output { display: none; }
+
+/* SECTION ARCHITECTURE */
+.section-block {
+  background: var(--white);
+  border: 0.5px solid var(--border);
+  border-radius: 10px;
+  padding: 22px 24px;
+  margin-bottom: 12px;
+}
+.section-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.63rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 16px;
+}
+.section-eyebrow::before {
+  content: '';
+  width: 16px;
+  height: 1px;
+  background: var(--gold);
+  flex-shrink: 0;
+}
+.section-title {
+  font-family: var(--serif);
+  font-size: 1.05rem;
+  font-weight: 300;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+/* TABLES */
+.pro-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+.pro-table th {
+  font-size: 0.64rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 0.5px solid var(--border);
+}
+.pro-table td {
+  padding: 9px 10px;
+  color: var(--ink-mid);
+  border-bottom: 0.5px solid var(--border);
+  vertical-align: top;
+}
+.pro-table tr:last-child td { border-bottom: none; }
+.pro-table .num { text-align: right; font-feature-settings: "tnum"; }
+.pro-table .hl { background: var(--gold-bg); }
+.pro-table .grn { color: var(--green); font-weight: 500; }
+.pro-table .red { color: var(--red); font-weight: 500; }
+.pro-table .amb { color: var(--amber); font-weight: 500; }
+.pro-table .gld { color: var(--gold); font-weight: 500; }
+
+/* STATUS TAGS */
+.tag {
+  display: inline-block;
+  font-size: 0.64rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+.tag-grn { background: var(--green-bg); color: var(--green); }
+.tag-red { background: var(--red-bg); color: var(--red); }
+.tag-amb { background: rgba(184,120,32,0.1); color: var(--amber); }
+.tag-gld { background: var(--gold-light); color: var(--gold); }
+
+/* DASHBOARD GRID */
+.dash-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 4px;
+}
+@media (max-width: 540px) { .dash-grid { grid-template-columns: repeat(2, 1fr); } }
+.dash-cell {
+  background: var(--surface);
+  border-radius: 7px;
+  padding: 12px 14px;
+}
+.dash-cell-label {
+  font-size: 0.66rem;
+  color: var(--ink-faint);
+  letter-spacing: 0.06em;
+  margin-bottom: 5px;
+}
+.dash-cell-val {
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1;
+}
+.dash-cell-sub { font-size: 0.7rem; color: var(--ink-faint); margin-top: 3px; }
+
+/* COHERENCE SCORE FULL */
+.coherence-wrap {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+}
+.coherence-score-big {
+  font-family: var(--serif);
+  font-size: 4rem;
+  font-weight: 300;
+  color: var(--ink);
+  line-height: 1;
+  min-width: 100px;
+}
+.coherence-score-big span { font-size: 1.2rem; color: var(--ink-faint); }
+.coherence-detail { flex: 1; }
+.coherence-components {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.coherence-comp {
+  font-size: 0.69rem;
+  padding: 2px 9px;
+  border-radius: 3px;
+  background: var(--surface);
+  color: var(--ink-mid);
+}
+
+/* CONFLICTS */
+.conflict-list { display: flex; flex-direction: column; gap: 8px; }
+.conflict-item {
+  font-size: 0.84rem;
+  color: var(--ink-mid);
+  line-height: 1.65;
+  padding: 12px 14px;
+  background: var(--gold-bg);
+  border-left: 2px solid rgba(160,124,46,0.3);
+  border-radius: 0 7px 7px 0;
+}
+
+/* OPPORTUNITY COST */
+.opp-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+@media (max-width: 540px) { .opp-grid { grid-template-columns: 1fr; } }
+.opp-card {
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+.opp-label { font-size: 0.68rem; color: var(--ink-faint); margin-bottom: 5px; letter-spacing: 0.06em; }
+.opp-val { font-size: 1.1rem; font-weight: 500; color: var(--red); line-height: 1; }
+.opp-note { font-size: 0.72rem; color: var(--ink-faint); margin-top: 4px; line-height: 1.4; }
+
+/* METRICS ROW */
+.metrics-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+@media (max-width: 540px) { .metrics-row { grid-template-columns: 1fr; } }
+.metric-card {
+  background: var(--white);
+  border: 0.5px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 20px;
+}
+.metric-label {
+  font-size: 0.63rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 8px;
+}
+.metric-big {
+  font-family: var(--serif);
+  font-size: 2.1rem;
+  font-weight: 300;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.metric-sub { font-size: 0.72rem; color: var(--ink-faint); line-height: 1.45; }
+
+/* ACTION LADDER */
+.action-ladder { display: flex; flex-direction: column; gap: 0; }
+.action-step {
+  display: flex;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 0.5px solid var(--border);
+  align-items: flex-start;
+}
+.action-step:last-child { border-bottom: none; }
+.action-num {
+  font-family: var(--serif);
+  font-size: 1.3rem;
+  font-weight: 300;
+  color: var(--ink-faint);
+  min-width: 28px;
+  line-height: 1;
+  margin-top: 2px;
+}
+.action-body h5 {
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+.action-body p {
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+  line-height: 1.6;
+}
+
+/* STABILITY TIMELINE */
+.timeline { display: flex; flex-direction: column; gap: 0; }
+.timeline-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 1fr 1fr auto;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 0.5px solid var(--border);
+  align-items: center;
+  font-size: 0.8rem;
+}
+.timeline-row:last-child { border-bottom: none; }
+.timeline-period {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--ink-mid);
+}
+.timeline-val { color: var(--ink-mid); }
+.timeline-tag { text-align: right; }
+
+/* POSITIONING SUMMARY */
+.pos-summary {
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 22px 24px;
+  margin-bottom: 12px;
+  border-left: 3px solid var(--ink);
+}
+.pos-summary p {
+  font-family: var(--serif);
+  font-size: 1.05rem;
+  font-weight: 300;
+  color: var(--ink);
+  line-height: 1.75;
+  font-style: italic;
+}
+
+/* RECOMMENDATIONS */
+.rec-list { display: flex; flex-direction: column; gap: 0; }
+.rec-item {
+  display: flex;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 0.5px solid var(--border);
+}
+.rec-item:last-child { border-bottom: none; }
+.rec-num {
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--gold);
+  min-width: 24px;
+  padding-top: 2px;
+}
+.rec-text h5 {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--ink);
+  margin-bottom: 5px;
+}
+.rec-text p {
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+  line-height: 1.65;
+}
+
+/* BLURRED SECTION */
+.blurred-section {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.blurred-inner {
+  filter: blur(5px);
+  opacity: 0.35;
+  pointer-events: none;
+  user-select: none;
+}
+.blurred-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  color: var(--ink-mid);
+  font-style: italic;
+  text-align: center;
+  padding: 20px;
+}
+
+/* OUTPUT FOOTER */
+.output-footer {
+  text-align: center;
+  padding: 20px 0 10px;
+}
+.output-footer p {
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+  margin-bottom: 14px;
+  font-style: italic;
+}
+.output-footer-btns {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.btn-p {
+  padding: 11px 24px;
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--white);
+  background: var(--ink);
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.btn-p:hover { opacity: 0.82; }
+.btn-s {
+  padding: 11px 24px;
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  color: var(--ink-mid);
+  background: transparent;
+  border: 0.5px solid var(--border-med);
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-s:hover { border-color: var(--ink); color: var(--ink); }
+
+/* DL BUTTONS */
+.dl-row { display: flex; gap: 8px; }
+.dl-btn {
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  font-weight: 500;
+  padding: 6px 14px;
+  background: var(--ink);
+  color: var(--white);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: opacity 0.15s;
+}
+.dl-btn:hover { opacity: 0.82; }
+.dl-btn.sec {
+  background: transparent;
+  color: var(--ink-mid);
+  border: 0.5px solid var(--border-med);
+}
+.dl-btn.sec:hover { border-color: var(--ink); color: var(--ink); }
+
+/* SECTION HEADER */
+.sec-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* B-USEFUL BADGE */
+.buseful-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #1A2744;
+  border-radius: 5px;
+  padding: 5px 12px;
+  text-decoration: none;
+  margin-bottom: 32px;
+}
+.buseful-badge span {
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: #fff;
+}
+.buseful-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4A90D9;
+}
+
+/* FOOTER */
+footer {
+  border-top: 0.5px solid var(--border);
+  padding: 28px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.footer-copy {
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+}
+.footer-links {
+  display: flex;
+  gap: 20px;
+}
+.footer-links a {
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+  text-decoration: none;
+}
+.footer-links a:hover { color: var(--ink-mid); }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-brand">RC<span style="color:var(--gold)">Loop</span></a>
+  <span class="nav-tag">Spreadsheet Pro</span>
+  <span class="nav-right" onclick="window.history.back()">&#8592; All systems</span>
+</nav>
+
+<!-- PAGE: INTAKE -->
+<div id="s0" class="page on">
+<div class="wrap">
+
+  <a href="https://oi-ecosystem.github.io/b-useful/" target="_blank" class="buseful-badge">
+    <div class="buseful-dot"></div>
+    <span>B&#8209;Useful</span>
+  </a>
+
+  <p class="intake-eyebrow">RC Loop &mdash; Spreadsheet Pro</p>
+  <h1 class="intake-headline">Your financial behaviour,<br>coherently mapped.</h1>
+  <p class="intake-sub">One input. Five analytical passes. A financial positioning system built around your specific situation &mdash; not a template.</p>
+
+  <!-- INTENT -->
+  <div class="intent-section">
+    <div class="intent-label">Your financial intent</div>
+    <div class="intent-sub">Describe your situation honestly. Include the concern, the goal, and anything that feels like it is working against you. 300&ndash;500 characters.</div>
+    <textarea id="intent" oninput="countChars()" placeholder="e.g. I have credit card debt at high interest, spend too much on food and nights out, earn a reasonable salary but feel like I have nothing to show for it. I want to understand where the leakage is and build a proper structure." rows="4"></textarea>
+    <div class="char-counter" id="char-count">0 / 500</div>
+    <!-- SPELL PANEL -->
+    <div class="spell-panel" id="spell-panel">
+      <p class="spell-heading">We noticed a few spellings &mdash; here is the corrected version</p>
+      <div class="spell-corrected" id="spell-corrected"></div>
+      <div class="spell-btns">
+        <button class="spell-btn-a" onclick="sc_accept()">Use corrected version</button>
+        <button class="spell-btn-i" onclick="sc_ignore()">Keep as entered</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CORE NUMBERS -->
+  <div class="numbers-section">
+    <div class="numbers-label">Your numbers</div>
+    <div class="numbers-grid">
+      <div class="field">
+        <label>Monthly net income</label>
+        <input type="number" id="income" placeholder="e.g. 2800" min="0" max="50000" step="50">
+      </div>
+      <div class="field">
+        <label>Total debt</label>
+        <input type="number" id="debt" placeholder="e.g. 4500" min="0" max="500000" step="100">
+      </div>
+      <div class="field">
+        <label>Current savings</label>
+        <input type="number" id="savings" placeholder="e.g. 800" min="0" max="500000" step="100">
+      </div>
+      <div class="field">
+        <label>Essential monthly spend</label>
+        <input type="number" id="essentials" placeholder="e.g. 1400" min="0" max="20000" step="50">
+      </div>
+      <div class="field">
+        <label>Discretionary monthly</label>
+        <input type="number" id="discretionary" placeholder="e.g. 400" min="0" max="10000" step="50">
+      </div>
+      <div class="field">
+        <label>Savings goal target</label>
+        <input type="number" id="savingsgoal" placeholder="e.g. 6000" min="0" max="500000" step="500">
+      </div>
+    </div>
+  </div>
+
+  <!-- PRIMARY CONCERN -->
+  <div class="concern-section">
+    <div class="numbers-label">Primary concern</div>
+    <div class="concern-pills">
+      <button class="concern-btn sel" onclick="selConcern(this)">Reduce debt</button>
+      <button class="concern-btn" onclick="selConcern(this)">Build emergency fund</button>
+      <button class="concern-btn" onclick="selConcern(this)">Control spending</button>
+      <button class="concern-btn" onclick="selConcern(this)">Grow savings</button>
+      <button class="concern-btn" onclick="selConcern(this)">Understand cashflow</button>
+      <button class="concern-btn" onclick="selConcern(this)">Financial stability</button>
+    </div>
+  </div>
+
+  <!-- OPTIONAL DETAIL -->
+  <div style="margin-bottom: 28px;">
+    <div class="optional-toggle" id="opt-toggle" onclick="toggleOptional()">Add more detail (optional)</div>
+    <div class="optional-section" id="opt-section">
+      <p class="optional-note">These fields improve the depth of analysis. None are required &mdash; leave any blank.</p>
+      <div class="numbers-grid">
+        <div class="field">
+          <label>Estimated debt APR %</label>
+          <input type="number" id="apr" placeholder="e.g. 19.9" min="0" max="100" step="0.1">
+        </div>
+        <div class="field">
+          <label>Rent / mortgage monthly</label>
+          <input type="number" id="rent" placeholder="e.g. 900" min="0" max="10000" step="50">
+        </div>
+        <div class="field">
+          <label>Dependents</label>
+          <input type="number" id="dependents" placeholder="e.g. 1" min="0" max="10" step="1">
+        </div>
+        <div class="field">
+          <label>Emergency target (months)</label>
+          <input type="number" id="emtarget" placeholder="e.g. 3" min="1" max="12" step="1">
+        </div>
+        <div class="field">
+          <label>Existing investments</label>
+          <input type="number" id="investments" placeholder="e.g. 2000" min="0" max="500000" step="500">
+        </div>
+        <div class="field">
+          <label>Debt types</label>
+          <input type="text" id="debttypes" placeholder="e.g. credit card, overdraft">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-row">
+    <span class="btn-subtle">Everything derived from your inputs. No data stored.</span>
+    <button class="btn-generate" onclick="generate()">Generate my financial positioning &rarr;</button>
+  </div>
+
+</div>
+</div>
+
+<!-- PAGE: PROCESSING -->
+<div id="s1" class="page">
+<div style="max-width:560px;margin:0 auto;padding:80px 24px;">
+  <p class="processing-eyebrow">RC Loop Pro &mdash; 5-Pass Analysis</p>
+  <h2 class="processing-headline">Analysing your financial coherence&hellip;</h2>
+  <div class="passes" id="pass-list">
+    <div class="pass-item" id="pass-1">
+      <div class="pass-dot"></div>
+      <div class="pass-name">Pass 1 &mdash; Extraction</div>
+      <div class="pass-desc" style="flex:1;font-size:0.74rem;color:var(--ink-faint);">Mapping concerns, behaviours, contradictions</div>
+      <div class="pass-status" id="pass-1-status">Waiting</div>
+    </div>
+    <div class="pass-item" id="pass-2">
+      <div class="pass-dot"></div>
+      <div class="pass-name">Pass 2 &mdash; Prioritisation</div>
+      <div class="pass-desc" style="flex:1;font-size:0.74rem;color:var(--ink-faint);">Ranking by urgency, leverage, relief</div>
+      <div class="pass-status" id="pass-2-status">Waiting</div>
+    </div>
+    <div class="pass-item" id="pass-3">
+      <div class="pass-dot"></div>
+      <div class="pass-name">Pass 3 &mdash; Coherence Engine</div>
+      <div class="pass-desc" style="flex:1;font-size:0.74rem;color:var(--ink-faint);">Scoring alignment between behaviour and goal</div>
+      <div class="pass-status" id="pass-3-status">Waiting</div>
+    </div>
+    <div class="pass-item" id="pass-4">
+      <div class="pass-dot"></div>
+      <div class="pass-name">Pass 4 &mdash; Compression</div>
+      <div class="pass-desc" style="flex:1;font-size:0.74rem;color:var(--ink-faint);">Removing redundancy, sharpening output</div>
+      <div class="pass-status" id="pass-4-status">Waiting</div>
+    </div>
+    <div class="pass-item" id="pass-5">
+      <div class="pass-dot"></div>
+      <div class="pass-name">Pass 5 &mdash; Synchronisation</div>
+      <div class="pass-desc" style="flex:1;font-size:0.74rem;color:var(--ink-faint);">Aligning all sections to one direction</div>
+      <div class="pass-status" id="pass-5-status">Waiting</div>
+    </div>
+  </div>
+  <p class="processing-sub">This analysis is deterministic &mdash; derived entirely from the numbers and intent you provided. No assumptions beyond your inputs.</p>
+</div>
+</div>
+
+<!-- PAGE: OUTPUT -->
+<div id="s2" class="page">
+<div class="wrap-wide">
+
+  <!-- Intent echo -->
+  <div class="output-intent" id="out-intent"></div>
+
+  <!-- FREE PREVIEW -->
+  <div id="free-preview">
+
+    <!-- Score preview + one contradiction -->
+    <div class="preview-grid">
+      <div class="preview-card">
+        <div class="preview-card-label">Financial coherence score</div>
+        <div class="score-display" id="prev-score">72<span>/100</span></div>
+        <div class="score-cat tag" id="prev-score-cat"></div>
+        <div class="score-bar-track" style="margin-top:10px">
+          <div class="score-bar-fill" id="prev-score-bar" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="preview-card">
+        <div class="preview-card-label">Primary contradiction detected</div>
+        <div id="prev-contradiction"></div>
+      </div>
+    </div>
+
+    <!-- One recommendation -->
+    <div class="section-block" style="margin-bottom:14px;">
+      <div class="section-eyebrow">Priority recommendation</div>
+      <div id="prev-rec"></div>
+    </div>
+
+    <!-- Blurred remaining sections -->
+    <div class="blurred-section">
+      <div class="blurred-inner">
+        <div class="section-block">
+          <div class="section-eyebrow">Financial position dashboard</div>
+          <div class="dash-grid">
+            <div class="dash-cell"><div class="dash-cell-label">Net income</div><div class="dash-cell-val">&#163;2,800</div></div>
+            <div class="dash-cell"><div class="dash-cell-label">Debt load</div><div class="dash-cell-val">&#163;4,500</div></div>
+            <div class="dash-cell"><div class="dash-cell-label">Runway</div><div class="dash-cell-val">0.3 mo</div></div>
+            <div class="dash-cell"><div class="dash-cell-label">DTI ratio</div><div class="dash-cell-val">26%</div></div>
+            <div class="dash-cell"><div class="dash-cell-label">Interest bleed</div><div class="dash-cell-val">&#163;895/yr</div></div>
+            <div class="dash-cell"><div class="dash-cell-label">Stress level</div><div class="dash-cell-val">High</div></div>
+          </div>
+        </div>
+        <div class="section-block" style="margin-top:12px;">
+          <div class="section-eyebrow">Coherence conflicts</div>
+          <div class="conflict-list">
+            <div class="conflict-item">Conflict statement one would appear here with specific numbers.</div>
+            <div class="conflict-item">Conflict statement two referencing your exact situation.</div>
+            <div class="conflict-item">Conflict statement three identifying the primary drag.</div>
+          </div>
+        </div>
+      </div>
+      <div class="blurred-overlay">14 further sections unlock below &mdash; including debt snowball, opportunity cost engine, 3-scenario projection and stability timeline.</div>
+    </div>
+
+  </div>
+
+  <!-- UNLOCK -->
+  <div class="unlock-card" id="unlock-card">
+    <div class="dev-pill">DEV MODE &mdash; Mock response. Zero tokens.</div>
+    <p class="unlock-heading">Unlock your full financial positioning.</p>
+    <p class="unlock-sub">15 structured sections built deterministically from your situation. A 5-pass coherence engine, debt strategy, opportunity cost analysis and a 24-month stability timeline.</p>
+    <div class="unlock-features">
+      <span class="unlock-feature">Financial position dashboard</span>
+      <span class="unlock-feature">Debt snowball &amp; avalanche</span>
+      <span class="unlock-feature">Coherence conflicts</span>
+      <span class="unlock-feature">Opportunity cost engine</span>
+      <span class="unlock-feature">3-scenario projection</span>
+      <span class="unlock-feature">Behavioural leakage detection</span>
+      <span class="unlock-feature">Action priority ladder</span>
+      <span class="unlock-feature">24-month stability timeline</span>
+    </div>
+    <button class="unlock-btn" onclick="unlockFull()">Unlock my full positioning &mdash; &pound;29</button>
+    <span class="unlock-price">One-time &middot; Instant &middot; No account needed</span>
+  </div>
+
+  <!-- AI LOADER -->
+  <div class="ai-loader" id="ai-loader">
+    <div class="ai-spinner"></div>
+    <p class="ai-loader-msg" id="ai-loader-msg">Preparing your full positioning report...</p>
+  </div>
+
+  <!-- FULL OUTPUT - all 15 sections -->
+  <div class="full-output" id="full-output">
+
+    <!-- DL ROW -->
+    <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+      <div class="dl-row">
+        <button class="dl-btn" onclick="dlXLSX()">&#8595; XLSX</button>
+        <button class="dl-btn sec" onclick="dlGoogleSheets()">&#8595; Google Sheets</button>
+      </div>
+    </div>
+
+    <!-- 1. FINANCIAL POSITION DASHBOARD -->
+    <div class="section-block">
+      <div class="sec-header">
+        <div>
+          <div class="section-eyebrow">Section 1</div>
+          <div class="section-title">Financial Position Dashboard</div>
+        </div>
+      </div>
+      <div class="dash-grid" id="s-dashboard"></div>
+    </div>
+
+    <!-- 2. INCOME ALLOCATION ENGINE -->
+    <div class="section-block">
+      <div class="section-eyebrow">Section 2</div>
+      <div class="section-title" style="margin-bottom:14px;">Income Allocation Engine</div>
+      <table class="pro-table" id="s-allocation"></table>
+    </div>
+
+    <!-- 3. DEBT PRESSURE ANALYSIS -->
+    <div class="section-block" id="s-debt-block">
+      <div class="section-eyebrow">Section 3</div>
+      <div class="section-title" style="margin-bottom:14px;">Debt Pressure Analysis</div>
+      <table class="pro-table" id="s-debt-pressure"></table>
+    </div>
+
+    <!-- 4. DEBT SNOWBALL / AVALANCHE -->
+    <div class="section-block" id="s-snowball-block">
+      <div class="section-eyebrow">Section 4</div>
+      <div class="section-title" style="margin-bottom:14px;" id="s-snowball-title">Debt Snowball Tracker</div>
+      <table class="pro-table" id="s-snowball"></table>
+    </div>
+
+    <!-- 5. EMERGENCY RUNWAY PLANNER -->
+    <div class="section-block">
+      <div class="section-eyebrow">Section 5</div>
+      <div class="section-title" style="margin-bottom:14px;">Emergency Runway Planner</div>
+      <table class="pro-table" id="s-runway"></table>
+    </div>
+
+    <!-- METRICS ROW: Interest Bleed + Financial Runway -->
+    <div class="metrics-row">
+      <div class="metric-card">
+        <div class="metric-label">Interest bleed</div>
+        <div class="metric-big" id="m-interest-val" style="color:var(--red)"></div>
+        <div class="metric-sub" id="m-interest-sub"></div>
+        <div id="m-interest-saved" style="margin-top:10px;"></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Financial runway</div>
+        <div class="metric-big" id="m-runway-val"></div>
+        <div class="metric-sub" id="m-runway-sub"></div>
+      </div>
+    </div>
+
+    <!-- 6. SAVINGS VELOCITY PROJECTION -->
+    <div class="section-block">
+      <div class="section-eyebrow">Section 6</div>
+      <div class="section-title" style="margin-bottom:14px;">Savings Velocity Projection</div>
+      <table class="pro-table" id="s-savings-velocity"></table>
+    </div>
+
+    <!-- 7. DISPOSABLE INCOME TRACKING -->
+    <div class="section-block">
+      <div class="section-eyebrow">Section 7</div>
+      <div class="section-title" style="margin-bottom:14px;">Disposable Income Tracking</div>
+      <table class="pro-table" id="s-disposable"></table>
+    </div>
+
+    <!-- 8. BEHAVIOURAL LEAKAGE DETECTION -->
+    <div class="section-block">
+      <div class="section-eyebrow">Section 8</div>
+      <div class="section-title" style="margin-bottom:6px;">Behavioural Leakage Detection</div>
+      <p style="font-size:0.78rem;color:var(--ink-faint);margin-bottom:14px;">Small recurring costs compound significantly. This section calculates the annual and long-term impact of daily leakage.</p>
+      <table class="pro-table" id="s-leakage"></table>
+    </div>
+
+    <!-- 9. FINANCIAL COHERENCE SCORE -->
+    <div class="section-block">
+      <div class="section-eyebrow">Section 9</div>
+      <div class="section-title" style="margin-bottom:14px;">Financial Coherence Score</div>
+      <div class="coherence-wrap">
+        <div class="coherence-score-big" id="s-score-num">72<span>/100</span></div>
+        <div class="coherence-detail">
+          <div class="score-bar-track" style="margin-bottom:8px;"><div class="score-bar-fill" id="s-score-bar" style="width:0%"></div></div>
+          <div style="font-size:0.82rem;color:var(--ink-mid);margin-bottom:6px;" id="s-score-interp"></div>
+          <div class="coherence-components" id="s-score-comps"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 10. COHERENCE CONFLICT DETECTION -->
+    <div class="section-block">
+      <div class="section-eyebrow">Section 10</div>
+      <div class="section-title" style="margin-bottom:14px;">Coherence Conflict Detection</div>
+      <div class="conflict-list" id="s-conflicts"></div>
+    </div>
+
+    <!-- 11. OPPORTUNITY COST ENGINE -->
+    <div class="section-block">
+      <div class="section-eyebrow">Section 11</div>
+      <div class="section-title" style="margin-bottom:14px;">Opportunity Cost Engine</div>
+      <div class="opp-grid" id="s-oppcost"></div>
+    </div>
+
+    <!-- 12. 3-SCENARIO PROJECTION -->
+    <div class="section-block">
+      <div class="section-eyebrow">Section 12</div>
+      <div class="section-title" style="margin-bottom:14px;">3-Scenario Future Projection</div>
+      <table class="pro-table" id="s-scenarios"></table>
+    </div>
+
+    <!-- 13. STRUCTURED RECOMMENDATION ENGINE -->
+    <div class="section-block">
+      <div class="section-eyebrow">Section 13</div>
+      <div class="section-title" style="margin-bottom:14px;">Structured Recommendation Engine</div>
+      <div class="rec-list" id="s-recs"></div>
+    </div>
+
+    <!-- 14. ACTION PRIORITY LADDER -->
+    <div class="section-block">
+      <div class="section-eyebrow">Section 14</div>
+      <div class="section-title" style="margin-bottom:14px;">Action Priority Ladder</div>
+      <p style="font-size:0.78rem;color:var(--ink-faint);margin-bottom:14px;">Sequenced by survival importance, leverage and psychological relief.</p>
+      <div class="action-ladder" id="s-actions"></div>
+    </div>
+
+    <!-- 15. FINANCIAL STABILITY TIMELINE -->
+    <div class="section-block">
+      <div class="section-eyebrow">Section 15</div>
+      <div class="section-title" style="margin-bottom:14px;">Financial Stability Timeline</div>
+      <div class="timeline" id="s-timeline"></div>
+    </div>
+
+    <!-- POSITIONING SUMMARY -->
+    <div class="pos-summary">
+      <div class="section-eyebrow" style="margin-bottom:12px;">Financial positioning summary</div>
+      <p id="s-summary"></p>
+    </div>
+
+    <div class="output-footer">
+      <p>RC Loop Spreadsheet Pro &mdash; 5-pass financial coherence engine. QuickStart also available from &pound;15.</p>
+      <div class="output-footer-btns">
+        <button class="btn-p">Explore RC Loop Resume Pro &rarr;</button>
+        <button class="btn-s" onclick="goBack()">Start again</button>
+      </div>
+    </div>
+
+  </div><!-- /full-output -->
+
+</div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <span class="footer-copy">&copy; RC Loop. A <a href="https://oi-ecosystem.github.io/b-useful/" style="color:var(--ink-faint);text-decoration:none;">B&#8209;Useful</a> financial utility. Everything derived from your exact inputs.</span>
+  <div class="footer-links">
+    <a href="#">QuickStart Spreadsheet &rarr;</a>
+    <a href="#">Resume Pro &rarr;</a>
+    <a href="#">1LINE utilities &rarr;</a>
+  </div>
+</footer>
+
+<!-- GOATCOUNTER -->
+<script data-goatcounter="https://signal333.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+
+<script>
+/* ============================================================
+   RC LOOP SPREADSHEET PRO - ENGINE
+   5-pass deterministic financial coherence analysis
+
+   DEV_MODE = true  -> mock, zero cost
+   PREMIUM_GATED = false -> open for testing
+
+   SPELL CHECKER: sc_ prefix, no \b in regex
+   (Python \b corrupts to backspace \x08 - use /([a-zA-Z]+)/g only)
+   NO const/let - all var
+   NO adjacent string literals without +
+   NO minified one-liners in loops
+============================================================ */
+
+var DEV_MODE       = true;
+var PREMIUM_GATED  = false;
+
+/* ── SPELL CHECKER (sc_ prefix throughout) ── */
+var sc_checked  = false;
+var sc_ignflag  = false;
+var sc_lastval  = '';
+var sc_corrtext = '';
+
+var SC_CORRECTIONS = {
+  'abcense':'absence','absense':'absence','abscence':'absence',
+  'accidently':'accidentally','accidentaly':'accidentally',
+  'accomodate':'accommodate','acommodate':'accommodate',
+  'acheive':'achieve','achive':'achieve',
+  'adventorous':'adventurous','adventourous':'adventurous',
+  'agressive':'aggressive','agresive':'aggressive',
+  'allready':'already','alreday':'already',
+  'amature':'amateur','amatuer':'amateur',
+  'anniversery':'anniversary','anniverssary':'anniversary',
+  'appriciate':'appreciate','apreciate':'appreciate',
+  'apropriate':'appropriate',
+  'arguement':'argument',
+  'asperation':'aspiration',
+  'avalable':'available','availble':'available','availible':'available',
+  'awfull':'awful','aweful':'awful',
+  'beautifull':'beautiful','beutiful':'beautiful','beautful':'beautiful',
+  'becuase':'because','becasue':'because','beacuse':'because',
+  'begining':'beginning',
+  'beleive':'believe','belive':'believe',
+  'benificial':'beneficial',
+  'boundries':'boundaries',
+  'brillant':'brilliant',
+  'buisness':'business','bussiness':'business',
+  'careing':'caring',
+  'charachter':'character',
+  'chiold':'child','chidl':'child',
+  'childen':'children',
+  'colege':'colleague','collegue':'colleague',
+  'comming':'coming',
+  'compasion':'compassion',
+  'completly':'completely',
+  'concious':'conscious',
+  'confidance':'confidence',
+  'corageous':'courageous',
+  'crative':'creative',
+  'curiousity':'curiosity',
+  'daugther':'daughter','dauhgter':'daughter','dauther':'daughter',
+  'definate':'definite','definately':'definitely','definatly':'definitely',
+  'desparate':'desperate',
+  'develoment':'development','developement':'development',
+  'diferent':'different','differant':'different',
+  'disapear':'disappear',
+  'elegent':'elegant','elemant':'elegant',
+  'empthy':'empathy',
+  'enviroment':'environment',
+  'especally':'especially',
+  'excellant':'excellent','excelent':'excellent',
+  'existance':'existence',
+  'experiance':'experience','experence':'experience',
+  'faimly':'family','familly':'family',
+  'fasinating':'fascinating',
+  'favourit':'favourite',
+  'freind':'friend','freinds':'friends',
+  'furthur':'further',
+  'genious':'genius',
+  'gentel':'gentle',
+  'goverment':'government',
+  'gratefull':'grateful','greatful':'grateful',
+  'grammer':'grammar',
+  'guidence':'guidance',
+  'happyness':'happiness','hapiness':'happiness',
+  'helpfull':'helpful',
+  'hoppe':'hope','hoppes':'hopes',
+  'humerous':'humorous',
+  'ignorence':'ignorance',
+  'imediately':'immediately',
+  'impotant':'important',
+  'independant':'independent',
+  'inteligent':'intelligent','intellegent':'intelligent',
+  'intresting':'interesting',
+  'joyfull':'joyful',
+  'kindnes':'kindness',
+  'knowlege':'knowledge',
+  'lonelyness':'loneliness',
+  'loveing':'loving',
+  'maintainance':'maintenance',
+  'managment':'management',
+  'meaningfull':'meaningful',
+  'millenium':'millennium',
+  'mischevious':'mischievous',
+  'naturaly':'naturally',
+  'necesary':'necessary','neccesary':'necessary',
+  'noticable':'noticeable',
+  'nuturing':'nurturing',
+  'ocasion':'occasion',
+  'occured':'occurred',
+  'opportunitiy':'opportunity','opportunitity':'opportunity','opportuniity':'opportunity',
+  'opporunity':'opportunity','opportunty':'opportunity','oppurtunity':'opportunity',
+  'opportunitey':'opportunity','oppertunity':'opportunity','opportunety':'opportunity',
+  'optomistic':'optimistic',
+  'orignal':'original',
+  'paralel':'parallel',
+  'pasionate':'passionate',
+  'patiance':'patience',
+  'percieve':'perceive',
+  'permenent':'permanent',
+  'persistance':'persistence',
+  'personalty':'personality',
+  'persue':'pursue',
+  'phenominal':'phenomenal',
+  'posession':'possession',
+  'priveledge':'privilege',
+  'probaly':'probably',
+  'proffesional':'professional','profesional':'professional',
+  'purposfull':'purposeful',
+  'realy':'really',
+  'recieve':'receive',
+  'recomend':'recommend',
+  'relevent':'relevant',
+  'religous':'religious',
+  'remeber':'remember',
+  'resilant':'resilient','resilent':'resilient',
+  'resistence':'resistance',
+  'sandwhich':'sandwich',
+  'sensative':'sensitive',
+  'seperate':'separate',
+  'simalar':'similar',
+  'sincerly':'sincerely',
+  'spiritul':'spiritual',
+  'spontanious':'spontaneous',
+  'stong':'strong',
+  'strenght':'strength',
+  'sucesful':'successful','succesfull':'successful','sucessful':'successful',
+  'suprise':'surprise',
+  'surounded':'surrounded','sorrounded':'surrounded',
+  'tendancy':'tendency',
+  'timeles':'timeless',
+  'tommorow':'tomorrow','tomorow':'tomorrow',
+  'truely':'truly',
+  'unfortunatly':'unfortunately',
+  'untill':'until',
+  'usualy':'usually',
+  'valueable':'valuable','valuble':'valuable',
+  'visable':'visible',
+  'warmht':'warmth',
+  'wierd':'weird',
+  'wisdome':'wisdom',
+  'withold':'withhold',
+  'writting':'writing',
+  /* Finance-specific */
+  'woud':'would','ahve':'have','butr':'but',
+  'spreadhseet':'spreadsheet','spreadhsheet':'spreadsheet','spreadshet':'spreadsheet',
+  'imoplemtened':'implemented','implementd':'implemented',
+  'aopid':'avoid','avodi':'avoid',
+  'portfoloi':'portfolio','portoflio':'portfolio',
+  'dividens':'dividends','divdends':'dividends',
+  'commdoities':'commodities','commodites':'commodities',
+  'intreset':'interest','interets':'interest',
+  'borrowign':'borrowing','borowing':'borrowing',
+  'disposabel':'disposable','disposble':'disposable',
+  'snowbawl':'snowball','snowbal':'snowball',
+  'managment':'management','managemnt':'management',
+  'investement':'investment','invesment':'investment',
+  'morgage':'mortgage','mortage':'mortgage',
+  'dept':'debt','depts':'debts',
+  'finacial':'financial','finantial':'financial',
+  'saveing':'saving','savaings':'savings',
+  'spendig':'spending','spening':'spending',
+  'budgit':'budget','budjet':'budget',
+  'carreer':'career','carear':'career',
+  'intrest':'interest'
+};
+
+function spellCheck(text) {
+  var sc_changed = false;
+  var corrected = text.replace(/([a-zA-Z]+)/g, function(word) {
+    var lower = word.toLowerCase();
+    if (SC_CORRECTIONS[lower]) {
+      sc_changed = true;
+      var fix = SC_CORRECTIONS[lower];
+      if (word[0] === word[0].toUpperCase() && word[0] !== word[0].toLowerCase()) {
+        return fix.charAt(0).toUpperCase() + fix.slice(1);
+      }
+      return fix;
+    }
+    return word;
+  });
+  return { corrected: corrected, changed: sc_changed };
+}
+
+function sc_showPanel(orig, corr) {
+  var el = document.getElementById('spell-corrected');
+  var ow = orig.split(' ');
+  var cw = corr.split(' ');
+  el.textContent = '';
+  for (var i = 0; i < cw.length; i++) {
+    if (i > 0) el.appendChild(document.createTextNode(' '));
+    if (ow[i] && ow[i].toLowerCase() !== cw[i].toLowerCase()) {
+      var m = document.createElement('mark');
+      m.textContent = cw[i];
+      el.appendChild(m);
+    } else {
+      el.appendChild(document.createTextNode(cw[i] || ''));
+    }
+  }
+  sc_corrtext = corr;
+  document.getElementById('spell-panel').className = 'spell-panel visible';
+}
+
+function sc_hidePanel() {
+  var p = document.getElementById('spell-panel');
+  if (p) p.className = 'spell-panel';
+}
+
+function sc_accept() {
+  var ta = document.getElementById('intent');
+  if (ta) ta.value = sc_corrtext;
+  sc_hidePanel();
+  sc_checked = true;
+  sc_ignflag = false;
+  sc_lastval = sc_corrtext;
+  countChars();
+}
+
+function sc_ignore() {
+  sc_hidePanel();
+  sc_ignflag = true;
+  sc_checked = false;
+}
+
+function looksLikeTypo(word) {
+  if (word.length < 4) return false;
+  var lower = word.toLowerCase();
+  /* Vowel-h-vowel at word start signals ahve/ohver transpositions */
+  if (/^[aeiou]h[aeiou]/.test(lower)) return true;
+  return false;
+}
+
+function sc_run(val) {
+  if (val !== sc_lastval) {
+    sc_checked = false;
+    sc_ignflag = false;
+  }
+  if (!sc_checked && !sc_ignflag) {
+    sc_lastval = val;
+    var r = spellCheck(val);
+    if (r.changed) {
+      sc_checked = true;
+      sc_showPanel(val, r.corrected);
+      return true;
+    }
+    /* Secondary: flag suspicious words */
+    var words = val.split(/\s+/);
+    var suspects = words.filter(function(w) {
+      var clean = w.replace(/[^a-zA-Z]/g, '');
+      return clean.length > 2 && looksLikeTypo(clean);
+    });
+    if (suspects.length > 0) {
+      var panel = document.getElementById('spell-panel');
+      var corrEl = document.getElementById('spell-corrected');
+      corrEl.textContent = '';
+      corrEl.appendChild(document.createTextNode('We spotted possible typos: '));
+      suspects.forEach(function(w, i) {
+        if (i > 0) corrEl.appendChild(document.createTextNode(', '));
+        var mark = document.createElement('mark');
+        mark.textContent = w;
+        corrEl.appendChild(mark);
+      });
+      corrEl.appendChild(document.createTextNode('. Please check before generating.'));
+      sc_corrtext = val;
+      panel.className = 'spell-panel visible';
+      sc_checked = true;
+      return true;
+    }
+    sc_checked = true;
+  }
+  return false;
+}
+
+/* ── UI HELPERS ── */
+function countChars() {
+  var ta = document.getElementById('intent');
+  var cc = document.getElementById('char-count');
+  if (!ta || !cc) return;
+  var len = ta.value.length;
+  cc.textContent = len + ' / 500';
+  cc.className = 'char-counter' + (len > 450 ? ' warn' : '');
+  sc_checked = false;
+  sc_ignflag = false;
+  sc_lastval = '';
+  sc_hidePanel();
+}
+
+function selConcern(btn) {
+  document.querySelectorAll('.concern-btn').forEach(function(b) {
+    b.classList.remove('sel');
+  });
+  btn.classList.add('sel');
+}
+
+function selectedConcern() {
+  var sel = document.querySelector('.concern-btn.sel');
+  return sel ? sel.textContent.trim() : 'Reduce debt';
+}
+
+function toggleOptional() {
+  var tog = document.getElementById('opt-toggle');
+  var sec = document.getElementById('opt-section');
+  var open = sec.className === 'optional-section visible';
+  sec.className = open ? 'optional-section' : 'optional-section visible';
+  tog.className = open ? 'optional-toggle' : 'optional-toggle open';
+}
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(function(p) {
+    p.className = 'page';
+  });
+  document.getElementById(id).className = 'page on';
+}
+
+function goBack() {
+  sc_checked = false;
+  sc_ignflag = false;
+  sc_lastval = '';
+  showPage('s0');
+}
+
+function v(id) {
+  var e = document.getElementById(id);
+  return e ? (parseFloat(e.value) || 0) : 0;
+}
+
+function fmt(n) {
+  return '\u00a3' + Math.abs(Math.round(n)).toLocaleString('en-GB');
+}
+
+function pct(a, b) {
+  return b > 0 ? Math.round((a / b) * 100) : 0;
+}
+
+function dlXLSX() {
+  var d = _proData;
+  if (!d || !d.income) { alert('Please generate your financial overview first.'); return; }
+  var wb = XLSX.utils.book_new();
+  var mnth = new Date().toLocaleString('en-GB',{month:'long',year:'numeric'});
+  var surplus = (d.income||0)-(d.out||0);
+  var ws1 = XLSX.utils.aoa_to_sheet([
+    ['RC Loop Pro Financial Dashboard', mnth], [''],
+    ['Your situation', d.intent||''], [''],
+    ['Monthly income', d.income||0], ['Monthly outgoings', d.out||0],
+    ['Monthly surplus', '=B5-B6'], ['Savings rate (%)', '=ROUND(B7/B5*100,1)'], [''],
+    ['Total debt', d.debt||0], ['Current savings', d.savings||0],
+    ['Emergency runway (mths)', d.savings&&d.out?'=ROUND(B11/B6,1)':0],
+    ['Months to debt free', surplus>0&&d.debt?'=CEILING(B10/B7,1)':'N/A'], [''],
+    ['Coherence score', d.coherenceScore||0]
+  ]);
+  ws1['!cols'] = [{wch:28},{wch:20}];
+  XLSX.utils.book_append_sheet(wb, ws1, 'Dashboard');
+  var ws2 = XLSX.utils.aoa_to_sheet([
+    ['Income Allocation',''], ['Total income', d.income||0], [''],
+    ['Category','Amount','% of income'],
+    ['Essential spending', Math.round((d.income||0)*0.50), '=ROUND(B5/B2*100,1)'],
+    ['Debt repayments', Math.round((d.debt||0)*0.05), '=ROUND(B6/B2*100,1)'],
+    ['Savings', Math.round((d.income||0)*0.10), '=ROUND(B7/B2*100,1)'],
+    ['Discretionary', '=B2-B5-B6-B7', '=ROUND(B8/B2*100,1)'],
+    [''], ['TOTAL','=SUM(B5:B8)','=SUM(C5:C8)']
+  ]);
+  ws2['!cols'] = [{wch:25},{wch:18},{wch:15}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Income Allocation');
+  var ws3 = XLSX.utils.aoa_to_sheet([
+    ['Debt Snowball Planner','','',''],
+    ['Debt name','Balance','Interest rate (%)','Min payment'],
+    ['Debt 1',d.debt||0,'',''], ['Debt 2','','',''], ['Debt 3','','',''], [''],
+    ['Total','=SUM(B3:B5)','','=SUM(D3:D5)'],
+    ['Monthly available for debt', surplus>0?surplus:0,'',''],
+    ['Projected payoff (mths)', surplus>0&&d.debt?'=CEILING(B7/B8,1)':'N/A','','']
+  ]);
+  ws3['!cols'] = [{wch:25},{wch:15},{wch:18},{wch:18}];
+  XLSX.utils.book_append_sheet(wb, ws3, 'Debt Snowball');
+  var ws4 = XLSX.utils.aoa_to_sheet([
+    ['Emergency Runway Planner',''],
+    ['Monthly outgoings', d.out||0], ['Current savings', d.savings||0],
+    ['Current runway (mths)', '=ROUND(B3/B2,1)'], [''],
+    ['Target runway (mths)', 3], ['Target savings needed', '=B2*B6'],
+    ['Gap to target', '=MAX(0,B7-B3)'],
+    ['Months to reach target', surplus>0?'=CEILING(B8/'+Math.max(surplus,1)+',1)':'N/A']
+  ]);
+  ws4['!cols'] = [{wch:28},{wch:18}];
+  XLSX.utils.book_append_sheet(wb, ws4, 'Emergency Runway');
+  var ws5 = XLSX.utils.aoa_to_sheet([
+    ['Savings Velocity Planner','',''],
+    ['Current savings', d.savings||0,''],
+    ['Monthly savings target', Math.round((d.income||0)*0.10),''],
+    [''], ['Month','Projected savings','Cumulative'],
+    ['1','=B2+B3','=B6'],
+    ['3','=C6+(B3*2)','=B7+C7'],
+    ['6','=C7+(B3*3)','=B8+C8'],
+    ['12','=C8+(B3*6)','=B9+C9']
+  ]);
+  ws5['!cols'] = [{wch:12},{wch:22},{wch:22}];
+  XLSX.utils.book_append_sheet(wb, ws5, 'Savings Velocity');
+  var trackerRows = [
+    ['Category','Budgeted','Actual'],
+    ['Housing / rent','',''], ['Food & groceries','',''], ['Transport','',''],
+    ['Utilities','',''], ['Subscriptions','',''], ['Dining & takeaways','',''],
+    ['Entertainment','',''], ['Clothing','',''],
+    ['Debt repayments', Math.round((d.debt||0)*0.05),''],
+    ['Savings', Math.round((d.income||0)*0.10),''], ['Other','',''],
+    [''], ['TOTAL','=SUM(B2:B12)','=SUM(C2:C12)'],
+    ['Income',d.income||0,d.income||0], ['Surplus','=B14-B13','=C14-C13']
+  ];
+  var ws6 = XLSX.utils.aoa_to_sheet(trackerRows);
+  ws6['!cols'] = [{wch:25},{wch:18},{wch:18}];
+  XLSX.utils.book_append_sheet(wb, ws6, 'Spending Tracker');
+  var ws7 = XLSX.utils.aoa_to_sheet([
+    ['Behavioural Leakage Analysis',''],
+    ['Category','Estimated monthly'],
+    ['Dining & takeaways',''], ['Subscriptions (unused)',''],
+    ['Impulse purchases',''], ['Convenience spending',''], ['Other discretionary',''],
+    [''], ['Total leakage','=SUM(B3:B7)'],
+    ['Annual leakage','=B9*12'],
+    ['As % of income', d.income?'=ROUND(B9/'+d.income+'*100,1)':'']
+  ]);
+  ws7['!cols'] = [{wch:28},{wch:22}];
+  XLSX.utils.book_append_sheet(wb, ws7, 'Behavioural Leakage');
+  var ws8 = XLSX.utils.aoa_to_sheet([
+    ['3-Scenario Projection','Conservative','Base','Optimistic'],
+    ['Monthly surplus', Math.round(surplus*0.7), surplus, Math.round(surplus*1.3)],
+    ['Annual savings', '=B2*12','=C2*12','=D2*12'],
+    ['Debt free (mths)', d.debt&&surplus>0?Math.ceil(d.debt/(surplus*0.7)):0,
+                         d.debt&&surplus>0?Math.ceil(d.debt/surplus):0,
+                         d.debt&&surplus>0?Math.ceil(d.debt/(surplus*1.3)):0],
+    ['Savings in 12m', '='+(d.savings||0)+'+B3', '='+(d.savings||0)+'+C3', '='+(d.savings||0)+'+D3']
+  ]);
+  ws8['!cols'] = [{wch:22},{wch:18},{wch:18},{wch:18}];
+  XLSX.utils.book_append_sheet(wb, ws8, 'Scenarios');
+  var recs = typeof _aiRecs !== 'undefined' ? _aiRecs : [];
+  var recRows = [['Recommendations','']];
+  recs.forEach(function(r,i){ recRows.push([String(i+1).padStart(2,'0')+'. '+(r.title||r), r.body||'']); recRows.push(['','']); });
+  if (recs.length===0) { recRows.push(['No recommendations loaded yet — generate your report first.','']); }
+  var ws9 = XLSX.utils.aoa_to_sheet(recRows);
+  ws9['!cols'] = [{wch:40},{wch:65}];
+  XLSX.utils.book_append_sheet(wb, ws9, 'Recommendations');
+  var ws10 = XLSX.utils.aoa_to_sheet([
+    ['Monthly Action Ladder','',''],
+    ['Priority','Action','Target date'],
+    ['1 - Immediate','Review and categorise all subscriptions','This week'],
+    ['2 - This month','Set up automatic savings transfer on payday',''],
+    ['3 - This month','Negotiate one bill or subscription',''],
+    ['4 - Next month','Review debt repayment strategy',''],
+    ['5 - Ongoing','Track spending weekly against this plan','']
+  ]);
+  ws10['!cols'] = [{wch:20},{wch:50},{wch:18}];
+  XLSX.utils.book_append_sheet(wb, ws10, 'Action Ladder');
+  XLSX.writeFile(wb, 'RC_Loop_Pro_' + mnth.replace(' ','_') + '.xlsx');
+}
+function dlGoogleSheets() {
+  var d = _proData;
+  if (!d || !d.income) { alert('Please generate your financial overview first.'); return; }
+  var surplus = (d.income||0)-(d.out||0);
+  var rows = [
+    'RC Loop Pro Financial Report',
+    '',
+    'Monthly income,' + (d.income||0),
+    'Monthly outgoings,' + (d.out||0),
+    'Monthly surplus,' + surplus,
+    'Total debt,' + (d.debt||0),
+    'Current savings,' + (d.savings||0),
+    '',
+    'INCOME ALLOCATION',
+    'Category,Amount,% of income',
+    'Essential spending,' + Math.round((d.income||0)*0.50) + ',',
+    'Debt repayments,' + Math.round((d.debt||0)*0.05) + ',',
+    'Savings,' + Math.round((d.income||0)*0.10) + ',',
+    'Discretionary,,',
+    '',
+    'SPENDING TRACKER',
+    'Category,Budgeted,Actual',
+    'Housing / rent,,',
+    'Food & groceries,,',
+    'Transport,,',
+    'Utilities,,',
+    'Subscriptions,,',
+    'Dining & takeaways,,',
+    'Entertainment,,',
+    'Debt repayments,' + Math.round((d.debt||0)*0.05) + ',',
+    'Savings,' + Math.round((d.income||0)*0.10) + ',',
+    '',
+    'SCENARIOS',
+    ',Conservative,Base,Optimistic',
+    'Monthly surplus,' + Math.round(surplus*0.7) + ',' + surplus + ',' + Math.round(surplus*1.3)
+  ];
+  var blob = new Blob([rows.join('\n')], {type:'text/csv'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = 'RC_Loop_Pro_Google_Sheets.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  setTimeout(function(){ alert('CSV downloaded. In Google Sheets: File -> Import -> Upload this CSV.'); }, 300);
+}
+
+/* ── GENERATE ── */
+function generate() {
+  var intent = document.getElementById('intent').value.trim();
+  if (intent.length < 50) {
+    alert('Please describe your situation in at least 50 characters for an accurate analysis.');
+    return;
+  }
+  if (sc_run(intent)) return;
+
+  /* Collect inputs */
+  var income    = v('income')       || 2800;
+  var debt      = v('debt')         || 0;
+  var savings   = v('savings')      || 0;
+  var ess       = v('essentials')   || Math.round(income * 0.55);
+  var disc      = v('discretionary')|| Math.round(income * 0.15);
+  var savGoal   = v('savingsgoal')  || income * 3;
+  var apr       = v('apr')          || 19.9;
+  var rent      = v('rent')         || 0;
+  var deps      = v('dependents')   || 0;
+  var emTarget  = v('emtarget')     || 3;
+  var invest    = v('investments')  || 0;
+  var concern   = selectedConcern();
+
+  /* Store for unlock */
+  _proData = { intent:intent, income:income, debt:debt, savings:savings,
+               ess:ess, disc:disc, savGoal:savGoal, apr:apr, rent:rent,
+               deps:deps, emTarget:emTarget, invest:invest, concern:concern };
+
+  document.getElementById('out-intent').textContent = '\u201c' + intent + '\u201d';
+  showPage('s1');
+  runProcessing();
+}
+
+/* ── 5-PASS ANIMATION ── */
+function runProcessing() {
+  var passes = [
+    { id:'pass-1', name:'Extracting financial signals', time: 700 },
+    { id:'pass-2', name:'Prioritising by urgency and leverage', time: 900 },
+    { id:'pass-3', name:'Scoring financial coherence', time: 800 },
+    { id:'pass-4', name:'Compressing and sharpening', time: 600 },
+    { id:'pass-5', name:'Synchronising all sections', time: 700 }
+  ];
+
+  var d = _proData;
+  var proResult = buildProData(d.intent, d.income, d.debt, d.savings, d.ess, d.disc, d.savGoal, d.apr, d.rent, d.deps, d.emTarget, d.invest, d.concern);
+
+  var delay = 200;
+  passes.forEach(function(pass, idx) {
+    setTimeout(function() {
+      var el = document.getElementById(pass.id);
+      var st = document.getElementById(pass.id + '-status');
+      if (el) el.className = 'pass-item active';
+      if (st) st.textContent = 'Analysing...';
+    }, delay);
+
+    setTimeout(function() {
+      var el = document.getElementById(pass.id);
+      var st = document.getElementById(pass.id + '-status');
+      if (el) el.className = 'pass-item done';
+      if (st) st.textContent = 'Complete';
+    }, delay + pass.time);
+
+    delay += pass.time + 100;
+  });
+
+  setTimeout(function() {
+    showPage('s2');
+    renderPreview(proResult);
+    _proResult = proResult;
+  }, delay + 300);
+}
+
+/* ── PREVIEW (free) ── */
+function renderPreview(d) {
+  /* Score */
+  document.getElementById('prev-score').innerHTML = d.score + '<span>/100</span>';
+  var scoreCat = document.getElementById('prev-score-cat');
+  scoreCat.textContent = d.scoreCategory;
+  scoreCat.className = 'score-cat tag ' + d.scoreCatClass;
+  setTimeout(function() {
+    document.getElementById('prev-score-bar').style.width = d.score + '%';
+  }, 300);
+
+  /* One contradiction */
+  var contEl = document.getElementById('prev-contradiction');
+  if (d.conflicts && d.conflicts.length > 0) {
+    contEl.innerHTML = '<div class="contradiction-item">' + d.conflicts[0] + '</div>';
+  }
+
+  /* One rec */
+  var recEl = document.getElementById('prev-rec');
+  if (d.recs && d.recs.length > 0) {
+    var r = d.recs[0];
+    recEl.innerHTML = '<div class="rec-preview-item">'
+      + '<div class="rec-preview-num">Priority 01</div>'
+      + '<div class="rec-preview-title">' + r.title + '</div>'
+      + '<div class="rec-preview-body">' + r.body + '</div>'
+      + '</div>';
+  }
+}
+
+/* ── UNLOCK ── */
+var _proData   = {};
+var _proResult = {};
+
+function unlockFull() {
+  if (PREMIUM_GATED) {
+    Object.keys(_proData).forEach(function(k) {
+      sessionStorage.setItem('pro_' + k, _proData[k]);
+    });
+    window.location.href = 'https://your-lemon-squeezy-link.com';
+    return;
+  }
+
+  document.getElementById('unlock-card').style.display = 'none';
+  document.getElementById('ai-loader').style.display = 'block';
+
+  var msgs = [
+    'Rendering your financial position dashboard...',
+    'Building debt snowball and avalanche tables...',
+    'Calculating opportunity cost engine...',
+    'Projecting 3-scenario trajectories...',
+    'Completing your stability timeline...'
+  ];
+  var idx = 0;
+  var el  = document.getElementById('ai-loader-msg');
+  var iv  = setInterval(function() {
+    idx = (idx + 1) % msgs.length;
+    if (el) el.textContent = msgs[idx];
+  }, 700);
+
+  setTimeout(function() {
+    clearInterval(iv);
+    document.getElementById('ai-loader').style.display = 'none';
+    renderFull(_proResult);
+  }, 3000);
+}
+
+/* ── BUILD ALL 15 SECTIONS (deterministic) ── */
+function buildProData(intent, income, debt, savings, ess, disc, savGoal, apr, rent, deps, emTarget, invest, concern) {
+  var lower    = intent.toLowerCase();
+  var surplus  = income - ess - disc;
+  var annInc   = income * 12;
+  var dtiPct   = income > 0 ? Math.round((debt / annInc) * 100) : 0;
+  var runwayMo = income > 0 ? Math.round((savings / income) * 10) / 10 : 0;
+  var mRes     = runwayMo;
+  var emReq    = income * (emTarget || 3);
+  var emGap    = Math.max(emReq - savings, 0);
+
+  /* Debt mechanics */
+  var estAPR      = (apr && apr > 0) ? apr / 100 : 0.199;
+  var monthlyInt  = debt > 0 ? Math.round(debt * (estAPR / 12)) : 0;
+  var annualInt   = monthlyInt * 12;
+  var recDebtPay  = debt > 0 ? Math.max(Math.round(Math.max(surplus, 0) * 0.5), monthlyInt + 10) : 0;
+  var recSavPay   = Math.max(Math.round(Math.max(surplus, 0) * 0.3), 0);
+
+  /* Debt payoff calculation */
+  var debtMo = 0;
+  if (debt > 0 && recDebtPay > monthlyInt) {
+    var bal2 = debt;
+    while (bal2 > 0 && debtMo < 120) {
+      var mi2 = Math.round(bal2 * (estAPR / 12));
+      bal2 = Math.max(bal2 - (recDebtPay - mi2), 0);
+      debtMo++;
+    }
+  }
+
+  /* Snowball acceleration */
+  var accelPay = recDebtPay + Math.round(disc * 0.15);
+  var accelBal = debt, accelInt = 0, accelMo = 0;
+  while (accelBal > 0 && accelMo < 120) {
+    var ami = Math.round(accelBal * (estAPR / 12));
+    accelInt += ami;
+    accelBal = Math.max(accelBal - Math.max(accelPay - ami, 0), 0);
+    accelMo++;
+  }
+  var baseBal2 = debt, baseInt2 = 0;
+  while (baseBal2 > 0 && baseInt2 < 120 * monthlyInt + debt) {
+    var bmi2 = Math.round(baseBal2 * (estAPR / 12));
+    baseInt2 += bmi2;
+    baseBal2 = Math.max(baseBal2 - Math.max(recDebtPay - bmi2, 0), 0);
+    if (baseBal2 === 0) break;
+    if (baseInt2 > 120 * monthlyInt + debt) break;
+  }
+  var intSaved = Math.max(baseInt2 - accelInt, 0);
+  var moSaved  = Math.max(debtMo - accelMo, 0);
+
+  /* Signal detection */
+  var hasFood     = /food|grocer|supermarket|cook|eating/.test(lower);
+  var hasTakeaway = /takeaway|eating out|deliveroo|restaurant/.test(lower);
+  var hasCoffee   = /coffee|cafe|starbucks|costa/.test(lower);
+  var hasSubs     = /subscription|netflix|spotify|streaming/.test(lower);
+  var hasNights   = /night|nights out|going out|drinks|pub|bar/.test(lower);
+  var hasDebt     = /debt|loan|credit|overdraft/.test(lower) || concern === 'Reduce debt';
+  var hasSnowball = /snowball/.test(lower);
+  var hasSavings  = /sav|emergency|buffer|cushion/.test(lower) || concern === 'Build savings' || concern === 'Build emergency fund';
+  var hasLeakage  = /leak|disappear|no idea|nothing to show|where.*goes/.test(lower);
+
+  /* PASS 1: Extract pressure levels */
+  var debtPressure     = debt > income * 6 ? 'High' : debt > income * 3 ? 'Moderate' : debt > 0 ? 'Low' : 'None';
+  var runwayPressure   = mRes < 0.5 ? 'Critical' : mRes < 1 ? 'High' : mRes < 3 ? 'Moderate' : 'Safe';
+  var discRatio        = income > 0 ? disc / income : 0;
+  var leakageRisk      = discRatio > 0.30 ? 'High' : discRatio > 0.20 ? 'Moderate' : 'Low';
+  var stressScore      = 0;
+  if (dtiPct > 50) stressScore += 3;
+  else if (dtiPct > 25) stressScore += 2;
+  else if (dtiPct > 10) stressScore += 1;
+  if (mRes < 0.5) stressScore += 3;
+  else if (mRes < 1) stressScore += 2;
+  else if (mRes < 2) stressScore += 1;
+  if (ess / income > 0.80) stressScore += 2;
+  else if (ess / income > 0.70) stressScore += 1;
+  if (surplus < 0) stressScore += 2;
+  var stressLabel = stressScore >= 6 ? 'High' : stressScore >= 4 ? 'Moderate' : 'Manageable';
+  var stressClass = stressScore >= 6 ? 'tag-red' : stressScore >= 4 ? 'tag-amb' : 'tag-grn';
+
+  /* PASS 2: Prioritise */
+  var priorities = [];
+  if (mRes < 1 && debt > 0) priorities.push('emergency-buffer');
+  else if (debt > 0) priorities.push('debt-reduction');
+  if (mRes < 1) priorities.push('runway-building');
+  if (leakageRisk === 'High') priorities.push('leakage-control');
+  if (!hasSavings && savings < income) priorities.push('savings-automation');
+  if (priorities.length === 0) priorities.push('optimisation');
+
+  /* PASS 3: Coherence score */
+  var cScores = [
+    { label: 'Debt management',       score: debt === 0 ? 25 : Math.max(0, 25 - Math.round(dtiPct * 0.5)), max: 25 },
+    { label: 'Savings rate',          score: Math.min(20, Math.round((recSavPay / income) * 100)), max: 20 },
+    { label: 'Emergency preparedness',score: Math.min(20, Math.round(mRes * 6.67)), max: 20 },
+    { label: 'Discretionary control', score: Math.max(0, Math.min(20, 20 - Math.round(discRatio * 50))), max: 20 },
+    { label: 'Goal alignment',        score: priorities[0] === 'optimisation' ? 15 : Math.max(5, 15 - stressScore), max: 15 }
+  ];
+  var totalScore = cScores.reduce(function(s, c) { return s + c.score; }, 0);
+  var scoreCategory = totalScore >= 75 ? 'Stable' : totalScore >= 60 ? 'Improving' : totalScore >= 45 ? 'Fractured' : totalScore >= 30 ? 'High Pressure' : 'Unsustainable';
+  var scoreCatClass = totalScore >= 75 ? 'tag-grn' : totalScore >= 60 ? 'tag-gld' : totalScore >= 45 ? 'tag-amb' : 'tag-red';
+
+  /* PASS 3: Conflicts */
+  var conflicts = [];
+  if (hasDebt && mRes < 1) {
+    conflicts.push('You state debt reduction as the priority, but emergency savings cover less than one month of income. Without a buffer, unexpected costs will return you to debt \u2014 negating every repayment made.');
+  }
+  if (recDebtPay < income * 0.10 && debt > 0) {
+    conflicts.push('Your stated goal is debt reduction, but current repayment allocation represents only ' + pct(recDebtPay, income) + '% of income \u2014 below the recommended 15\u201320%. Discretionary spend currently exceeds debt velocity.');
+  }
+  if (discRatio > 0.25 && (hasSavings || concern === 'Grow savings')) {
+    conflicts.push('Savings growth is a stated priority, but discretionary spending consumes ' + Math.round(discRatio * 100) + '% of income \u2014 leaving insufficient surplus for meaningful accumulation.');
+  }
+  if (mRes < 2 && recSavPay < 50) {
+    conflicts.push('Emergency reserves are critically low, yet savings allocation is insufficient to reach even a 1-month buffer within the next 6 months at current pace.');
+  }
+  if (ess / income > 0.75) {
+    conflicts.push('Essential outgoings consume ' + pct(ess, income) + '% of net income \u2014 above the 65\u201370% structural threshold. This limits all debt and savings strategies without income growth or cost reduction.');
+  }
+  if (leakageRisk === 'High' && hasLeakage) {
+    conflicts.push('You identify that money disappears without explanation, yet no structured tracking currently captures discretionary flow. The absence of tracking is the primary leakage mechanism.');
+  }
+  if (conflicts.length === 0) {
+    conflicts.push('No major structural conflicts detected. The primary opportunity is optimisation \u2014 accelerating the existing structure for faster goal achievement.');
+  }
+
+  /* PASS 4/5: Build all recommendations (synchronised to one direction) */
+  var recs = [];
+
+  if (debt > 0 && mRes < 1) {
+    recs.push({
+      title: 'Build a one-month emergency buffer before aggressive debt repayment',
+      body: 'Your current savings of ' + fmt(savings) + ' cover ' + mRes.toFixed(1) + ' months of income. A single unexpected event will return you to debt, resetting every repayment made. Target ' + fmt(income) + ' in a separate accessible account first. At ' + fmt(recSavPay) + '/month you reach this in ' + Math.ceil((income - savings) / Math.max(recSavPay, 1)) + ' months.'
+    });
+  }
+  if (debt > 0) {
+    var debtTitle = hasSnowball ? 'Implement the debt snowball: smallest balance first' : 'Accelerate debt repayment to ' + fmt(recDebtPay) + '/month';
+    recs.push({
+      title: debtTitle,
+      body: 'At ' + fmt(recDebtPay) + '/month \u2014 50% of available surplus \u2014 you clear ' + fmt(debt) + ' in approximately ' + debtMo + ' months. Redirecting an additional ' + fmt(Math.round(disc * 0.15)) + '/month from discretionary saves approximately ' + fmt(intSaved) + ' in interest and reduces payoff by ' + moSaved + ' months.'
+    });
+  }
+  if (leakageRisk === 'High' || hasLeakage) {
+    var weeklyDisc = Math.round(disc / 4.3);
+    recs.push({
+      title: 'Set a weekly discretionary cap of ' + fmt(weeklyDisc),
+      body: 'A weekly cap of ' + fmt(weeklyDisc) + ' on discretionary spending would make current outflows visible and deliberate. Most people find awareness alone reduces this category by 15\u201320% within the first month \u2014 recovering ' + fmt(Math.round(disc * 0.175)) + '/month without any change in lifestyle quality.'
+    });
+  }
+  if (mRes < 3 && (hasSavings || concern === 'Build emergency fund')) {
+    recs.push({
+      title: 'Automate ' + fmt(recSavPay) + ' savings transfer on payday',
+      body: 'Treating savings as a fixed outgoing rather than a discretionary decision is the single most reliable behaviour change. Transfer ' + fmt(recSavPay) + ' to a separate account the day income arrives. At this rate you reach a 3-month buffer (' + fmt(income * 3) + ') in ' + Math.ceil((income * 3 - savings) / Math.max(recSavPay, 1)) + ' months.'
+    });
+  }
+  if (hasTakeaway || hasNights) {
+    var socAmt = hasNights ? Math.round(disc * 0.35) : Math.round(disc * 0.25);
+    recs.push({
+      title: 'Reduce social and eating-out spend by 25%',
+      body: 'Social spending is the highest-leverage discretionary reduction for most people. A 25% reduction saves approximately ' + fmt(Math.round(socAmt * 0.25)) + '/month \u2014 ' + fmt(Math.round(socAmt * 0.25 * 12)) + '/year. The goal is not elimination but structure: a weekly limit makes the spend deliberate rather than automatic.'
+    });
+  }
+  if (hasSubs) {
+    recs.push({
+      title: 'Subscription audit: 30 minutes, permanent saving',
+      body: 'List every recurring charge in your bank statement. Cancel anything unused in 30+ days. The average UK household saves \u00a315\u2013\u00a340/month from this single audit \u2014 compounding to \u00a3180\u2013\u00a3480 annually with zero lifestyle impact.'
+    });
+  }
+  if (recs.length < 3) {
+    recs.push({
+      title: 'Automate your financial structure on payday',
+      body: 'The moment income arrives: emergency buffer first (' + fmt(recSavPay) + '), debt payment second (' + fmt(recDebtPay) + '), live on what remains. Automation removes daily financial decision-making. Set it once, review quarterly.'
+    });
+  }
+
+  /* ACTION LADDER */
+  var actions = [];
+  if (mRes < 1 && debt > 0) {
+    actions.push({ title: 'Open a dedicated emergency savings account', body: 'Separate from your current account. Not for debt. Not for anything else. Target: ' + fmt(income) + '.' });
+  }
+  if (debt > 0) {
+    actions.push({ title: 'Set up automatic debt payment of ' + fmt(recDebtPay) + ' on payday', body: 'Automate before you can spend it. Highest-interest balance first.' });
+  }
+  actions.push({ title: 'Track every discretionary transaction for 30 days', body: 'No judgement. Just data. One line per transaction. You will find the leakage.' });
+  if (hasSubs) {
+    actions.push({ title: 'Audit all subscriptions this week', body: 'List every recurring charge. Cancel anything unused in the last 30 days.' });
+  }
+  actions.push({ title: 'Set a weekly discretionary limit of ' + fmt(Math.round(disc / 4.3)), body: 'Check it mid-week. Adjust Thursday onwards. Awareness creates structure.' });
+  if (mRes >= 1 || debt === 0) {
+    actions.push({ title: 'Automate ' + fmt(recSavPay) + ' savings transfer on payday', body: 'Fixed outgoing, not a decision. Target: ' + fmt(emReq) + ' emergency buffer.' });
+  }
+
+  /* STABILITY TIMELINE */
+  var timeline = [];
+  var timeDebt    = debt;
+  var timeSavings = savings;
+  var timePeriods = [1, 3, 6, 12, 24];
+  timePeriods.forEach(function(mo) {
+    /* Apply monthly actions */
+    for (var tm = 0; tm < mo - (timeline.length > 0 ? timePeriods[timeline.length - 1] : 0); tm++) {
+      if (timeDebt > 0) {
+        var tInt = Math.round(timeDebt * (estAPR / 12));
+        timeDebt = Math.max(timeDebt - Math.max(recDebtPay - tInt, 0), 0);
+      }
+      timeSavings += recSavPay;
+    }
+    var tRun = income > 0 ? Math.round((timeSavings / income) * 10) / 10 : 0;
+    var tStress = timeDebt === 0 && tRun >= 3 ? 'Low' : timeDebt > 0 && tRun < 1 ? 'High' : 'Moderate';
+    var tClass  = tStress === 'Low' ? 'tag-grn' : tStress === 'High' ? 'tag-red' : 'tag-amb';
+    timeline.push({
+      period: 'Month ' + mo,
+      debt: timeDebt,
+      savings: timeSavings,
+      runway: tRun,
+      stress: tStress,
+      stressClass: tClass
+    });
+  });
+
+  /* POSITIONING SUMMARY */
+  var summary;
+  if (stressScore >= 6) {
+    summary = 'Your financial position is under genuine structural pressure \u2014 but this is a solvable problem, not a permanent state. The primary constraint is the absence of an emergency buffer alongside active debt, which creates a cycle where any disruption returns you to borrowing. The fastest path forward is not aggressive debt repayment but simultaneous buffer-building and controlled repayment \u2014 removing the vulnerability first, then accelerating the clearance. With ' + fmt(Math.max(surplus, 50)) + ' of monthly surplus to redirect, this system has a clear path.';
+  } else if (stressScore >= 4) {
+    summary = 'Your financial position is manageable but lacks the structural resilience that creates genuine calm. The gap between where you are and where you want to be is primarily a tracking and automation problem \u2014 not an income problem. ' + fmt(disc) + '/month in discretionary spending contains recoverable cash that, directed deliberately, changes both the debt trajectory and the savings runway. The structured plan above shows exactly where each pound should go and why.';
+  } else {
+    summary = 'Your financial fundamentals are solid. The opportunity here is optimisation rather than rescue \u2014 tightening the structure to work harder for you. Your disposable surplus of ' + fmt(Math.max(surplus, 0)) + '/month, automated and directed, can ' + (debt > 0 ? 'clear your debt in ' + debtMo + ' months and ' : '') + 'build a meaningful financial runway within the year. The single highest-leverage action is automation: structuring payments to happen before any discretionary decisions are made.';
+  }
+
+  return {
+    intent: intent, income: income, debt: debt, savings: savings,
+    ess: ess, disc: disc, surplus: surplus, concern: concern,
+    dtiPct: dtiPct, mRes: mRes, runwayMo: runwayMo,
+    annualInt: annualInt, monthlyInt: monthlyInt, estAPR: estAPR,
+    debtMo: debtMo, recDebtPay: recDebtPay, recSavPay: recSavPay,
+    accelPay: accelPay, intSaved: intSaved, moSaved: moSaved,
+    emReq: emReq, emGap: emGap, emTarget: emTarget,
+    invest: invest, deps: deps, savGoal: savGoal,
+    stressLabel: stressLabel, stressClass: stressClass,
+    debtPressure: debtPressure, runwayPressure: runwayPressure, leakageRisk: leakageRisk,
+    score: totalScore, scoreCategory: scoreCategory, scoreCatClass: scoreCatClass,
+    scoreComponents: cScores, conflicts: conflicts,
+    recs: recs.slice(0, 5), actions: actions.slice(0, 6),
+    timeline: timeline, summary: summary,
+    hasFood: hasFood, hasTakeaway: hasTakeaway, hasCoffee: hasCoffee,
+    hasSubs: hasSubs, hasNights: hasNights, hasDebt: hasDebt, hasSnowball: hasSnowball
+  };
+}
+
+/* ── RENDER ALL 15 SECTIONS ── */
+function renderFull(d) {
+  /* Helper row builders */
+  function tr(cells, cls) {
+    var row = '<tr' + (cls ? ' class="' + cls + '"' : '') + '>';
+    cells.forEach(function(cell) { row += cell; });
+    row += '</tr>';
+    return row;
+  }
+  function td(val, cls) { return '<td' + (cls ? ' class="' + cls + '"' : '') + '>' + val + '</td>'; }
+  function th(val) { return '<th>' + val + '</th>'; }
+  function tag(text, cls) { return '<span class="tag ' + cls + '">' + text + '</span>'; }
+
+  /* 1. DASHBOARD */
+  var dashData = [
+    { label: 'Net income',      val: fmt(d.income),                 sub: '100% base',             cls: '' },
+    { label: 'Essential spend', val: fmt(d.ess),                    sub: pct(d.ess,d.income) + '% of income', cls: d.ess/d.income > 0.75 ? 'red' : '' },
+    { label: 'Discretionary',  val: fmt(d.disc),                   sub: pct(d.disc,d.income) + '% of income', cls: '' },
+    { label: 'Total debt',      val: d.debt > 0 ? fmt(d.debt) : 'None', sub: 'DTI: ' + d.dtiPct + '%', cls: d.debt > 0 ? 'red' : 'grn' },
+    { label: 'Savings',         val: fmt(d.savings),                sub: d.mRes.toFixed(1) + ' months reserve', cls: d.mRes < 1 ? 'red' : d.mRes < 3 ? 'amb' : 'grn' },
+    { label: 'Monthly surplus', val: fmt(Math.max(d.surplus, 0)),   sub: d.surplus < 0 ? 'DEFICIT' : 'Available', cls: d.surplus < 0 ? 'red' : 'grn' },
+    { label: 'Stress level',    val: d.stressLabel,                 sub: 'Composite indicator', cls: d.stressLabel === 'High' ? 'red' : d.stressLabel === 'Moderate' ? 'amb' : 'grn' },
+    { label: 'Interest bleed',  val: d.debt > 0 ? fmt(d.monthlyInt) + '/mo' : 'None', sub: d.debt > 0 ? fmt(d.annualInt) + '/yr est.' : 'No debt', cls: d.debt > 0 ? 'red' : 'grn' },
+    { label: 'Financial runway',val: d.runwayMo.toFixed(1) + ' mo', sub: d.runwayPressure,        cls: d.mRes < 1 ? 'red' : d.mRes < 3 ? 'amb' : 'grn' }
+  ];
+  var dashHTML = '';
+  dashData.forEach(function(cell) {
+    dashHTML += '<div class="dash-cell">';
+    dashHTML += '<div class="dash-cell-label">' + cell.label + '</div>';
+    dashHTML += '<div class="dash-cell-val' + (cell.cls ? ' ' + cell.cls : '') + '">' + cell.val + '</div>';
+    dashHTML += '<div class="dash-cell-sub">' + cell.sub + '</div>';
+    dashHTML += '</div>';
+  });
+  document.getElementById('s-dashboard').innerHTML = dashHTML;
+
+  /* 2. INCOME ALLOCATION */
+  var allocRows = th('Category') + th('Monthly') + th('% Income') + th('Target %') + th('Variance') + th('Status');
+  var allocData = [
+    { cat: 'Essential outgoings', amt: d.ess,          tgt: '50-65%', status: d.ess/d.income>0.75?'High':'Within range', cls: d.ess/d.income>0.75?'red':'grn' },
+    { cat: 'Debt repayment',      amt: d.recDebtPay,   tgt: '15-20%', status: d.debt>0?'Allocated':'No debt', cls: 'gld' },
+    { cat: 'Savings allocation',  amt: d.recSavPay,    tgt: '10-20%', status: d.recSavPay/d.income<0.10?'Below target':'On target', cls: d.recSavPay/d.income<0.10?'amb':'grn' },
+    { cat: 'Discretionary',       amt: d.disc,         tgt: '10-20%', status: d.disc/d.income>0.25?'High':'Available', cls: d.disc/d.income>0.25?'amb':'grn' },
+    { cat: 'Remaining surplus',   amt: Math.max(d.surplus-d.recDebtPay-d.recSavPay,0), tgt: 'Variable', status: 'Unallocated', cls: 'ink-faint' }
+  ];
+  allocData.forEach(function(row) {
+    var pctInc   = pct(row.amt, d.income);
+    var tgtLow   = parseInt(row.tgt) || 0;
+    var variance = pctInc - tgtLow;
+    var varStr   = variance > 0 ? '+' + variance + 'pp' : variance + 'pp';
+    allocRows += '<tr>';
+    allocRows += td(row.cat);
+    allocRows += td(fmt(row.amt), 'num');
+    allocRows += td(pctInc + '%', 'num');
+    allocRows += td(row.tgt, 'num');
+    allocRows += td(varStr, 'num ' + (variance > 5 ? 'red' : variance < -5 ? 'grn' : 'amb'));
+    allocRows += td(row.status, row.cls);
+    allocRows += '</tr>';
+  });
+  document.getElementById('s-allocation').innerHTML = '<tr>' + allocRows + '</tr>';
+
+  /* 3. DEBT PRESSURE ANALYSIS */
+  if (d.debt > 0) {
+    document.getElementById('s-debt-block').style.display = 'block';
+    var debtRows = '<tr>' + th('Metric') + th('Value') + th('Assessment') + '</tr>';
+    var debtData = [
+      { metric: 'Total debt balance', val: fmt(d.debt), assess: 'DTI: ' + d.dtiPct + '%', cls: d.dtiPct>40?'red':d.dtiPct>20?'amb':'grn' },
+      { metric: 'Estimated APR', val: (d.estAPR*100).toFixed(1) + '%', assess: d.estAPR>0.25?'High interest':'Moderate', cls: d.estAPR>0.25?'red':'amb' },
+      { metric: 'Monthly interest charge', val: fmt(d.monthlyInt), assess: fmt(d.annualInt) + '/year', cls: 'red' },
+      { metric: 'Recommended payment', val: fmt(d.recDebtPay) + '/mo', assess: 'Clears in ~' + d.debtMo + ' months', cls: 'grn' },
+      { metric: 'Debt pressure level', val: d.debtPressure, assess: d.debtPressure === 'High' ? 'Requires immediate priority' : 'Manageable with structure', cls: d.debtPressure==='High'?'red':d.debtPressure==='Moderate'?'amb':'grn' },
+      { metric: 'Acceleration potential', val: fmt(d.intSaved) + ' saved', assess: fmt(d.moSaved) + ' months faster', cls: 'grn' }
+    ];
+    debtData.forEach(function(row) {
+      debtRows += '<tr>' + td(row.metric) + td(row.val, 'num') + td(row.assess, row.cls) + '</tr>';
+    });
+    document.getElementById('s-debt-pressure').innerHTML = debtRows;
+  } else {
+    document.getElementById('s-debt-block').style.display = 'none';
+    document.getElementById('s-snowball-block').style.display = 'none';
+  }
+
+  /* 4. DEBT SNOWBALL */
+  if (d.debt > 0) {
+    document.getElementById('s-snowball-block').style.display = 'block';
+    document.getElementById('s-snowball-title').textContent = d.hasSnowball ? 'Debt Snowball Tracker' : 'Debt Repayment Tracker';
+    var snowRows = '<tr>' + th('Month') + th('Opening') + th('Payment') + th('Interest') + th('Closing') + th('% Cleared') + '</tr>';
+    var snowBal = d.debt;
+    var snowMoCount = 0;
+    var maxMo = Math.min(d.debtMo + 1, 12);
+    while (snowBal > 0 && snowMoCount < maxMo) {
+      snowMoCount++;
+      var sOpen = snowBal;
+      var sInt  = Math.round(snowBal * (d.estAPR / 12));
+      var sPrin = Math.max(d.recDebtPay - sInt, 0);
+      var sPay  = Math.min(d.recDebtPay, snowBal + sInt);
+      snowBal = Math.max(snowBal - sPrin, 0);
+      var sProg = Math.round(((d.debt - snowBal) / d.debt) * 100);
+      var rowCls = snowMoCount === 1 ? 'hl' : '';
+      var balCls = snowBal === 0 ? 'grn' : '';
+      snowRows += '<tr class="' + rowCls + '">';
+      snowRows += td('Month ' + snowMoCount);
+      snowRows += td(fmt(sOpen), 'num');
+      snowRows += td(fmt(sPay), 'num grn');
+      snowRows += td('-' + fmt(sInt), 'num red');
+      snowRows += td(fmt(snowBal), 'num ' + balCls);
+      snowRows += td(sProg + '%', 'num gld');
+      snowRows += '</tr>';
+    }
+    if (d.debtMo > 12) {
+      snowRows += '<tr><td colspan="5" style="font-size:0.74rem;font-style:italic;color:var(--ink-faint);">...continuing for ' + (d.debtMo - 12) + ' more months at this pace</td>';
+      snowRows += td(fmt(d.recDebtPay) + '/mo', 'num gld');
+      snowRows += '</tr>';
+    }
+    /* Interest summary row */
+    var totalBaseInt = d.monthlyInt * d.debtMo;
+    snowRows += '<tr class="hl">';
+    snowRows += td('Total interest at this pace', 'gld');
+    snowRows += td(fmt(totalBaseInt), 'num red');
+    snowRows += td('By accelerating ' + fmt(d.accelPay - d.recDebtPay) + '/mo:', 'num');
+    snowRows += td('Save ' + fmt(d.intSaved), 'num grn');
+    snowRows += td(d.moSaved + ' months faster', 'num grn');
+    snowRows += td('', '');
+    snowRows += '</tr>';
+    document.getElementById('s-snowball').innerHTML = snowRows;
+  }
+
+  /* 5. EMERGENCY RUNWAY */
+  var runwayRows = '<tr>' + th('Safety level') + th('Required') + th('Current') + th('Gap') + th('Monthly contribution') + th('Months to reach') + th('Status') + '</tr>';
+  var runwayLevels = [
+    { label: 'Level 1 \u2014 Essential cover (1 month)', req: d.ess },
+    { label: 'Level 2 \u2014 Income replacement (1 month)', req: d.income },
+    { label: 'Level 3 \u2014 Safety buffer (' + d.emTarget + ' months income)', req: d.emReq },
+    { label: 'Level 4 \u2014 Full security (6 months)', req: d.income * 6 }
+  ];
+  runwayLevels.forEach(function(level) {
+    var gap = Math.max(level.req - d.savings, 0);
+    var mtr = d.recSavPay > 0 ? Math.ceil(gap / d.recSavPay) : 999;
+    var met = d.savings >= level.req;
+    var pctCov = Math.min(Math.round((d.savings / level.req) * 100), 100);
+    var cls = met ? 'grn' : pctCov >= 50 ? 'amb' : 'red';
+    runwayRows += '<tr>';
+    runwayRows += td(level.label);
+    runwayRows += td(fmt(level.req), 'num');
+    runwayRows += td(fmt(d.savings), 'num');
+    runwayRows += td(gap > 0 ? '-' + fmt(gap) : '\u2014', 'num ' + (gap > 0 ? 'red' : 'grn'));
+    runwayRows += td(fmt(d.recSavPay) + '/mo', 'num');
+    runwayRows += td(met ? '\u2014' : (mtr < 999 ? mtr + ' mo' : '>99 mo'), 'num');
+    runwayRows += td(met ? 'Met' : (pctCov >= 50 ? 'Partial' : 'Critical'), cls);
+    runwayRows += '</tr>';
+  });
+  document.getElementById('s-runway').innerHTML = runwayRows;
+
+  /* METRICS: Interest bleed + Runway */
+  var intValEl = document.getElementById('m-interest-val');
+  if (intValEl) {
+    intValEl.textContent = d.debt > 0 ? '-' + fmt(d.annualInt) : 'None';
+    intValEl.style.color = d.debt > 0 ? 'var(--red)' : 'var(--green)';
+  }
+  var intSubEl = document.getElementById('m-interest-sub');
+  if (intSubEl) intSubEl.textContent = d.debt > 0 ? 'Estimated annual interest at ' + (d.estAPR * 100).toFixed(1) + '% APR' : 'No active debt detected';
+  var intSavedEl = document.getElementById('m-interest-saved');
+  if (intSavedEl && d.debt > 0 && d.intSaved > 0) {
+    intSavedEl.innerHTML = '<div style="margin-top:10px;padding:8px 10px;background:var(--green-bg);border-radius:6px;border-left:2px solid rgba(45,122,90,0.4);">'
+      + '<div style="font-size:0.68rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--green);margin-bottom:3px;">By snowballing</div>'
+      + '<div style="font-size:0.9rem;font-weight:500;color:var(--green);">Save ' + fmt(d.intSaved) + ' &middot; ' + d.moSaved + ' months faster</div>'
+      + '<div style="font-size:0.7rem;color:var(--ink-faint);margin-top:2px;">Adding ' + fmt(d.accelPay - d.recDebtPay) + '/mo extra</div>'
+      + '</div>';
+  }
+  var runValEl = document.getElementById('m-runway-val');
+  if (runValEl) {
+    runValEl.textContent = d.runwayMo.toFixed(1) + ' mo';
+    runValEl.style.color = d.runwayMo < 1 ? 'var(--red)' : d.runwayMo < 3 ? 'var(--amber)' : 'var(--green)';
+  }
+  var runSubEl = document.getElementById('m-runway-sub');
+  if (runSubEl) {
+    var runMsg = d.runwayMo < 1 ? 'Critical. Less than 1 month if income stopped.' : d.runwayMo < 3 ? 'Low. Target 3 months minimum.' : d.runwayMo < 6 ? 'Moderate. Building toward 6 months creates security.' : 'Solid. Real financial resilience established.';
+    runSubEl.textContent = runMsg;
+  }
+
+  /* 6. SAVINGS VELOCITY */
+  var savVelRows = '<tr>' + th('Scenario') + th('Monthly saving') + th('3 months') + th('6 months') + th('12 months') + th('24 months') + '</tr>';
+  var savScenarios = [
+    { label: 'Current pace',    save: d.recSavPay },
+    { label: 'Optimised',       save: Math.round(d.recSavPay * 1.4) },
+    { label: 'Accelerated',     save: Math.round(d.recSavPay * 2.0) }
+  ];
+  savScenarios.forEach(function(sc, idx) {
+    var rowCls = idx === 1 ? 'hl' : '';
+    savVelRows += '<tr class="' + rowCls + '">';
+    savVelRows += td(sc.label + (idx === 1 ? ' \u2605' : ''));
+    savVelRows += td(fmt(sc.save), 'num');
+    savVelRows += td(fmt(d.savings + sc.save * 3), 'num grn');
+    savVelRows += td(fmt(d.savings + sc.save * 6), 'num grn');
+    savVelRows += td(fmt(d.savings + sc.save * 12), 'num grn');
+    savVelRows += td(fmt(d.savings + sc.save * 24), 'num grn');
+    savVelRows += '</tr>';
+  });
+  document.getElementById('s-savings-velocity').innerHTML = savVelRows;
+
+  /* 7. DISPOSABLE INCOME TRACKING */
+  var dispItems = [];
+  if (d.hasFood) dispItems.push({ cat: 'Food & groceries', est: Math.round(d.ess * 0.15), risk: 'Meal planning reduces by 10-20%' });
+  if (d.hasTakeaway) dispItems.push({ cat: 'Takeaways & eating out', est: Math.round(d.disc * 0.30), risk: 'Habit-driven. Weekly cap effective.' });
+  if (d.hasCoffee) dispItems.push({ cat: 'Coffee & cafes', est: Math.round(d.disc * 0.08), risk: 'Small but signals automatic spending' });
+  if (d.hasSubs) dispItems.push({ cat: 'Subscriptions', est: Math.round(d.disc * 0.10), risk: 'Audit removes 30-50% in one session' });
+  if (d.hasNights) dispItems.push({ cat: 'Social & nights out', est: Math.round(d.disc * 0.35), risk: 'Highest-leverage reduction category' });
+  if (dispItems.length === 0) {
+    dispItems.push({ cat: 'Untracked discretionary', est: d.disc, risk: '30-day tracking required to diagnose' });
+    dispItems.push({ cat: 'Convenience spending', est: Math.round(d.disc * 0.20), risk: 'Typically reducible 20-30%' });
+  }
+  var dispRows = '<tr>' + th('Category') + th('Monthly estimate') + th('Suggested cap') + th('Recoverable') + th('Annual leakage') + th('Behavioural risk') + '</tr>';
+  var totalLeakage = 0;
+  dispItems.forEach(function(item) {
+    var cap = Math.round(item.est * 0.75);
+    var rec = item.est - cap;
+    totalLeakage += rec;
+    dispRows += '<tr>';
+    dispRows += td(item.cat);
+    dispRows += td(fmt(item.est), 'num');
+    dispRows += td(fmt(cap), 'num gld');
+    dispRows += td('+' + fmt(rec), 'num grn');
+    dispRows += td(fmt(rec * 12), 'num red');
+    dispRows += td(item.risk, '');
+    dispRows += '</tr>';
+  });
+  dispRows += '<tr class="hl">';
+  dispRows += td('Total estimated monthly leakage');
+  dispRows += td('', '');
+  dispRows += td('', '');
+  dispRows += td('+' + fmt(totalLeakage), 'num grn');
+  dispRows += td(fmt(totalLeakage * 12) + '/yr', 'num red');
+  dispRows += td('Recoverable with structured tracking', '');
+  dispRows += '</tr>';
+  document.getElementById('s-disposable').innerHTML = dispRows;
+
+  /* 8. BEHAVIOURAL LEAKAGE */
+  var leakItems = [
+    { label: 'Daily convenience spend (\u00a36/day)', daily: 6 },
+    { label: 'Untracked coffee & snacks (\u00a33.50/day)', daily: 3.50 },
+    { label: 'Impulse purchases (\u00a312/week)', daily: 12/7 },
+    { label: 'Unused subscriptions (\u00a322/mo)', daily: 22/30 }
+  ];
+  var leakRows = '<tr>' + th('Leakage source') + th('Daily') + th('Monthly') + th('Annual') + th('3-year impact') + '</tr>';
+  leakItems.forEach(function(item) {
+    var monthly = Math.round(item.daily * 30);
+    var annual  = Math.round(item.daily * 365);
+    var threeYr = Math.round(item.daily * 365 * 3);
+    leakRows += '<tr>';
+    leakRows += td(item.label);
+    leakRows += td(fmt(item.daily), 'num amb');
+    leakRows += td(fmt(monthly), 'num amb');
+    leakRows += td(fmt(annual), 'num red');
+    leakRows += td(fmt(threeYr), 'num red');
+    leakRows += '</tr>';
+  });
+  /* Total row */
+  var totalDaily = leakItems.reduce(function(s, i) { return s + i.daily; }, 0);
+  leakRows += '<tr class="hl">';
+  leakRows += td('Combined leakage if all apply');
+  leakRows += td(fmt(totalDaily) + '/day', 'num red');
+  leakRows += td(fmt(totalDaily * 30), 'num red');
+  leakRows += td(fmt(totalDaily * 365), 'num red');
+  leakRows += td(fmt(totalDaily * 365 * 3) + ' capital drain', 'num red');
+  leakRows += '</tr>';
+  document.getElementById('s-leakage').innerHTML = leakRows;
+
+  /* 9. COHERENCE SCORE */
+  document.getElementById('s-score-num').innerHTML = d.score + '<span>/100</span>';
+  document.getElementById('s-score-interp').textContent = d.scoreCategory + ' \u2014 ' + (d.score >= 75 ? 'Financial behaviour broadly aligns with stated goals.' : d.score >= 60 ? 'Positive trajectory with identifiable friction points.' : d.score >= 45 ? 'Significant contradictions between behaviour and goals.' : 'Structural misalignment requiring immediate attention.');
+  setTimeout(function() {
+    document.getElementById('s-score-bar').style.width = d.score + '%';
+  }, 200);
+  var compsHTML = '';
+  d.scoreComponents.forEach(function(comp) {
+    compsHTML += '<span class="coherence-comp">' + comp.label + ': ' + comp.score + '/' + comp.max + '</span>';
+  });
+  document.getElementById('s-score-comps').innerHTML = compsHTML;
+
+  /* 10. CONFLICTS */
+  var conflictHTML = '';
+  d.conflicts.forEach(function(cf) {
+    conflictHTML += '<div class="conflict-item">' + cf + '</div>';
+  });
+  document.getElementById('s-conflicts').innerHTML = conflictHTML;
+
+  /* 11. OPPORTUNITY COST */
+  var oppItems = [
+    { label: 'Annual interest on current debt', val: fmt(d.annualInt), note: 'Paid to lender. Zero return.', cls: d.debt > 0 ? 'red' : 'grn' },
+    { label: 'Interest savings by accelerating', val: d.intSaved > 0 ? fmt(d.intSaved) : 'No debt', note: 'Adding ' + fmt(d.accelPay - d.recDebtPay) + '/mo extra', cls: 'grn' },
+    { label: 'Annual cost of untracked leakage', val: fmt(totalLeakage * 12), note: 'Recoverable without lifestyle impact', cls: 'red' },
+    { label: 'Lost compounding over 5 years', val: fmt(Math.round(totalLeakage * 12 * 5 * 1.05)), note: 'At 5% if redirected to savings', cls: 'amb' }
+  ];
+  var oppHTML = '';
+  oppItems.forEach(function(item) {
+    oppHTML += '<div class="opp-card">';
+    oppHTML += '<div class="opp-label">' + item.label + '</div>';
+    oppHTML += '<div class="opp-val" style="color:var(--' + (item.cls === 'grn' ? 'green' : item.cls === 'red' ? 'red' : 'amber') + ')">' + item.val + '</div>';
+    oppHTML += '<div class="opp-note">' + item.note + '</div>';
+    oppHTML += '</div>';
+  });
+  document.getElementById('s-oppcost').innerHTML = oppHTML;
+
+  /* 12. 3-SCENARIO PROJECTION */
+  var scenRows = '<tr>' + th('Scenario') + th('Monthly debt') + th('Debt-free') + th('Monthly savings') + th('Savings at 12mo') + th('Runway at 12mo') + '</tr>';
+  var scenData = [
+    { label: 'Current path',         dPay: d.recDebtPay,              sPay: d.recSavPay,              cls: '' },
+    { label: 'Optimised',            dPay: Math.round(d.recDebtPay*1.3), sPay: Math.round(d.recSavPay*1.3), cls: 'hl' },
+    { label: 'Accelerated discipline',dPay: Math.round(d.recDebtPay*1.6), sPay: Math.round(d.recSavPay*1.5), cls: '' }
+  ];
+  scenData.forEach(function(sc, si) {
+    var sDf = 0, sBal = d.debt;
+    while (sBal > 0 && sDf < 120) {
+      var smi = Math.round(sBal * (d.estAPR / 12));
+      sBal = Math.max(sBal - Math.max(sc.dPay - smi, 0), 0);
+      sDf++;
+    }
+    var sSav  = d.savings + sc.sPay * 12;
+    var sRun  = d.income > 0 ? (sSav / d.income).toFixed(1) : '0.0';
+    var dfTxt = d.debt === 0 ? 'No debt' : sDf + ' months';
+    scenRows += '<tr class="' + sc.cls + '">';
+    scenRows += td(sc.label + (si === 1 ? ' \u2605' : ''));
+    scenRows += td(fmt(sc.dPay), 'num');
+    scenRows += td(dfTxt, 'num ' + (si > 0 ? 'grn' : ''));
+    scenRows += td(fmt(sc.sPay), 'num');
+    scenRows += td(fmt(sSav), 'num ' + (si > 0 ? 'grn' : ''));
+    scenRows += td(sRun + ' mo', 'num gld');
+    scenRows += '</tr>';
+  });
+  document.getElementById('s-scenarios').innerHTML = scenRows;
+
+  /* 13. RECOMMENDATIONS */
+  var recsHTML = '';
+  d.recs.forEach(function(rec, i) {
+    recsHTML += '<div class="rec-item">';
+    recsHTML += '<div class="rec-num">' + String(i + 1).padStart(2, '0') + '</div>';
+    recsHTML += '<div class="rec-text"><h5>' + rec.title + '</h5><p>' + rec.body + '</p></div>';
+    recsHTML += '</div>';
+  });
+  document.getElementById('s-recs').innerHTML = recsHTML;
+
+  /* 14. ACTION LADDER */
+  var actHTML = '';
+  d.actions.forEach(function(act, i) {
+    actHTML += '<div class="action-step">';
+    actHTML += '<div class="action-num">' + (i + 1) + '</div>';
+    actHTML += '<div class="action-body"><h5>' + act.title + '</h5><p>' + act.body + '</p></div>';
+    actHTML += '</div>';
+  });
+  document.getElementById('s-actions').innerHTML = actHTML;
+
+  /* 15. STABILITY TIMELINE */
+  var tlHTML = '<div class="timeline-row" style="font-size:0.68rem;font-weight:500;color:var(--ink-faint);border-bottom:1px solid var(--border);">'
+    + '<span>Period</span><span>Debt</span><span>Savings</span><span>Runway</span><span class="timeline-tag">Pressure</span></div>';
+  d.timeline.forEach(function(row) {
+    tlHTML += '<div class="timeline-row">';
+    tlHTML += '<span class="timeline-period">' + row.period + '</span>';
+    tlHTML += '<span class="timeline-val ' + (row.debt === 0 ? 'grn' : '') + '">' + (row.debt === 0 ? 'Cleared' : fmt(row.debt)) + '</span>';
+    tlHTML += '<span class="timeline-val grn">' + fmt(row.savings) + '</span>';
+    tlHTML += '<span class="timeline-val">' + row.runway.toFixed(1) + ' mo</span>';
+    tlHTML += '<span class="timeline-tag"><span class="tag ' + row.stressClass + '">' + row.stress + '</span></span>';
+    tlHTML += '</div>';
+  });
+  document.getElementById('s-timeline').innerHTML = tlHTML;
+
+  /* POSITIONING SUMMARY */
+  document.getElementById('s-summary').textContent = d.summary;
+
+  /* SHOW */
+  var fullOut = document.getElementById('full-output');
+  fullOut.style.display = 'block';
+  fullOut.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* Return from payment */
+document.addEventListener('DOMContentLoaded', function() {
+  if (window.location.search.indexOf('unlocked=true') !== -1) {
+    var keys = ['intent','income','debt','savings','ess','disc','savGoal','apr','rent','deps','emTarget','invest','concern'];
+    var vals = {};
+    keys.forEach(function(k) { vals[k] = sessionStorage.getItem('pro_' + k); });
+    if (vals.intent) {
+      _proData = { intent:vals.intent, income:parseFloat(vals.income)||0, debt:parseFloat(vals.debt)||0,
+                   savings:parseFloat(vals.savings)||0, ess:parseFloat(vals.ess)||0, disc:parseFloat(vals.disc)||0,
+                   savGoal:parseFloat(vals.savGoal)||0, apr:parseFloat(vals.apr)||19.9, rent:parseFloat(vals.rent)||0,
+                   deps:parseFloat(vals.deps)||0, emTarget:parseFloat(vals.emTarget)||3, invest:parseFloat(vals.invest)||0,
+                   concern:vals.concern||'Reduce debt' };
+      var d = _proData;
+      _proResult = buildProData(d.intent,d.income,d.debt,d.savings,d.ess,d.disc,d.savGoal,d.apr,d.rent,d.deps,d.emTarget,d.invest,d.concern);
+      document.getElementById('out-intent').textContent = '\u201c' + d.intent + '\u201d';
+      showPage('s2');
+      renderPreview(_proResult);
+      unlockFull();
+    }
+  }
+});
+</script>
+</body>
+</html>
