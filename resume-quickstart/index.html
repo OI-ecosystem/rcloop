@@ -1568,7 +1568,7 @@ function renderAIOutput(data) {
 function callAnthropicAPI(d, onSuccess) {
   var system = 'You are an expert CV and resume writer for UK professionals. Rewrite the career data into a polished, targeted resume and cover letter. Respond ONLY in valid JSON: {"name":"","target":"","current":"","prev":"","aiSummary":"","strengths":[],"skills":"","edu":"","rewrittenBullets":[],"coverLetter":"","metricScore":0,"strengthScore":0,"verbScore":0,"positionScore":0,"recs":[{"title":"","body":""}]}. Use strong action verbs. Be specific and professional. UK English. No markdown.';
   var prompt = 'Name: ' + d.name + '. Target role: ' + d.target + '. Current: ' + d.current + '. Sector: ' + (d.sector || 'not specified') + '. Intent: ' + (d.intent || 'not provided') + '. Achievements: ' + d.ranked.join(' | ') + '. Strengths: ' + d.strengths.join(', ') + '. Skills: ' + d.skills + '. Education: ' + d.edu + '. Rewrite all bullets with strong verbs. Write a professional summary and UK-style cover letter for the target role.';
-  fetch('https://your-vercel-app.vercel.app/api/ai', {
+  fetch('https://rcloop-proxy.vercel.app/api/ai', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ system: system, prompt: prompt })
