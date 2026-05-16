@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RC Loop — Resume Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1A1A14;--ink-mid:#4A4A3E;--ink-muted:#7A7A6E;--ink-faint:#A8A89C;
+  --cream:#FAF8F5;--white:#FFFFFF;--border:#E8E5E0;--border-med:#D0CCC4;
+  --surface:#F4F2EE;--surface-2:#EDEAE4;
+  --gold:#A07C2E;--gold-bg:#FDFAF3;
+  --green:#2D7A5A;--green-bg:rgba(45,122,90,0.08);
+  --red:#C83C3C;--red-bg:rgba(200,60,60,0.07);
+  --amber:#B87820;
+  --serif:'DM Serif Display',serif;--sans:'DM Sans',sans-serif
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:15px;-webkit-font-smoothing:antialiased}
+body{font-family:var(--sans);background:var(--cream);color:var(--ink);min-height:100vh}
+
+nav{display:flex;align-items:center;justify-content:space-between;padding:18px 32px;border-bottom:0.5px solid var(--border);background:var(--cream);position:sticky;top:0;z-index:10}
+.nav-brand{font-family:var(--sans);font-size:0.78rem;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink);text-decoration:none}
+.nav-brand span{color:var(--gold)}
+.nav-tag{font-size:0.7rem;background:var(--surface);color:var(--ink-muted);padding:3px 10px;border-radius:20px;border:0.5px solid var(--border);letter-spacing:0.06em}
+.nav-right{font-size:0.72rem;color:var(--ink-faint);cursor:pointer}
+.nav-right:hover{color:var(--ink)}
+
+.page{display:none}.page.on{display:block}
+.wrap{max-width:680px;margin:0 auto;padding:44px 24px 80px}
+.wrap-wide{max-width:860px;margin:0 auto;padding:40px 24px 80px}
+
+/* STEP INDICATOR */
+.step-indicator{font-size:0.66rem;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.step-indicator::before{content:'';width:20px;height:1px;background:var(--gold)}
+.step-dots{display:flex;gap:5px;margin-bottom:32px}
+.dot{width:24px;height:3px;background:var(--border-med);border-radius:2px;transition:background 0.3s}
+.dot.done{background:var(--gold)}.dot.active{background:var(--ink)}
+
+/* CARD HEADLINE */
+.card-eyebrow{font-size:0.68rem;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+.card-headline{font-family:var(--serif);font-size:1.5rem;font-weight:400;color:var(--ink);line-height:1.2;margin-bottom:8px}
+.card-sub{font-size:0.84rem;color:var(--ink-muted);line-height:1.65;margin-bottom:28px}
+
+/* INTRO BOX */
+.intro-box{background:#2C2C28;border-radius:10px;padding:20px 22px;margin-bottom:28px}
+.intro-box-main{font-size:0.84rem;font-weight:300;color:rgba(255,255,255,0.75);line-height:1.75;margin-bottom:14px;padding-bottom:14px;border-bottom:0.5px solid rgba(255,255,255,0.1)}
+.intro-box-main strong{font-weight:500;color:#fff}
+.intro-privacy-label{font-size:0.65rem;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:8px}
+.intro-privacy-body{font-size:0.78rem;font-weight:300;color:rgba(255,255,255,0.45);line-height:1.75}
+.intro-privacy-body p{margin-bottom:0.5rem}
+.intro-privacy-body p:last-child{margin-bottom:0}
+.intro-privacy-body strong{font-weight:500;color:rgba(255,255,255,0.65)}
+
+/* SPELL PANEL */
+.spell-panel{display:none;background:var(--gold-bg);border:0.5px solid rgba(160,124,46,0.3);border-radius:8px;padding:14px 16px;margin-top:8px}
+.spell-panel.visible{display:block}
+.spell-heading{font-size:0.68rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+.spell-corrected{font-size:0.84rem;color:var(--ink-mid);line-height:1.7;margin-bottom:10px}
+.spell-corrected mark{background:rgba(160,124,46,0.15);color:var(--gold);border-radius:2px;padding:0 2px;font-style:normal}
+.spell-btns{display:flex;gap:8px}
+.spell-btn-a{font-family:var(--sans);font-size:0.76rem;font-weight:500;padding:6px 14px;background:var(--ink);color:var(--white);border:none;border-radius:5px;cursor:pointer}
+.spell-btn-i{font-family:var(--sans);font-size:0.76rem;padding:6px 14px;background:var(--white);color:var(--ink-muted);border:0.5px solid var(--border-med);border-radius:5px;cursor:pointer}
+
+/* FIELDS */
+.field{margin-bottom:16px}
+.field label{font-size:0.76rem;font-weight:500;color:var(--ink-muted);display:block;margin-bottom:5px}
+.field .opt{font-weight:300;color:var(--ink-faint)}
+.field input,.field textarea{font-family:var(--sans);font-size:0.88rem;background:var(--white);border:0.5px solid var(--border-med);border-radius:7px;padding:10px 12px;color:var(--ink);width:100%;outline:none;transition:border-color 0.15s}
+.field input:focus,.field textarea:focus{border-color:var(--ink)}
+.field input::placeholder,.field textarea::placeholder{color:var(--ink-faint)}
+.field textarea{min-height:100px;resize:vertical;line-height:1.65}
+.field-note{font-size:0.72rem;color:var(--ink-faint);font-style:italic;margin-top:4px;line-height:1.5}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:480px){.two-col{grid-template-columns:1fr}}
+
+/* STRENGTH TAGS */
+.tag-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.tag-pill{font-family:var(--sans);font-size:0.76rem;padding:6px 14px;background:var(--white);color:var(--ink-mid);border:0.5px solid var(--border-med);border-radius:20px;cursor:pointer;transition:all 0.15s;user-select:none}
+.tag-pill:hover{border-color:var(--ink)}
+.tag-pill.sel{background:var(--ink);color:var(--white);border-color:var(--ink)}
+
+/* SECTION LABEL */
+.section-label{font-size:0.72rem;font-weight:500;color:var(--ink-muted);letter-spacing:0.08em;margin-bottom:14px;margin-top:24px}
+hr.divider{border:none;border-top:0.5px solid var(--border);margin:24px 0}
+
+/* ACTIONS */
+.actions{display:flex;justify-content:space-between;align-items:center;padding-top:12px}
+.btn-p{font-family:var(--sans);font-size:0.82rem;font-weight:500;padding:11px 28px;background:var(--ink);color:var(--white);border:none;border-radius:7px;cursor:pointer;transition:opacity 0.15s}
+.btn-p:hover{opacity:0.82}
+.btn-ghost{font-family:var(--sans);font-size:0.8rem;color:var(--ink-faint);background:none;border:none;cursor:pointer}
+.btn-ghost:hover{color:var(--ink)}
+.btn-generate{padding:13px 32px;font-family:var(--sans);font-size:0.82rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--white);background:var(--ink);border:none;border-radius:8px;cursor:pointer;transition:opacity 0.15s}
+.btn-generate:hover{opacity:0.82}
+.btn-subtle{font-size:0.76rem;color:var(--ink-faint)}
+
+/* PROCESSING */
+.processing-wrap{max-width:560px;margin:0 auto;padding:80px 24px;text-align:center}
+.processing-eyebrow{font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:24px}
+.processing-headline{font-family:var(--serif);font-size:1.6rem;font-weight:300;color:var(--ink);margin-bottom:40px;line-height:1.3}
+.passes{display:flex;flex-direction:column;gap:0;margin-bottom:40px;text-align:left}
+.pass-item{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:0.5px solid var(--border);opacity:0.3;transition:opacity 0.4s}
+.pass-item:last-child{border-bottom:none}
+.pass-item.active{opacity:1}.pass-item.done{opacity:0.6}
+.pass-dot{width:8px;height:8px;border-radius:50%;background:var(--border-med);flex-shrink:0;transition:background 0.3s}
+.pass-item.active .pass-dot{background:var(--gold)}
+.pass-item.done .pass-dot{background:var(--green)}
+.pass-name{font-size:0.82rem;font-weight:500;color:var(--ink);flex:1}
+.pass-desc{font-size:0.74rem;color:var(--ink-faint);flex:2}
+.pass-status{font-size:0.7rem;color:var(--ink-faint);white-space:nowrap}
+.pass-item.active .pass-status{color:var(--gold)}
+.pass-item.done .pass-status{color:var(--green)}
+
+/* OUTPUT */
+.output-intent{font-family:var(--serif);font-size:0.95rem;font-style:italic;color:var(--ink-muted);border-left:2px solid var(--border-med);padding-left:14px;margin-bottom:22px;line-height:1.65}
+.preview-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+@media(max-width:540px){.preview-grid{grid-template-columns:1fr}}
+.preview-card{background:var(--white);border:0.5px solid var(--border);border-radius:10px;padding:18px 20px}
+.preview-card-label{font-size:0.64rem;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:10px}
+.score-display{font-family:var(--serif);font-size:3rem;font-weight:300;color:var(--ink);line-height:1;margin-bottom:6px}
+.score-display span{font-size:1.1rem;color:var(--ink-faint)}
+.score-cat{display:inline-block;font-size:0.72rem;font-weight:500;padding:3px 10px;border-radius:20px;margin-bottom:8px}
+.tag-grn{background:var(--green-bg);color:var(--green)}
+.tag-gld{background:var(--gold-bg);color:var(--gold)}
+.tag-amb{background:rgba(184,120,32,0.1);color:var(--amber)}
+.tag-red{background:var(--red-bg);color:var(--red)}
+.score-bar-track{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:8px}
+.score-bar-fill{height:100%;border-radius:3px;background:var(--gold);transition:width 1.2s cubic-bezier(0.25,0.46,0.45,0.94)}
+.signal-item{font-size:0.82rem;color:var(--ink-mid);line-height:1.65;padding:10px 12px;background:var(--red-bg);border-left:2px solid rgba(200,60,60,0.3);border-radius:0 6px 6px 0;margin-bottom:8px}
+.signal-item.positive{background:var(--green-bg);border-color:rgba(45,122,90,0.3)}
+
+/* UNLOCK */
+.unlock-card{background:var(--ink);border-radius:12px;padding:32px 28px;text-align:center;margin-bottom:14px}
+.unlock-heading{font-family:var(--serif);font-size:1.4rem;font-weight:300;color:var(--white);line-height:1.25;margin-bottom:8px}
+.unlock-sub{font-size:0.82rem;color:rgba(255,255,255,0.42);margin-bottom:20px;line-height:1.65;max-width:380px;margin-left:auto;margin-right:auto}
+.unlock-features{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:22px}
+.unlock-feature{font-size:0.68rem;color:rgba(255,255,255,0.45);background:rgba(255,255,255,0.07);border-radius:20px;padding:3px 11px}
+.unlock-btn{padding:14px 36px;font-family:var(--sans);font-size:0.82rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink);background:var(--white);border:none;border-radius:8px;cursor:pointer;transition:opacity 0.15s}
+.unlock-btn:hover{opacity:0.9}
+.unlock-price{display:block;font-size:0.7rem;color:rgba(255,255,255,0.25);margin-top:10px}
+.dev-pill{display:inline-block;background:rgba(45,122,90,0.15);border:0.5px solid rgba(45,122,90,0.3);border-radius:4px;padding:3px 10px;font-size:0.68rem;color:#2D7A5A;letter-spacing:0.06em;margin-bottom:16px}
+
+/* AI LOADER */
+.ai-loader{background:var(--white);border:0.5px solid var(--border);border-radius:10px;padding:36px;text-align:center;display:none;margin-bottom:14px}
+.ai-spinner{width:22px;height:22px;border:2px solid var(--border-med);border-top-color:var(--ink);border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block;margin-bottom:14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ai-loader-msg{font-size:0.84rem;color:var(--ink-mid)}
+
+/* FULL OUTPUT */
+.full-output{display:none}
+.section-block{background:var(--white);border:0.5px solid var(--border);border-radius:10px;padding:22px 26px;margin-bottom:12px}
+.section-eyebrow{display:flex;align-items:center;gap:8px;font-size:0.63rem;font-weight:500;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:14px}
+.section-eyebrow::before{content:'';width:16px;height:1px;background:var(--gold);flex-shrink:0}
+
+/* RESUME DOC */
+.resume-doc{background:var(--white);border:0.5px solid var(--border);border-radius:10px;padding:32px;margin-bottom:12px}
+.resume-pos-stmt{font-family:var(--serif);font-size:1.05rem;font-weight:300;font-style:italic;color:var(--ink-mid);border-left:2px solid var(--gold);padding-left:16px;margin-bottom:24px;line-height:1.7}
+.resume-name{font-family:var(--serif);font-size:1.8rem;font-weight:400;color:var(--ink);margin-bottom:3px}
+.resume-target{font-size:0.88rem;font-weight:500;color:var(--gold);letter-spacing:0.04em;margin-bottom:20px}
+.resume-section{margin-bottom:20px;padding-bottom:20px;border-bottom:0.5px solid var(--border)}
+.resume-section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.resume-sec-head{font-size:0.65rem;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px}
+.resume-summary{font-size:0.84rem;color:var(--ink-mid);line-height:1.75}
+.strengths-wrap{display:flex;flex-wrap:wrap;gap:6px}
+.strength-tag{font-size:0.74rem;padding:4px 12px;background:var(--surface);border:0.5px solid var(--border-med);border-radius:20px;color:var(--ink-mid)}
+.resume-role-label{font-size:0.84rem;font-weight:500;color:var(--ink);margin-bottom:8px}
+.resume-bullets{list-style:none;display:flex;flex-direction:column;gap:6px}
+.resume-bullets li{font-size:0.82rem;color:var(--ink-mid);line-height:1.65;padding-left:14px;position:relative}
+.resume-bullets li::before{content:'';position:absolute;left:0;top:9px;width:4px;height:4px;border-radius:50%;background:var(--gold)}
+.resume-bullets li.metric{color:var(--ink);font-weight:500}
+.pass-badge{display:inline-block;font-size:0.65rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);background:var(--gold-bg);border:0.5px solid rgba(160,124,46,0.25);border-radius:3px;padding:2px 8px;margin-bottom:18px}
+
+/* IDENTITY SCORES */
+.identity-score-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.identity-score-card{background:var(--surface);border-radius:8px;padding:14px 16px}
+.id-score-label{font-size:0.68rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px}
+.id-score-bar-track{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:6px}
+.id-score-bar-fill{height:100%;border-radius:2px;background:var(--gold);transition:width 1s ease}
+.id-score-num{font-size:0.78rem;font-weight:500;color:var(--ink)}
+
+/* PERCEPTION GRID */
+.perception-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:540px){.perception-grid,.identity-score-grid{grid-template-columns:1fr}}
+.perception-card{background:var(--surface);border-radius:8px;padding:14px 16px}
+.perception-label{font-size:0.68rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px}
+.perception-val{font-size:0.88rem;color:var(--ink-mid);line-height:1.55}
+
+/* ATS GRID */
+.ats-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+@media(max-width:540px){.ats-grid{grid-template-columns:1fr 1fr}}
+.ats-cell{background:var(--surface);border-radius:7px;padding:12px 14px}
+.ats-cell-label{font-size:0.66rem;color:var(--ink-faint);letter-spacing:0.06em;margin-bottom:4px}
+.ats-cell-val{font-size:0.82rem;font-weight:500}
+.ats-cell.pass .ats-cell-val{color:var(--green)}
+.ats-cell.warn .ats-cell-val{color:var(--amber)}
+
+/* CONFLICTS */
+.conflict-list{display:flex;flex-direction:column;gap:8px}
+.conflict-item{font-size:0.84rem;color:var(--ink-mid);line-height:1.65;padding:12px 14px;background:var(--gold-bg);border-left:2px solid rgba(160,124,46,0.3);border-radius:0 7px 7px 0}
+
+/* COVER */
+.cover-doc{background:var(--white);border:0.5px solid var(--border);border-radius:10px;padding:28px 32px;margin-bottom:12px}
+.cover-body{font-size:0.84rem;color:var(--ink-mid);line-height:1.85;white-space:pre-line}
+
+/* DL */
+.doc-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+.doc-header h4{font-family:var(--serif);font-size:0.95rem;font-weight:300}
+.dl-row{display:flex;gap:8px}
+.dl-btn{font-family:var(--sans);font-size:0.72rem;font-weight:500;padding:6px 14px;background:var(--ink);color:var(--white);border:none;border-radius:5px;cursor:pointer;letter-spacing:0.04em;transition:opacity 0.15s}
+.dl-btn:hover{opacity:0.82}
+.dl-btn.sec{background:transparent;color:var(--ink-mid);border:0.5px solid var(--border-med)}
+.dl-btn.sec:hover{border-color:var(--ink);color:var(--ink)}
+
+/* RECS */
+.rec-list{display:flex;flex-direction:column;gap:0}
+.rec-item{display:flex;gap:14px;padding:14px 0;border-bottom:0.5px solid var(--border)}
+.rec-item:last-child{border-bottom:none}
+.rec-num{font-size:0.7rem;font-weight:500;letter-spacing:0.1em;color:var(--gold);min-width:22px;padding-top:2px}
+.rec-text h5{font-size:0.88rem;font-weight:500;color:var(--ink);margin-bottom:4px}
+.rec-text p{font-size:0.8rem;color:var(--ink-muted);line-height:1.65}
+
+/* POS SUMMARY */
+.pos-summary{background:var(--surface);border-radius:10px;padding:22px 26px;margin-bottom:12px;border-left:3px solid var(--ink)}
+.pos-summary p{font-family:var(--serif);font-size:1.05rem;font-weight:300;font-style:italic;color:var(--ink);line-height:1.75}
+
+/* BLURRED */
+.blurred-section{position:relative;border-radius:10px;overflow:hidden;margin-bottom:14px}
+.blurred-inner{filter:blur(5px);opacity:0.35;pointer-events:none;user-select:none}
+.blurred-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:0.8rem;color:var(--ink-mid);font-style:italic;text-align:center;padding:20px}
+
+/* OUTPUT FOOTER */
+.output-footer{text-align:center;padding:16px 0 8px}
+.output-footer p{font-size:0.78rem;color:var(--ink-faint);margin-bottom:12px;font-style:italic}
+.output-footer-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.btn-s{font-family:var(--sans);font-size:0.82rem;padding:11px 24px;background:var(--white);color:var(--ink-mid);border:0.5px solid var(--border-med);border-radius:7px;cursor:pointer;transition:all 0.15s}
+.btn-s:hover{border-color:var(--ink);color:var(--ink)}
+
+/* BUSEFUL BADGE */
+.buseful-badge{display:inline-flex;align-items:center;background:#1A2744;border-radius:5px;padding:5px 12px 5px 10px;text-decoration:none;margin-bottom:28px;transition:opacity 0.2s}
+.buseful-badge:hover{opacity:0.82}
+.buseful-badge-text{font-family:var(--sans);font-size:11px;font-weight:500;color:#FFFFFF;letter-spacing:0.02em}
+.buseful-badge-text em{font-style:italic;color:#C4A96A}
+
+footer{border-top:0.5px solid var(--border);padding:24px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.footer-copy{font-size:0.72rem;color:var(--ink-faint)}
+.footer-links{display:flex;gap:18px}
+.footer-links a{font-size:0.72rem;color:var(--ink-faint);text-decoration:none}
+.footer-links a:hover{color:var(--ink-mid)}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<nav>
+  <a href="#" class="nav-brand">RC<span>Loop</span></a>
+  <span class="nav-tag">RC Loop Pro &mdash; Resume</span>
+  <span class="nav-right" onclick="window.history.back()">&#8592; All systems</span>
+</nav>
+
+<!-- CARD 1: PROFESSIONAL FOUNDATION -->
+<div id="s0" class="page on">
+<div class="wrap">
+
+  <a href="https://oi-ecosystem.github.io/b-useful/" target="_blank" rel="noopener" class="buseful-badge" aria-label="Part of the B-Useful brand">
+    <span class="buseful-badge-text">B-<em>Useful</em></span>
+  </a>
+
+  <div class="step-indicator">Card 1 of 5 &mdash; Professional Foundation</div>
+  <div class="step-dots">
+    <div class="dot active" id="dot-0"></div>
+    <div class="dot" id="dot-1"></div>
+    <div class="dot" id="dot-2"></div>
+    <div class="dot" id="dot-3"></div>
+    <div class="dot" id="dot-4"></div>
+  </div>
+
+  <!-- INTRO BOX -->
+  <div class="intro-box">
+    <div class="intro-box-main"><strong>RC Loop Pro begins with identity, not formatting.</strong> The five reflection prompts ahead feed directly into a 5-pass refinement engine that builds your resume and cover letter from a single coherent positioning model &mdash; and optimises every section for ATS compatibility and recruiter impact.<br><br>There is no CV upload here. That is intentional. Uploading an old CV anchors you to your old narrative &mdash; the very thing this system is designed to move you beyond.<br><br><strong>The quality of your output depends entirely on the quality of your reflection.</strong> The engine does not invent, pad or guess. Specific achievements with real numbers, honest positioning statements and genuine reflection produce exceptional output. Vague or minimal inputs produce vague outputs. Take your time on each card &mdash; it is worth it.</div>
+    <div class="intro-privacy-label">Privacy &amp; Discretion</div>
+    <div class="intro-privacy-body">
+      <p>Your resume and cover letter are generated instantly and designed to be <strong>fully editable after download.</strong></p>
+      <p>If you prefer, you may use approximate job titles, fictional employers, or placeholder achievements initially &mdash; to explore the system and understand the positioning structure it creates before entering real details.</p>
+      <p>No personal records, employer names, or contact details are required to experience the logic and depth of the system.</p>
+      <p>The goal is not data collection &mdash; it is coherent professional positioning without unnecessary complexity.</p>
+    </div>
+  </div>
+
+  <!-- PROFESSIONAL FOUNDATION FIELDS -->
+  <div class="card-eyebrow">Your professional foundation</div>
+  <h2 class="card-headline">Let&rsquo;s establish who you are professionally.</h2>
+  <p class="card-sub">This anchors the positioning model &mdash; the starting point and direction of travel. Approximate or placeholder details work perfectly at this stage.</p>
+
+  <div class="two-col">
+    <div class="field">
+      <label>Full name</label>
+      <input type="text" id="p-name" placeholder="Your name or a placeholder">
+    </div>
+    <div class="field">
+      <label>Target role</label>
+      <input type="text" id="p-target" placeholder="Role you are positioning toward">
+    </div>
+  </div>
+
+  <div class="field">
+    <label>Current or most recent role</label>
+    <input type="text" id="p-current" placeholder="e.g. Marketing Director at Acme Co, 2020&ndash;present">
+  </div>
+
+  <div class="field">
+    <label>Previous role <span class="opt">(optional)</span></label>
+    <input type="text" id="p-prev" placeholder="e.g. Senior Manager at XYZ, 2016&ndash;2020">
+  </div>
+
+  <div class="two-col">
+    <div class="field">
+      <label>Education</label>
+      <input type="text" id="p-edu" placeholder="e.g. BA Economics, Leeds, 2010">
+    </div>
+    <div class="field">
+      <label>Certifications / technical skills</label>
+      <input type="text" id="p-skills" placeholder="e.g. PMP, Tableau, Python">
+    </div>
+  </div>
+
+  <!-- SPELL PANEL on first field set -->
+  <div class="spell-panel" id="spell-panel">
+    <p class="spell-heading">We noticed a few spellings &mdash; here is the corrected version</p>
+    <div class="spell-corrected" id="spell-corrected"></div>
+    <div class="spell-btns">
+      <button class="spell-btn-a" onclick="sc_accept('p-current')">Use corrected version</button>
+      <button class="spell-btn-i" onclick="sc_ignore()">Keep as entered</button>
+    </div>
+  </div>
+
+  <div class="actions">
+    <span class="btn-ghost" onclick="window.history.back()">&#8592; Back</span>
+    <button class="btn-p" onclick="goCard(1)">Continue &rarr;</button>
+  </div>
+
+</div>
+</div>
+
+<!-- CARD 2: ACHIEVEMENTS -->
+<div id="s1" class="page">
+<div class="wrap">
+
+  <div class="step-indicator">Card 2 of 5 &mdash; Your Achievements</div>
+  <div class="step-dots">
+    <div class="dot done" id="dot2-0"></div>
+    <div class="dot active" id="dot2-1"></div>
+    <div class="dot" id="dot2-2"></div>
+    <div class="dot" id="dot2-3"></div>
+    <div class="dot" id="dot2-4"></div>
+  </div>
+
+  <div class="card-eyebrow">What you have delivered</div>
+  <h2 class="card-headline">Your achievements &mdash; in your words.</h2>
+  <p class="card-sub">One per line. Include numbers, team sizes, budgets and timescales wherever possible. The engine prioritises and reorders these by impact. Do not filter yourself &mdash; include everything and let the system decide.</p>
+
+  <div class="field">
+    <label>Key achievements and outcomes <span class="opt">(one per line)</span></label>
+    <textarea id="p-achievements" rows="9" placeholder="e.g.&#10;Led restructure of finance function saving &pound;240k annually&#10;Managed P&amp;L of &pound;18m across 3 business units&#10;Delivered ERP implementation on time and &pound;80k under budget&#10;Built and mentored team of 12 from a team of 4&#10;Reduced month-end close from 12 to 4 days&#10;Secured &pound;6m funding round as CFO-equivalent&#10;Increased NPS from 42 to 71 over 18 months&#10;Won &pound;2.4m enterprise contract from competitor"></textarea>
+    <div class="field-note">Include specific numbers wherever possible &mdash; percentages, pound values, team sizes, timescales, project values. The engine does not invent or pad: it works only with what you provide here. A detailed, honest list of achievements produces a document that genuinely represents you. A sparse list produces a sparse document.</div>
+  </div>
+
+  <!-- SPELL PANEL for achievements -->
+  <div class="spell-panel" id="spell-panel-2">
+    <p class="spell-heading">We noticed a few spellings &mdash; here is the corrected version</p>
+    <div class="spell-corrected" id="spell-corrected-2"></div>
+    <div class="spell-btns">
+      <button class="spell-btn-a" onclick="sc_accept2()">Use corrected version</button>
+      <button class="spell-btn-i" onclick="sc_ignore2()">Keep as entered</button>
+    </div>
+  </div>
+
+  <div class="field" style="margin-top:8px;">
+    <label>Moments you are most proud of <span class="opt">(optional &mdash; feeds the positioning layer)</span></label>
+    <textarea id="p-proud" rows="3" placeholder="e.g. Building the finance function from scratch at a Series B startup and getting it IPO-ready in 18 months"></textarea>
+  </div>
+
+  <div class="actions">
+    <span class="btn-ghost" onclick="goCard(0)">&#8592; Back</span>
+    <button class="btn-p" onclick="goCard(2)">Continue &rarr;</button>
+  </div>
+
+</div>
+</div>
+
+<!-- CARD 3: STRENGTHS -->
+<div id="s2" class="page">
+<div class="wrap">
+
+  <div class="step-indicator">Card 3 of 5 &mdash; Strengths &amp; Environment</div>
+  <div class="step-dots">
+    <div class="dot done"></div><div class="dot done"></div>
+    <div class="dot active"></div><div class="dot"></div><div class="dot"></div>
+  </div>
+
+  <div class="card-eyebrow">Your core strengths</div>
+  <h2 class="card-headline">What you are genuinely known for.</h2>
+  <p class="card-sub">Select the competencies that accurately describe your professional strengths. These feed directly into the ATS keyword layer and positioning statement &mdash; be honest rather than aspirational.</p>
+
+  <div class="field">
+    <label>Select your core strengths <span class="opt">(select all that apply)</span></label>
+    <div class="tag-grid" id="strength-tags">
+      <span class="tag-pill" onclick="toggleTag(this)">Strategic leadership</span>
+      <span class="tag-pill" onclick="toggleTag(this)">Commercial acumen</span>
+      <span class="tag-pill" onclick="toggleTag(this)">Operational excellence</span>
+      <span class="tag-pill" onclick="toggleTag(this)">Stakeholder management</span>
+      <span class="tag-pill" onclick="toggleTag(this)">Team building &amp; mentoring</span>
+      <span class="tag-pill" onclick="toggleTag(this)">Financial management</span>
+      <span class="tag-pill" onclick="toggleTag(this)">Business development</span>
+      <span class="tag-pill" onclick="toggleTag(this)">Change management</span>
+      <span class="tag-pill" onclick="toggleTag(this)">Data &amp; analytics</span>
+      <span class="tag-pill" onclick="toggleTag(this)">Risk management</span>
+      <span class="tag-pill" onclick="toggleTag(this)">P&amp;L ownership</span>
+      <span class="tag-pill" onclick="toggleTag(this)">Regulatory compliance</span>
+      <span class="tag-pill" onclick="toggleTag(this)">Digital transformation</span>
+      <span class="tag-pill" onclick="toggleTag(this)">Product management</span>
+      <span class="tag-pill" onclick="toggleTag(this)">Customer success</span>
+      <span class="tag-pill" onclick="toggleTag(this)">Engineering leadership</span>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="card-eyebrow" style="margin-top:0;">Environments that energise you</div>
+  <p class="card-sub" style="margin-bottom:14px;">This shapes the cover letter tone and positioning language.</p>
+
+  <div class="field">
+    <div class="tag-grid" id="env-tags">
+      <span class="tag-pill" onclick="toggleTag(this)">High-growth</span>
+      <span class="tag-pill" onclick="toggleTag(this)">PE-backed</span>
+      <span class="tag-pill" onclick="toggleTag(this)">Listed companies</span>
+      <span class="tag-pill" onclick="toggleTag(this)">Scale-up</span>
+      <span class="tag-pill" onclick="toggleTag(this)">Transformation</span>
+      <span class="tag-pill" onclick="toggleTag(this)">International</span>
+      <span class="tag-pill" onclick="toggleTag(this)">Start-up</span>
+      <span class="tag-pill" onclick="toggleTag(this)">Public sector</span>
+      <span class="tag-pill" onclick="toggleTag(this)">Professional services</span>
+    </div>
+  </div>
+
+  <div class="actions">
+    <span class="btn-ghost" onclick="goCard(1)">&#8592; Back</span>
+    <button class="btn-p" onclick="goCard(3)">Continue &rarr;</button>
+  </div>
+
+</div>
+</div>
+
+<!-- CARD 4: POSITIONING -->
+<div id="s3" class="page">
+<div class="wrap">
+
+  <div class="step-indicator">Card 4 of 5 &mdash; Your Positioning</div>
+  <div class="step-dots">
+    <div class="dot done"></div><div class="dot done"></div>
+    <div class="dot done"></div><div class="dot active"></div><div class="dot"></div>
+  </div>
+
+  <div class="card-eyebrow">Identity and direction</div>
+  <h2 class="card-headline">How do you want to be seen?</h2>
+  <p class="card-sub">This is the most powerful section. These inputs allow the engine to engineer perception deliberately &mdash; rather than leaving it to chance. Be honest, not humble.</p>
+
+  <div class="field">
+    <label>How do you want to be perceived? <span class="opt">(your ideal professional identity)</span></label>
+    <input type="text" id="p-perception" placeholder="e.g. A commercially-driven CFO with a track record of scaling businesses through financial transformation">
+    <div class="field-note">This is the single most powerful input in the engine. A specific, honest perception statement &mdash; one that names exactly how you want to be seen and why you have earned that positioning &mdash; produces a document that genuinely differentiates you. Leave it vague and the engine defaults to generic professional language. Be specific.</div>
+  </div>
+
+  <div class="field">
+    <label>What genuinely differentiates you? <span class="opt">(honest &mdash; not humble)</span></label>
+    <input type="text" id="p-diff" placeholder="e.g. I combine technical finance rigour with genuine commercial instinct &mdash; rare at CFO level">
+  </div>
+
+  <div class="field">
+    <label>Why are you making this move?</label>
+    <input type="text" id="p-why" placeholder="e.g. Ready for a Group CFO role after delivering two successful exits at divisional level">
+  </div>
+
+  <div class="two-col">
+    <div class="field">
+      <label>Target sector <span class="opt">(optional)</span></label>
+      <input type="text" id="p-sector" placeholder="e.g. Financial services, Tech, Healthcare">
+    </div>
+    <div class="field">
+      <label>Target seniority level <span class="opt">(optional)</span></label>
+      <input type="text" id="p-seniority" placeholder="e.g. C-suite, Director, VP, Head of">
+    </div>
+  </div>
+
+  <div class="actions">
+    <span class="btn-ghost" onclick="goCard(2)">&#8592; Back</span>
+    <button class="btn-p" onclick="goCard(4)">Continue &rarr;</button>
+  </div>
+
+</div>
+</div>
+
+<!-- CARD 5: DEPTH -->
+<div id="s4" class="page">
+<div class="wrap">
+
+  <div class="step-indicator">Card 5 of 5 &mdash; Final Depth Layer</div>
+  <div class="step-dots">
+    <div class="dot done"></div><div class="dot done"></div>
+    <div class="dot done"></div><div class="dot done"></div>
+    <div class="dot active"></div>
+  </div>
+
+  <div class="card-eyebrow">The depth layer</div>
+  <h2 class="card-headline">What trusted colleagues know about you.</h2>
+  <p class="card-sub">These inputs are optional but significantly deepen the output. They surface the things that rarely appear on a CV but that define how you are actually experienced by others. All fields are optional &mdash; answer only what feels relevant.</p>
+
+  <div class="field">
+    <label>What do trusted colleagues say you are known for? <span class="opt">(the real you &mdash; not the formal version)</span></label>
+    <textarea id="p-trust" rows="3" placeholder="e.g. The person who stays calm in a crisis and always knows what the number means for the business, not just what it says"></textarea>
+  </div>
+
+  <div class="field">
+    <label>What energises you most professionally? <span class="opt">(not what you are good at &mdash; what drives you)</span></label>
+    <textarea id="p-energise" rows="3" placeholder="e.g. Building something from scratch &mdash; identifying the structural problem, designing the fix and seeing it work at scale"></textarea>
+  </div>
+
+  <div class="field">
+    <label>Is there anything your CV currently undersells? <span class="opt">(hidden value the documents miss)</span></label>
+    <textarea id="p-undersell" rows="3" placeholder="e.g. My operational depth &mdash; I have run teams and P&Ls directly, not just advised on them, which is rare at strategy director level"></textarea>
+  </div>
+
+  <div class="actions">
+    <span class="btn-ghost" onclick="goCard(3)">&#8592; Back</span>
+    <button class="btn-generate" onclick="generate()">Generate my positioning &rarr;</button>
+  </div>
+
+</div>
+</div>
+
+<!-- PROCESSING -->
+<div id="s5" class="page">
+<div class="processing-wrap">
+  <p class="processing-eyebrow">RC Loop Pro &mdash; 5-Pass Identity Engine</p>
+  <h2 class="processing-headline">Positioning your professional identity&hellip;</h2>
+  <div class="passes">
+    <div class="pass-item" id="pass-1">
+      <div class="pass-dot"></div>
+      <div class="pass-name">Pass 1 &mdash; Extraction</div>
+      <div class="pass-desc">Mapping achievements, identity signals, contradictions</div>
+      <div class="pass-status" id="pass-1-s">Waiting</div>
+    </div>
+    <div class="pass-item" id="pass-2">
+      <div class="pass-dot"></div>
+      <div class="pass-name">Pass 2 &mdash; Role alignment</div>
+      <div class="pass-desc">Ranking content by target role, seniority and ATS fit</div>
+      <div class="pass-status" id="pass-2-s">Waiting</div>
+    </div>
+    <div class="pass-item" id="pass-3">
+      <div class="pass-dot"></div>
+      <div class="pass-name">Pass 3 &mdash; Coherence engine</div>
+      <div class="pass-desc">Scoring identity alignment, detecting positioning conflicts</div>
+      <div class="pass-status" id="pass-3-s">Waiting</div>
+    </div>
+    <div class="pass-item" id="pass-4">
+      <div class="pass-dot"></div>
+      <div class="pass-name">Pass 4 &mdash; Compression</div>
+      <div class="pass-desc">Removing weak signals, compressing narrative to one direction</div>
+      <div class="pass-status" id="pass-4-s">Waiting</div>
+    </div>
+    <div class="pass-item" id="pass-5">
+      <div class="pass-dot"></div>
+      <div class="pass-name">Pass 5 &mdash; Synchronisation</div>
+      <div class="pass-desc">Aligning resume, cover letter and ATS output to one identity</div>
+      <div class="pass-status" id="pass-5-s">Waiting</div>
+    </div>
+  </div>
+  <p style="font-size:0.78rem;color:var(--ink-faint);line-height:1.6;">All positioning is deterministic &mdash; derived entirely from your inputs. No assumptions beyond what you have provided.</p>
+</div>
+</div>
+
+<!-- OUTPUT -->
+<div id="s6" class="page">
+<div class="wrap-wide">
+
+  <div class="output-intent" id="out-positioning"></div>
+
+  <!-- FREE PREVIEW -->
+  <div id="free-preview">
+    <div class="preview-grid">
+      <div class="preview-card">
+        <div class="preview-card-label">Identity coherence score</div>
+        <div class="score-display" id="prev-score">--<span>/100</span></div>
+        <div class="score-cat" id="prev-score-cat"></div>
+        <div class="score-bar-track"><div class="score-bar-fill" id="prev-score-bar" style="width:0%"></div></div>
+      </div>
+      <div class="preview-card">
+        <div class="preview-card-label">Primary perception signal</div>
+        <div id="prev-perception"></div>
+      </div>
+    </div>
+
+    <div class="section-block" style="margin-bottom:14px;">
+      <div class="section-eyebrow">Positioning conflict detected</div>
+      <div id="prev-conflict"></div>
+    </div>
+
+    <div class="blurred-section">
+      <div class="blurred-inner">
+        <div class="section-block">
+          <div class="section-eyebrow">Strategic professional positioning</div>
+          <div style="font-family:var(--serif);font-size:1.05rem;font-style:italic;color:var(--ink-mid);border-left:2px solid var(--gold);padding-left:16px;line-height:1.7;margin-bottom:12px;">"A commercially-driven leader positioned as the connective tissue between financial rigour and growth strategy..."</div>
+          <div style="font-size:0.82rem;color:var(--ink-mid);">Identity scores: Strategic alignment 91% &middot; Narrative coherence 88% &middot; ATS optimisation 95%</div>
+        </div>
+      </div>
+      <div class="blurred-overlay">Full 5-pass positioning, rewritten resume, ATS strategic optimisation and identity-coherent cover letter unlock below.</div>
+    </div>
+  </div>
+
+  <!-- UNLOCK -->
+  <div class="unlock-card" id="unlock-card">
+    <div class="dev-pill">DEV MODE &mdash; Mock response. Zero tokens.</div>
+    <p class="unlock-heading">Unlock your full professional positioning.</p>
+    <p class="unlock-sub">5-pass identity coherence. Strategic ATS optimisation. Keyword synchronisation. Perception engineering. Positioning statement. Identity-coherent cover letter.</p>
+    <div class="unlock-features">
+      <span class="unlock-feature">Identity coherence score</span>
+      <span class="unlock-feature">Perception engineering</span>
+      <span class="unlock-feature">Strategic ATS optimisation</span>
+      <span class="unlock-feature">Keyword synchronisation</span>
+      <span class="unlock-feature">Positioning statement</span>
+      <span class="unlock-feature">Coherence conflicts</span>
+      <span class="unlock-feature">Identity-coherent cover letter</span>
+      <span class="unlock-feature">ATS .txt download</span>
+    </div>
+    <button class="unlock-btn" onclick="unlockFull()">Unlock my positioning &mdash; &pound;29</button>
+    <span class="unlock-price">One-time &middot; Instant &middot; No account needed</span>
+  </div>
+
+  <!-- AI LOADER -->
+  <div class="ai-loader" id="ai-loader">
+    <div class="ai-spinner"></div>
+    <p class="ai-loader-msg" id="ai-loader-msg">Rendering your positioning report...</p>
+  </div>
+
+  <!-- FULL OUTPUT -->
+  <div class="full-output" id="full-output">
+
+    <!-- 1. POSITIONING STATEMENT + IDENTITY MODEL -->
+    <div class="section-block">
+      <div class="section-eyebrow">Strategic positioning statement</div>
+      <div class="resume-pos-stmt" id="out-pos-stmt"></div>
+      <div class="perception-grid" id="out-identity-model"></div>
+    </div>
+
+    <!-- 2. IDENTITY SCORES -->
+    <div class="section-block">
+      <div class="section-eyebrow">Identity coherence scores</div>
+      <div class="identity-score-grid" id="out-identity-scores"></div>
+    </div>
+
+    <!-- 3. ATS STRATEGIC OPTIMISATION -->
+    <div class="section-block">
+      <div class="section-eyebrow">ATS strategic optimisation</div>
+      <p style="font-size:0.78rem;color:var(--ink-faint);margin-bottom:14px;font-style:italic;">RC Loop Pro applies strategic ATS optimisation: role alignment, keyword synchronisation, perception engineering and banned phrase removal &mdash; not just formatting compliance.</p>
+      <div class="ats-grid" id="out-ats-grid"></div>
+      <div style="font-size:0.72rem;color:var(--ink-faint);margin-top:10px;">&#10003; Single column &middot; Standard section order &middot; Banned phrases removed &middot; Keywords synchronised &middot; Perception-engineered language throughout</div>
+    </div>
+
+    <!-- 4. COHERENCE CONFLICTS -->
+    <div class="section-block">
+      <div class="section-eyebrow">Coherence conflicts</div>
+      <p style="font-size:0.78rem;color:var(--ink-faint);margin-bottom:14px;font-style:italic;">Contradictions between your stated goal and what your current professional narrative communicates. All have been resolved in the positioned output below.</p>
+      <div class="conflict-list" id="out-conflicts"></div>
+    </div>
+
+    <!-- 5. RESUME -->
+    <div class="resume-doc">
+      <div class="doc-header">
+        <h4>Resume &mdash; 5-pass identity positioned</h4>
+        <div class="dl-row">
+          <button class="dl-btn" onclick="dlXLSX()">&#8595; XLSX</button>
+          <button class="dl-btn sec" onclick="dlGoogleSheets()">&#8595; Google Sheets</button>
+          <button class="dl-btn sec" onclick="dlATS()">&#8595; ATS .txt</button>
+        </div>
+      </div>
+      <div style="font-size:0.72rem;color:var(--ink-faint);margin-bottom:16px;font-style:italic;">&#10003; Strategically ATS-optimised &middot; Keywords synchronised &middot; Perception-engineered &middot; Single column &middot; No banned phrases</div>
+      <div id="out-resume"></div>
+    </div>
+
+    <!-- 6. COVER LETTER -->
+    <div class="cover-doc">
+      <div class="doc-header">
+        <h4>Cover letter &mdash; identity-coherent</h4>
+        <div class="dl-row">
+          <button class="dl-btn" onclick="dlXLSX()">&#8595; XLSX</button>
+          <button class="dl-btn sec" onclick="dlGoogleSheets()">&#8595; Google Sheets</button>
+        </div>
+      </div>
+      <div class="cover-body" id="out-cover"></div>
+    </div>
+
+    <!-- 7. RECOMMENDATIONS -->
+    <div class="section-block">
+      <div class="section-eyebrow">Structured recommendations</div>
+      <div class="rec-list" id="out-recs"></div>
+    </div>
+
+    <!-- 8. POSITIONING SUMMARY -->
+    <div class="pos-summary">
+      <div class="section-eyebrow" style="margin-bottom:12px;">Professional positioning summary</div>
+      <p id="out-summary"></p>
+    </div>
+
+    <div class="output-footer">
+      <p>RC Loop Resume Pro &mdash; 5-pass identity coherence engine. QuickStart also available from &pound;15.</p>
+      <div class="output-footer-btns">
+        <button class="btn-p">Explore Spreadsheet Pro &rarr;</button>
+        <button class="btn-s" onclick="goCard(0)">Start again</button>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+</div>
+
+<footer>
+  <span class="footer-copy">&copy; RC Loop. A <a href="https://oi-ecosystem.github.io/b-useful/" style="color:var(--ink-faint);text-decoration:none;">B&#8209;Useful</a> career utility.</span>
+  <div class="footer-links">
+    <a href="#">Resume QuickStart &rarr;</a>
+    <a href="#">Spreadsheet Pro &rarr;</a>
+    <a href="#">1LINE utilities &rarr;</a>
+  </div>
+</footer>
+
+<script data-goatcounter="https://signal333.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+
+<script>
+/* ============================================================
+   RC LOOP RESUME PRO v1
+   5-pass identity coherence engine
+   Card-based flow: 5 cards then processing then output
+
+   DEV_MODE = true  -> mock, zero cost
+   PREMIUM_GATED = false -> open for testing
+
+   SPELL CHECKER: sc_ prefix, no \b in regex
+   All var — no const or let
+   No adjacent string literals without +
+============================================================ */
+
+var DEV_MODE      = true;
+var PREMIUM_GATED = false;
+
+var _proData   = {};
+var _proResult = {};
+
+/* ── SPELL CHECKER ── */
+var sc_checked  = false;
+var sc_ignflag  = false;
+var sc_lastval  = '';
+var sc_corrtext = '';
+var sc_checked2 = false;
+var sc_ignflag2 = false;
+var sc_lastval2 = '';
+var sc_corrtext2= '';
+
+var SC_CORRECTIONS = {
+  'abcense':'absence','absense':'absence','abscence':'absence',
+  'accidently':'accidentally','accomodate':'accommodate',
+  'acheive':'achieve','achive':'achieve',
+  'agressive':'aggressive','allready':'already',
+  'amature':'amateur','amatuer':'amateur',
+  'avalable':'available','availble':'available',
+  'beautifull':'beautiful','beutiful':'beautiful',
+  'becuase':'because','becasue':'because','beacuse':'because',
+  'begining':'beginning','beleive':'believe','belive':'believe',
+  'buisness':'business','bussiness':'business',
+  'completly':'completely','confidance':'confidence',
+  'definate':'definite','definately':'definitely',
+  'desparate':'desperate','diferent':'different',
+  'enviroment':'environment','excellant':'excellent',
+  'experiance':'experience','faimly':'family','familly':'family',
+  'freind':'friend','freinds':'friends',
+  'gratefull':'grateful','happyness':'happiness',
+  'humerous':'humorous','imediately':'immediately',
+  'impotant':'important','independant':'independent',
+  'inteligent':'intelligent','intresting':'interesting',
+  'knowlege':'knowledge','maintainance':'maintenance',
+  'necesary':'necessary','neccesary':'necessary',
+  'noticable':'noticeable','occured':'occurred',
+  'opportunitiy':'opportunity','opportunitity':'opportunity',
+  'opportunty':'opportunity','oppurtunity':'opportunity',
+  'orignal':'original','probaly':'probably',
+  'proffesional':'professional','profesional':'professional',
+  'realy':'really','recieve':'receive','recomend':'recommend',
+  'relevent':'relevant','remeber':'remember',
+  'resilant':'resilient','seperate':'separate',
+  'simalar':'similar','stong':'strong','strenght':'strength',
+  'sucesful':'successful','succesfull':'successful',
+  'suprise':'surprise','surounded':'surrounded',
+  'tommorow':'tomorrow','tomorow':'tomorrow',
+  'truely':'truly','unfortunatly':'unfortunately',
+  'untill':'until','usualy':'usually',
+  'valueable':'valuable','visable':'visible',
+  'wierd':'weird','writting':'writing',
+  'responsibilties':'responsibilities','responsibilites':'responsibilities',
+  'acheivements':'achievements','achivements':'achievements',
+  'managment':'management','managemnt':'management',
+  'communcation':'communication','comunication':'communication',
+  'colaboration':'collaboration','colaberation':'collaboration',
+  'leadreship':'leadership','leadeship':'leadership',
+  'qualifcations':'qualifications','qualifictions':'qualifications',
+  'reccomend':'recommend','liasion':'liaison',
+  'developement':'development','develpment':'development',
+  'implmentation':'implementation','implementaion':'implementation',
+  'stategic':'strategic','stratigic':'strategic',
+  'comercial':'commercial',
+  'negociate':'negotiate','negotate':'negotiate',
+  'prioirity':'priority','priorites':'priorities',
+  'carreer':'career','carear':'career',
+  'performence':'performance','performace':'performance',
+  'achived':'achieved','achivement':'achievement',
+  'suceeded':'succeeded','succeded':'succeeded',
+  'deliverd':'delivered','delievered':'delivered',
+  'improvment':'improvement','improvemnt':'improvement',
+  'analisis':'analysis','analysiss':'analysis',
+  'recrutment':'recruitment','recrutiment':'recruitment',
+  'buget':'budget','budgit':'budget',
+  'finacial':'financial','finantial':'financial',
+  'comittee':'committee','commitee':'committee',
+  'negotation':'negotiation','negociation':'negotiation',
+  'presentaion':'presentation','presenation':'presentation',
+  'stakholders':'stakeholders','stakehodlers':'stakeholders',
+  'woud':'would','ahve':'have','butr':'but',
+  'teh':'the','adn':'and'
+};
+
+function spellCheck(text) {
+  var sc_changed = false;
+  var corrected = text.replace(/([a-zA-Z]+)/g, function(word) {
+    var lower = word.toLowerCase();
+    if (SC_CORRECTIONS[lower]) {
+      sc_changed = true;
+      var fix = SC_CORRECTIONS[lower];
+      if (word[0] === word[0].toUpperCase() && word[0] !== word[0].toLowerCase()) {
+        return fix.charAt(0).toUpperCase() + fix.slice(1);
+      }
+      return fix;
+    }
+    return word;
+  });
+  return { corrected: corrected, changed: sc_changed };
+}
+
+function sc_showPanel(orig, corr, panelId, corrId) {
+  var el = document.getElementById(corrId);
+  var ow = orig.split(' ');
+  var cw = corr.split(' ');
+  el.textContent = '';
+  for (var i = 0; i < cw.length; i++) {
+    if (i > 0) el.appendChild(document.createTextNode(' '));
+    if (ow[i] && ow[i].toLowerCase() !== cw[i].toLowerCase()) {
+      var mk = document.createElement('mark');
+      mk.textContent = cw[i];
+      el.appendChild(mk);
+    } else {
+      el.appendChild(document.createTextNode(cw[i] || ''));
+    }
+  }
+  document.getElementById(panelId).className = 'spell-panel visible';
+}
+
+function sc_accept(fieldId) {
+  var ta = document.getElementById(fieldId || 'p-current');
+  if (ta) ta.value = sc_corrtext;
+  document.getElementById('spell-panel').className = 'spell-panel';
+  sc_checked = true; sc_ignflag = false; sc_lastval = sc_corrtext;
+}
+
+function sc_ignore() {
+  document.getElementById('spell-panel').className = 'spell-panel';
+  sc_ignflag = true; sc_checked = false;
+}
+
+function sc_accept2() {
+  var ta = document.getElementById('p-achievements');
+  if (ta) ta.value = sc_corrtext2;
+  document.getElementById('spell-panel-2').className = 'spell-panel';
+  sc_checked2 = true; sc_ignflag2 = false; sc_lastval2 = sc_corrtext2;
+}
+
+function sc_ignore2() {
+  document.getElementById('spell-panel-2').className = 'spell-panel';
+  sc_ignflag2 = true; sc_checked2 = false;
+}
+
+function sc_runField(val, which) {
+  /* which: 1 = card 1 field, 2 = achievements */
+  if (which === 1) {
+    if (val !== sc_lastval) { sc_checked = false; sc_ignflag = false; }
+    if (!sc_checked && !sc_ignflag) {
+      sc_lastval = val;
+      var r = spellCheck(val);
+      if (r.changed) {
+        sc_checked = true; sc_corrtext = r.corrected;
+        sc_showPanel(val, r.corrected, 'spell-panel', 'spell-corrected');
+        return true;
+      }
+      sc_checked = true;
+    }
+  } else {
+    if (val !== sc_lastval2) { sc_checked2 = false; sc_ignflag2 = false; }
+    if (!sc_checked2 && !sc_ignflag2) {
+      sc_lastval2 = val;
+      var r2 = spellCheck(val);
+      if (r2.changed) {
+        sc_checked2 = true; sc_corrtext2 = r2.corrected;
+        sc_showPanel(val, r2.corrected, 'spell-panel-2', 'spell-corrected-2');
+        return true;
+      }
+      sc_checked2 = true;
+    }
+  }
+  return false;
+}
+
+/* ── ATS RULES ── */
+var ATS_BANNED = [
+  'hardworking','hard-working','team player','team-player',
+  'results-driven','results driven','passionate','passionate about',
+  'dynamic','proactive','synergy','synergies',
+  'go-getter','go getter','self-starter','self starter',
+  'detail-oriented','detail oriented',
+  'think outside the box','hit the ground running',
+  'guru','ninja','rockstar','wizard'
+];
+
+var ATS_REPLACEMENTS = {
+  'hardworking':'delivering consistently under pressure',
+  'hard-working':'delivering consistently under pressure',
+  'team player':'collaborative across functions',
+  'results-driven':'outcome-focused',
+  'results driven':'outcome-focused',
+  'passionate':'committed to',
+  'dynamic':'adaptable',
+  'proactive':'self-directed',
+  'detail-oriented':'precise in execution',
+  'detail oriented':'precise in execution',
+  'self-starter':'independent and initiative-led',
+  'self starter':'independent and initiative-led'
+};
+
+function atsClean(text) {
+  var t = text;
+  Object.keys(ATS_REPLACEMENTS).forEach(function(banned) {
+    t = t.replace(new RegExp(banned, 'gi'), ATS_REPLACEMENTS[banned]);
+  });
+  ATS_BANNED.forEach(function(banned) {
+    if (!ATS_REPLACEMENTS[banned]) {
+      t = t.replace(new RegExp(banned, 'gi'), '');
+    }
+  });
+  return t.replace(/\s{2,}/g, ' ').trim();
+}
+
+/* ── HELPERS ── */
+function hasMetric(txt) {
+  return /\d+%|\d+x|\u00a3|\u20ac|\$|\d+k|\d+m|\d+ (people|staff|team|sites|months|weeks)/i.test(txt);
+}
+
+function splitBullets(txt) {
+  if (!txt) return [];
+  return txt.split(/[\n\r]+|[;]+/)
+    .map(function(l) { return l.replace(/^[\-\u2022\*\u00b7\u2013]+\s*/, '').trim(); })
+    .filter(function(l) { return l.length > 8; });
+}
+
+function compress(txt, maxWords) {
+  if (!txt) return '';
+  var words = txt.split(/\s+/);
+  if (words.length <= maxWords) return txt;
+  return words.slice(0, maxWords).join(' ') + '\u2026';
+}
+
+var VERB_MAP = {
+  'responsible for':'Led','worked on':'Delivered','helped with':'Supported',
+  'was involved in':'Contributed to','assisted with':'Supported',
+  'duties included':'Managed','tasked with':'Executed','involved in':'Drove',
+  'managed the':'Directed the','dealt with':'Resolved',
+  'took part in':'Participated in','was responsible':'Owned',
+  'helped to':'Contributed to','carried out':'Executed',
+  'took care of':'Managed','worked with':'Collaborated with',
+  'in charge of':'Accountable for'
+};
+
+function upgradeVerbs(txt) {
+  var t = txt;
+  Object.keys(VERB_MAP).forEach(function(w) {
+    t = t.replace(new RegExp(w, 'gi'), VERB_MAP[w]);
+  });
+  return t;
+}
+
+function getSelTags(id) {
+  var c = document.getElementById(id);
+  if (!c) return [];
+  var result = [];
+  c.querySelectorAll('.tag-pill.sel').forEach(function(t) { result.push(t.textContent.trim()); });
+  return result;
+}
+
+function toggleTag(el) { el.classList.toggle('sel'); }
+
+function v(id) {
+  var e = document.getElementById(id);
+  return e ? e.value.trim() : '';
+}
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(function(p) { p.className = 'page'; });
+  document.getElementById(id).className = 'page on';
+  window.scrollTo(0, 0);
+}
+
+function goBack() { goCard(0); }
+
+/* ── CARD NAVIGATION ── */
+function goCard(n) {
+  /* Spell check on card 1 transition */
+  if (n === 1) {
+    var currentVal = v('p-current');
+    if (currentVal.length > 0 && sc_runField(currentVal, 1)) return;
+  }
+  /* Spell check on card 2 transition */
+  if (n === 2) {
+    var achVal = v('p-achievements');
+    if (achVal.length > 0 && sc_runField(achVal, 2)) return;
+  }
+  /* Quality gate on card 2 → card 3 */
+  if (n === 2) {
+    var achCheck = v('p-achievements');
+    if (achCheck.length < 80) {
+      var goOn = confirm('Your achievements look quite brief. The more specific detail you add \u2014 real numbers, outcomes, team sizes \u2014 the stronger your positioning output will be. The engine works only with what you provide here. Continue with what you have entered?');
+      if (!goOn) return;
+    }
+  }
+  showPage('s' + n);
+}
+
+/* ── GENERATE (from card 5) ── */
+function generate() {
+  var achText = v('p-achievements');
+  if (achText.length < 20) {
+    alert('Please add your key achievements on card 2 before generating.');
+    return;
+  }
+
+  var name      = v('p-name') || 'Candidate';
+  var target    = v('p-target') || 'Senior Professional';
+  var current   = v('p-current') || 'Most recent role';
+  var prev      = v('p-prev');
+  var edu       = v('p-edu');
+  var skills    = v('p-skills');
+  var proud     = v('p-proud');
+  var perception= v('p-perception');
+  var diff      = v('p-diff');
+  var why       = v('p-why');
+  var sector    = v('p-sector');
+  var seniority = v('p-seniority');
+  var trust     = v('p-trust');
+  var energise  = v('p-energise');
+  var undersell = v('p-undersell');
+  var strengths = getSelTags('strength-tags');
+  var envTags   = getSelTags('env-tags');
+
+  if (strengths.length === 0) strengths = ['Strategic leadership', 'Operational delivery', 'Stakeholder management'];
+
+  var rawBullets   = splitBullets(achText);
+  var proudBullets = proud ? splitBullets(proud) : [];
+  var allBullets   = rawBullets.concat(proudBullets);
+  var withM  = allBullets.filter(hasMetric);
+  var withoutM = allBullets.filter(function(a) { return !hasMetric(a); });
+  var ranked = withM.concat(withoutM);
+
+  _proData = {
+    name:name, target:target, current:current, prev:prev,
+    ranked:ranked, strengths:strengths, skills:skills, edu:edu,
+    perception:perception, diff:diff, why:why,
+    sector:sector, seniority:seniority, trust:trust,
+    energise:energise, undersell:undersell, envTags:envTags,
+    metrics:withM.length
+  };
+
+  var posLabel = perception ? compress(perception, 10) : target;
+  document.getElementById('out-positioning').textContent = '\u201c' + posLabel + '\u201d';
+
+  showPage('s5');
+  runProcessing();
+}
+
+/* ── 5-PASS ANIMATION ── */
+function runProcessing() {
+  var proResult = buildProResult(_proData);
+
+  var passes = [
+    { id:'pass-1', time:800 },
+    { id:'pass-2', time:900 },
+    { id:'pass-3', time:800 },
+    { id:'pass-4', time:700 },
+    { id:'pass-5', time:600 }
+  ];
+  var delay = 200;
+  passes.forEach(function(pass) {
+    setTimeout(function() {
+      var el = document.getElementById(pass.id);
+      var st = document.getElementById(pass.id + '-s');
+      if (el) el.className = 'pass-item active';
+      if (st) st.textContent = 'Analysing...';
+    }, delay);
+    setTimeout(function() {
+      var el = document.getElementById(pass.id);
+      var st = document.getElementById(pass.id + '-s');
+      if (el) el.className = 'pass-item done';
+      if (st) st.textContent = 'Complete';
+    }, delay + pass.time);
+    delay += pass.time + 100;
+  });
+
+  setTimeout(function() {
+    showPage('s6');
+    renderPreview(proResult);
+    _proResult = proResult;
+  }, delay + 300);
+}
+
+/* ── BUILD PRO RESULT ── */
+function buildProResult(d) {
+  var allText = d.ranked.join(' ').toLowerCase() + ' ' + d.strengths.join(' ').toLowerCase() + ' ' + d.target.toLowerCase();
+
+  /* PASS 1: Extract keywords */
+  var keywords = [];
+  d.target.split(/\s+/).forEach(function(w) { if (w.length > 4) keywords.push(w.toLowerCase()); });
+  d.strengths.forEach(function(s) { s.split(/\s+/).forEach(function(w) { if (w.length > 4) keywords.push(w.toLowerCase()); }); });
+  var seenKw = {};
+  keywords = keywords.filter(function(k) { if (seenKw[k]) return false; seenKw[k] = true; return true; }).slice(0, 12);
+
+  /* PASS 1: Perception signals */
+  var perSignals = [];
+  if (/assisted|helped|supported|was part of|took part/i.test(d.ranked.join(' '))) {
+    perSignals.push({ type: 'issue', label: 'Passive language detected', desc: 'Some bullets use supporting language which signals junior contribution rather than ownership. The engine has reframed these to demonstrate leadership and accountability.' });
+  }
+  if (d.metrics >= 3) {
+    perSignals.push({ type: 'positive', label: 'Strong evidence base: ' + d.metrics + ' quantified outcomes', desc: 'Quantified achievements are the most powerful ATS and recruiter signal. These have been prioritised at the top of your experience section.' });
+  } else {
+    perSignals.push({ type: 'issue', label: 'Limited quantification (' + d.metrics + ' metric bullets)', desc: 'Adding measurable outcomes is the highest-impact CV improvement available. Even approximate figures significantly increase engagement and ATS scoring.' });
+  }
+  if (d.seniority && /director|head|vp|cfo|ceo|coo|cto/i.test(d.seniority) && !/strategic|strategy|vision|architect|design|transform/i.test(allText)) {
+    perSignals.push({ type: 'issue', label: 'Operational language for senior target', desc: 'Experience is primarily operational for a director/C-suite target. The engine has elevated bullets to emphasise strategic intent and leadership decision-making.' });
+  }
+  if (d.perception && d.target) {
+    perSignals.push({ type: 'positive', label: 'Perception statement provided', desc: 'This is the most powerful input in the engine. It has been used to anchor every section to one coherent professional identity.' });
+  }
+
+  /* PASS 2: Rewrite bullets */
+  var strongOpeners = ['Spearheaded','Architected','Orchestrated','Championed','Transformed','Engineered','Accelerated','Pioneered','Elevated','Directed'];
+  var rewrittenBullets = [];
+  /* Strip any contact data that may have leaked into achievements */
+  var emailRxPro = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
+  var phoneRxPro = /(07|\+44|0044)[\d \-\(\)]{8,}/g;
+  d.ranked.forEach(function(bullet, idx) {
+    emailRxPro.lastIndex = phoneRxPro.lastIndex = 0;
+    var cleanBullet = bullet.replace(emailRxPro,'').replace(phoneRxPro,'').trim();
+    if (cleanBullet.length < 12) return;
+    var upgraded = upgradeVerbs(atsClean(cleanBullet));
+    var hasStrong = /^(led|delivered|managed|drove|built|created|launched|achieved|generated|reduced|increased|improved|developed|directed|executed|pioneered|spearheaded|architected|orchestrated|championed|accelerated|transformed|engineered|owned)/i.test(upgraded);
+    if (!hasStrong && upgraded.length > 20) {
+      var opener = strongOpeners[idx % strongOpeners.length];
+      upgraded = opener + ' ' + upgraded.charAt(0).toLowerCase() + upgraded.slice(1);
+    }
+    if (upgraded.length > 160) upgraded = upgraded.substring(0,157) + '\u2026';
+    rewrittenBullets.push(upgraded);
+  });
+  _proData.rewrittenBullets = rewrittenBullets;
+
+  /* PASS 3: Coherence scoring */
+  var scoreComponents = [
+    { label: 'Strategic alignment',    score: d.perception ? Math.min(82 + d.strengths.length * 2, 97) : Math.min(55 + d.strengths.length * 4, 82) },
+    { label: 'Narrative coherence',    score: d.metrics >= 3 ? Math.min(78 + d.metrics * 2, 96) : Math.min(48 + d.metrics * 8, 76) },
+    { label: 'ATS optimisation',       score: 91 },
+    { label: 'Perception engineering', score: d.perception && d.diff ? 93 : d.perception ? 78 : 60 },
+    { label: 'Keyword sync',           score: Math.min(68 + keywords.length * 2, 95) }
+  ];
+  var totalScore = Math.round(scoreComponents.reduce(function(s, c) { return s + c.score; }, 0) / scoreComponents.length);
+  var scoreCategory = totalScore >= 80 ? 'Sharply positioned' : totalScore >= 65 ? 'Well structured' : totalScore >= 50 ? 'Developing' : 'Needs attention';
+  var scoreCatClass = totalScore >= 80 ? 'tag-grn' : totalScore >= 65 ? 'tag-gld' : 'tag-amb';
+
+  /* PASS 3: Coherence conflicts */
+  var conflicts = [];
+  if (!d.perception) conflicts.push('No perception statement provided. Without a clear statement of how you want to be seen, the summary defaults to role description rather than identity positioning. Adding this on a future revision significantly sharpens the output.');
+  if (d.metrics < 2) conflicts.push('Fewer than 2 quantified achievements detected. Recruiters and ATS systems respond strongly to measurable outcomes. Without specific numbers, even the strongest positioning language reads as claim rather than evidence.');
+  if (d.ranked.some(function(b) { return /assisted|helped|was part of|took part|was involved/i.test(b); })) conflicts.push('Some bullets use passive or supporting language. For a ' + d.target + ' target, this signals contribution rather than ownership. The engine has reframed these throughout.');
+  if (d.seniority && /director|head|vp|cfo|ceo/i.test(d.seniority) && d.strengths.indexOf('Strategic leadership') === -1 && d.strengths.indexOf('P&L ownership') === -1) conflicts.push('Target seniority requires strategic and P&L language. These are not prominently featured in the selected strengths. The engine has compensated but explicit selection strengthens the output further.');
+  if (conflicts.length === 0) conflicts.push('No major positioning conflicts detected. The primary opportunity is optimisation &mdash; adding more quantified outcomes and tightening keyword density for maximum ATS scoring.');
+
+  /* PASS 3: ATS status */
+  var bannedFound = ATS_BANNED.filter(function(w) { return d.ranked.join(' ').toLowerCase().indexOf(w) !== -1; });
+  var atsStatus = [
+    { label:'Single-column format',   val:'Pass', cls:'pass' },
+    { label:'Standard section order', val:'Pass', cls:'pass' },
+    { label:'Banned phrases',         val:bannedFound.length === 0 ? 'Pass' : bannedFound.length + ' replaced', cls:bannedFound.length === 0 ? 'pass' : 'warn' },
+    { label:'Metric-rich bullets',    val:d.metrics + ' detected', cls:d.metrics >= 3 ? 'pass' : 'warn' },
+    { label:'Keyword sync',           val:keywords.length + ' keywords', cls:'pass' },
+    { label:'Role alignment',         val:d.target ? 'Targeted' : 'Generic', cls:d.target ? 'pass' : 'warn' }
+  ];
+
+  /* PASS 4: Positioning statement */
+  var s1 = d.strengths[0] || 'strategic leadership';
+  var s2 = d.strengths[1] || 'operational delivery';
+  var sectorCtx = d.sector ? ' within the ' + d.sector + ' sector' : '';
+  var posStatement;
+  if (d.perception) {
+    posStatement = d.perception + (d.diff ? ' \u2014 ' + compress(d.diff, 15) + '.' : '.');
+  } else {
+    posStatement = (d.name && d.name !== 'Candidate' ? d.name : 'A senior professional')
+      + ' positioned as a ' + d.target + ' with demonstrable expertise in '
+      + s1.toLowerCase() + ' and ' + s2.toLowerCase() + sectorCtx + '.'
+      + (d.diff ? ' ' + compress(d.diff, 18) + '.' : '');
+  }
+
+  /* PASS 4: Pro summary */
+  /* Clean ranked before use in summary */
+  var emailRxTA2 = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
+  var phoneRxTA2 = /(07|\+44|0044)[\d \-\(\)]{8,}/g;
+  var cleanRankedPro = d.ranked.map(function(a){
+    emailRxTA2.lastIndex = phoneRxTA2.lastIndex = 0;
+    return a.replace(emailRxTA2,'').replace(phoneRxTA2,'').trim();
+  }).filter(function(a){ return a.length > 12; });
+  var topAch = cleanRankedPro.find(hasMetric) || cleanRankedPro[0] || 'delivering sustained outcomes';
+  var nameRef = (d.name && d.name !== 'Candidate') ? d.name : 'A distinguished professional';
+  var undersellLine = d.undersell ? ' ' + compress(d.undersell, 15) + '.' : '';
+  var proSummary = nameRef + ' is a ' + d.target + ' with a demonstrable track record in '
+    + s1.toLowerCase() + ', ' + s2.toLowerCase()
+    + (d.strengths[2] ? ' and ' + d.strengths[2].toLowerCase() : '')
+    + sectorCtx + '. '
+    + compress(upgradeVerbs(atsClean(topAch)), 22) + '. '
+    + (d.perception ? compress(d.perception, 18) + '.' : '')
+    + undersellLine + ' '
+    + 'Consistently delivers outcomes that are measurable, sustained and directionally coherent with organisational priorities.';
+  _proData.proSummary = proSummary;
+
+  /* PASS 5: Identity-coherent cover letter */
+  var envStr = d.envTags && d.envTags.length > 0 ? d.envTags[0].toLowerCase() : 'high-performance';
+  var whyStr = d.why ? compress(d.why, 18) : 'pursue the next stage of my professional development';
+  var sectorLine = d.sector ? 'The ' + d.sector + ' context is one I understand and have operated within. ' : '';
+  var diffLine = d.diff ? '\n\n' + compress(d.diff, 20) + '.' : '';
+  var energiseLine = d.energise ? ' What drives me professionally is ' + compress(d.energise, 15) + '.' : '';
+  var emailRxCLP = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
+  var phoneRxCLP = /(07|\+44|0044)[\d \-\(\)]{8,}/g;
+  var cleanRankedCL = d.ranked.map(function(a){
+    emailRxCLP.lastIndex = phoneRxCLP.lastIndex = 0;
+    return a.replace(emailRxCLP,'').replace(phoneRxCLP,'').trim();
+  }).filter(function(a){ return a.length > 12; });
+  var ach2 = cleanRankedCL.find(hasMetric) || cleanRankedCL[0] || 'delivering measurable outcomes';
+  var achShort = compress(upgradeVerbs(atsClean(ach2.toLowerCase())), 22);
+
+  var coverLetter = 'Dear Hiring Manager,\n\n'
+    + 'I am writing to express my interest in the ' + d.target + ' position. '
+    + 'My background in ' + (d.current || 'progressive leadership roles') + ' has been defined by two consistent threads: '
+    + s1.toLowerCase() + ' and ' + s2.toLowerCase() + '. '
+    + 'It is precisely this combination that I believe makes me well-suited to contribute meaningfully to your organisation.\n\n'
+    + 'Throughout my career I have ' + achShort + '. '
+    + 'These outcomes were not incidental \u2014 they reflect a deliberate approach to identifying what matters most and directing energy accordingly.\n\n'
+    + sectorLine
+    + 'I am particularly drawn to ' + envStr + ' environments where strategic intent translates into measurable organisational impact. '
+    + 'My decision to ' + whyStr + ' reflects a clear-eyed assessment of where my strengths create the most value.'
+    + energiseLine
+    + diffLine + '\n\n'
+    + 'What distinguishes my application is not simply experience, but coherence of direction. '
+    + 'My resume and this letter tell the same professional story because they are built from the same foundation.\n\n'
+    + 'I would welcome the opportunity to discuss how my positioning aligns with your team\u2019s objectives.\n\n'
+    + 'Yours sincerely,\n'
+    + (d.name && d.name !== 'Candidate' ? d.name : '[Your Name]');
+
+  /* Recommendations */
+  var recs = [];
+  if (d.metrics < 3) recs.push({ title: 'Add ' + Math.max(3 - d.metrics, 1) + ' more quantified achievement' + (Math.max(3-d.metrics,1)!==1?'s':''), body: 'Quantified outcomes are the most powerful signal in your document. For a ' + d.target + ' role, recruiters expect to see scale: revenue impact, cost savings, team size, percentage improvements. Even a conservative estimate is significantly better than no figure.' });
+  if (!d.perception) recs.push({ title: 'Add a perception statement for sharper positioning', body: 'The perception field on card 4 is the most powerful input in the Pro engine. It allows the system to engineer every section toward one clear professional identity. Revisit with: \u201cI want to be seen as [specific identity] \u2014 [what makes that credible].\u201d' });
+  recs.push({ title: 'Mirror this summary language on LinkedIn', body: 'Your LinkedIn headline and About section should use the same positioning language as this summary. Recruiters cross-reference both. Consistent language reinforces credibility and improves search visibility for your target role.' });
+  if (d.sector) recs.push({ title: 'Create a sector-specific variant for ' + d.sector, body: 'For applications in ' + d.sector + ', adjust the second paragraph of the summary to reference specific sector challenges. Sector-fluent language significantly improves recruiter response rates in specialist areas.' });
+
+  /* Positioning summary */
+  var posSum = totalScore >= 75
+    ? (d.name && d.name !== 'Candidate' ? d.name : 'Your') + '\u2019s professional positioning is clear and coherent. The 5-pass engine has sharpened the narrative, synchronised keywords across all sections and engineered the language to present ' + (d.perception ? compress(d.perception, 10) : d.target + ' capability') + ' with authority. The primary opportunity is adding further quantified evidence to convert strong positioning into undeniable evidence.'
+    : totalScore >= 55
+    ? 'The positioning has strong foundations but benefits significantly from the compression and engineering applied here. The gap between where you are and where you want to go is primarily a language and framing problem \u2014 not a capability problem. Adding a perception statement and more metric-rich bullets in a future revision would move the coherence score significantly.'
+    : 'The positioning requires work \u2014 but the raw material is there. The engine has done significant compression and reframing. The immediate priority: add specific numbers to your top 3 achievements and complete the perception statement on card 4. That single revision would move the coherence score by 15\u201320 points.';
+
+  return {
+    posStatement:posStatement, proSummary:proSummary, rewrittenBullets:rewrittenBullets,
+    coverLetter:coverLetter, scoreComponents:scoreComponents,
+    totalScore:totalScore, scoreCategory:scoreCategory, scoreCatClass:scoreCatClass,
+    perSignals:perSignals, conflicts:conflicts, atsStatus:atsStatus,
+    recs:recs.slice(0,4), posSum:posSum
+  };
+}
+
+/* ── RENDER PREVIEW ── */
+function renderPreview(d) {
+  document.getElementById('prev-score').innerHTML = d.totalScore + '<span>/100</span>';
+  var catEl = document.getElementById('prev-score-cat');
+  catEl.textContent = d.scoreCategory;
+  catEl.className = 'score-cat ' + d.scoreCatClass;
+  setTimeout(function() { document.getElementById('prev-score-bar').style.width = d.totalScore + '%'; }, 300);
+
+  var sigEl = document.getElementById('prev-perception');
+  if (d.perSignals && d.perSignals.length > 0) {
+    var sig = d.perSignals[0];
+    sigEl.innerHTML = '<div class="signal-item' + (sig.type === 'positive' ? ' positive' : '') + '">'
+      + '<strong>' + sig.label + '</strong><br>' + sig.desc + '</div>';
+  }
+
+  var confEl = document.getElementById('prev-conflict');
+  if (d.conflicts && d.conflicts.length > 0) {
+    confEl.innerHTML = '<div class="conflict-item">' + d.conflicts[0] + '</div>';
+  }
+}
+
+/* ── UNLOCK FULL ── */
+function unlockFull() {
+  if (PREMIUM_GATED) {
+    sessionStorage.setItem('pro_data', JSON.stringify(_proData));
+    window.location.href = 'https://your-lemon-squeezy-link.com';
+    return;
+  }
+  document.getElementById('unlock-card').style.display = 'none';
+  document.getElementById('ai-loader').style.display = 'block';
+
+  var msgs = ['Rendering positioning statement...','Building identity coherence scores...','Running ATS strategic optimisation...','Writing identity-coherent cover letter...','Completing your positioning report...'];
+  var idx = 0;
+  var el  = document.getElementById('ai-loader-msg');
+  var iv  = setInterval(function() { idx = (idx+1)%msgs.length; if (el) el.textContent = msgs[idx]; }, 700);
+
+  setTimeout(function() {
+    clearInterval(iv);
+    document.getElementById('ai-loader').style.display = 'none';
+    renderFull(_proResult);
+  }, 3000);
+}
+
+/* ── RENDER FULL ── */
+function renderFull(d) {
+  var pd = _proData;
+
+  document.getElementById('out-pos-stmt').textContent = '\u201c' + d.posStatement + '\u201d';
+
+  /* Identity model */
+  var idItems = [
+    { label:'Positioning as', val:pd.perception ? compress(pd.perception,10) : pd.target },
+    { label:'Core identity',  val:pd.strengths.slice(0,3).join(' \u00b7 ') },
+    { label:'Direction',      val:pd.target },
+    { label:'Differentiator', val:pd.diff ? compress(pd.diff,12) : 'Determined from strengths and achievements' }
+  ];
+  var idHTML = '';
+  idItems.forEach(function(item) {
+    idHTML += '<div class="perception-card"><div class="perception-label">' + item.label + '</div><div class="perception-val">' + item.val + '</div></div>';
+  });
+  document.getElementById('out-identity-model').innerHTML = idHTML;
+
+  /* Identity scores */
+  var scHTML = '';
+  d.scoreComponents.forEach(function(comp) {
+    scHTML += '<div class="identity-score-card">';
+    scHTML += '<div class="id-score-label">' + comp.label + '</div>';
+    scHTML += '<div class="id-score-bar-track"><div class="id-score-bar-fill" style="width:0%" data-target="' + comp.score + '%"></div></div>';
+    scHTML += '<div class="id-score-num">' + comp.score + '%</div></div>';
+  });
+  document.getElementById('out-identity-scores').innerHTML = scHTML;
+  setTimeout(function() {
+    document.querySelectorAll('.id-score-bar-fill').forEach(function(bar) { bar.style.width = bar.getAttribute('data-target'); });
+  }, 300);
+
+  /* ATS grid */
+  var atsHTML = '';
+  d.atsStatus.forEach(function(item) {
+    atsHTML += '<div class="ats-cell ' + item.cls + '"><div class="ats-cell-label">' + item.label + '</div><div class="ats-cell-val">' + item.val + '</div></div>';
+  });
+  document.getElementById('out-ats-grid').innerHTML = atsHTML;
+
+  /* Conflicts */
+  document.getElementById('out-conflicts').innerHTML = d.conflicts.map(function(c) {
+    return '<div class="conflict-item">' + c + '</div>';
+  }).join('');
+
+  /* Resume */
+  var sHTML = '';
+  pd.strengths.forEach(function(s) { sHTML += '<span class="strength-tag">' + s + '</span>'; });
+  var bHTML = '';
+  d.rewrittenBullets.slice(0,6).forEach(function(b) {
+    bHTML += '<li' + (hasMetric(b) ? ' class="metric"' : '') + '>' + b + '</li>';
+  });
+
+  var rHTML = '<div class="pass-badge">5-pass identity refinement complete</div>';
+  rHTML += '<div class="resume-pos-stmt">' + d.posStatement + '</div>';
+  rHTML += '<div class="resume-name">' + pd.name + '</div>';
+  rHTML += '<div class="resume-target">' + pd.target + '</div>';
+  rHTML += '<div class="resume-section"><div class="resume-sec-head">Professional summary</div><div class="resume-summary">' + d.proSummary + '</div></div>';
+  rHTML += '<div class="resume-section"><div class="resume-sec-head">Core competencies</div><div class="strengths-wrap">' + sHTML + '</div></div>';
+  rHTML += '<div class="resume-section"><div class="resume-sec-head">Professional experience</div><div class="resume-role-label">' + pd.current + '</div><ul class="resume-bullets">' + bHTML + '</ul></div>';
+
+  if (pd.prev) {
+    var pBullets = d.rewrittenBullets.slice(6, 9);
+    if (pBullets.length > 0) {
+      var pHTML = '';
+      pBullets.forEach(function(b) { pHTML += '<li>' + b + '</li>'; });
+      rHTML += '<div class="resume-section"><div class="resume-role-label">' + pd.prev + '</div><ul class="resume-bullets">' + pHTML + '</ul></div>';
+    }
+  }
+  if (pd.trust) { rHTML += '<div class="resume-section"><div class="resume-sec-head">Key competencies</div><div class="resume-summary">' + compress(upgradeVerbs(atsClean(pd.trust)), 40) + '</div></div>'; }
+  if (pd.skills) { rHTML += '<div class="resume-section"><div class="resume-sec-head">Technical skills &amp; certifications</div><div class="resume-summary">' + pd.skills + '</div></div>'; }
+  if (pd.edu) { rHTML += '<div class="resume-section"><div class="resume-sec-head">Education</div><div class="resume-summary">' + pd.edu + '</div></div>'; }
+  document.getElementById('out-resume').innerHTML = rHTML;
+
+  document.getElementById('out-cover').textContent = d.coverLetter;
+
+  var recHTML = '';
+  d.recs.forEach(function(r,i) {
+    recHTML += '<div class="rec-item"><div class="rec-num">' + String(i+1).padStart(2,'0') + '</div><div class="rec-text"><h5>' + r.title + '</h5><p>' + r.body + '</p></div></div>';
+  });
+  document.getElementById('out-recs').innerHTML = recHTML;
+  document.getElementById('out-summary').textContent = d.posSum;
+
+  var fullOut = document.getElementById('full-output');
+  fullOut.style.display = 'block';
+  fullOut.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+/* ── ATS DOWNLOAD ── */
+function dlATS() {
+  var pd = _proData;
+  if (!pd || !pd.name) { alert('Please generate your positioning first.'); return; }
+  var lines = [pd.name, pd.target, '', 'PROFESSIONAL SUMMARY', atsClean(pd.proSummary || ''), '', 'EXPERIENCE', pd.current];
+  (pd.rewrittenBullets || pd.ranked).slice(0,8).forEach(function(b) { lines.push('- ' + atsClean(b)); });
+  if (pd.prev) { lines.push(''); lines.push(pd.prev); }
+  if (pd.strengths && pd.strengths.length > 0) { lines.push(''); lines.push('CORE COMPETENCIES'); lines.push(pd.strengths.join(' | ')); }
+  if (pd.skills) { lines.push(''); lines.push('TECHNICAL SKILLS & CERTIFICATIONS'); lines.push(pd.skills); }
+  if (pd.edu) { lines.push(''); lines.push('EDUCATION'); lines.push(pd.edu); }
+  var blob = new Blob([lines.join('\n')], { type:'text/plain' });
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href = url; a.download = (pd.name||'resume').replace(/\s+/g,'_') + '_ATS_Pro.txt';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+function dlXLSX() {
+  var pd = _proData; var pr = _proResult;
+  if (!pd || !pd.name) { alert('Please generate your positioning first.'); return; }
+  var wb = XLSX.utils.book_new();
+  var ws1 = XLSX.utils.aoa_to_sheet([
+    ['Name', pd.name], ['Target role', pd.target], ['Current role', pd.current], [''],
+    ['POSITIONING STATEMENT'], [pr.posStatement || ''], [''],
+    ['PROFESSIONAL SUMMARY'], [pr.proSummary || ''], [''],
+    ['Coherence Score', (pr.totalScore||0) + '/100'], ['Category', pr.scoreCategory||'']
+  ]);
+  ws1['!cols'] = [{wch:25},{wch:80}];
+  XLSX.utils.book_append_sheet(wb, ws1, 'Positioning Statement');
+  var resumeRows = [
+    [pd.name], [pd.target], [''], ['"' + (pr.posStatement||'') + '"'], [''],
+    ['PROFESSIONAL SUMMARY'], [pr.proSummary||''], [''],
+    ['CORE COMPETENCIES'], [(pd.strengths||[]).join(' | ')], [''],
+    ['PROFESSIONAL EXPERIENCE'], [pd.current]
+  ];
+  (pr.rewrittenBullets||[]).slice(0,7).forEach(function(b){ resumeRows.push(['  - ' + b]); });
+  if (pd.prev) { resumeRows.push(['']); resumeRows.push([pd.prev]); (pr.rewrittenBullets||[]).slice(7,10).forEach(function(b){ resumeRows.push(['  - ' + b]); }); }
+  if (pd.skills) { resumeRows.push(['']); resumeRows.push(['TECHNICAL SKILLS']); resumeRows.push([pd.skills]); }
+  if (pd.edu)    { resumeRows.push(['']); resumeRows.push(['EDUCATION']); resumeRows.push([pd.edu]); }
+  var ws2 = XLSX.utils.aoa_to_sheet(resumeRows);
+  ws2['!cols'] = [{wch:90}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Resume');
+  var ws3 = XLSX.utils.aoa_to_sheet((pr.coverLetter||'').split('\n').map(function(l){ return [l]; }));
+  ws3['!cols'] = [{wch:90}];
+  XLSX.utils.book_append_sheet(wb, ws3, 'Cover Letter');
+  var scoreRows = [['Component','Score (%)']];
+  (pr.scoreComponents||[]).forEach(function(c){ scoreRows.push([c.label, c.score]); });
+  scoreRows.push(['OVERALL', pr.totalScore||0]);
+  var ws4 = XLSX.utils.aoa_to_sheet(scoreRows);
+  ws4['!cols'] = [{wch:30},{wch:15}];
+  XLSX.utils.book_append_sheet(wb, ws4, 'Identity Scores');
+  var atsRows = [['Check','Result','Status']];
+  (pr.atsStatus||[]).forEach(function(a){ atsRows.push([a.label, a.val, a.cls==='pass'?'Pass':'Review']); });
+  atsRows.push(['']); atsRows.push(['Conflicts detected','','']);
+  (pr.conflicts||[]).forEach(function(c,i){ atsRows.push([String(i+1).padStart(2,'0'), c, '']); });
+  var ws5 = XLSX.utils.aoa_to_sheet(atsRows);
+  ws5['!cols'] = [{wch:30},{wch:20},{wch:10}];
+  XLSX.utils.book_append_sheet(wb, ws5, 'ATS Report');
+  var recRows = [['Recommendations','']];
+  (pr.recs||[]).forEach(function(r,i){ recRows.push([String(i+1).padStart(2,'0')+'. '+(r.title||''), r.body||'']); recRows.push(['','']); });
+  recRows.push(['Positioning Summary','']); recRows.push([pr.posSum||'','']);
+  var ws6 = XLSX.utils.aoa_to_sheet(recRows);
+  ws6['!cols'] = [{wch:35},{wch:70}];
+  XLSX.utils.book_append_sheet(wb, ws6, 'Recommendations');
+  XLSX.writeFile(wb, (pd.name||'resume').replace(/\s+/g,'_') + '_RC_Loop_Pro.xlsx');
+}
+function dlGoogleSheets() {
+  var pd = _proData; var pr = _proResult;
+  if (!pd || !pd.name) { alert('Please generate your positioning first.'); return; }
+  var lines = ['RC LOOP RESUME PRO - ' + pd.name, 'Target: ' + pd.target, '', 'POSITIONING STATEMENT', pr.posStatement||'', '', 'PROFESSIONAL SUMMARY', pr.proSummary||'', '', 'RESUME', pd.current];
+  (pr.rewrittenBullets||[]).slice(0,8).forEach(function(b){ lines.push('  - ' + b); });
+  lines.push(''); lines.push('COVER LETTER'); lines.push(pr.coverLetter||'');
+  lines.push(''); lines.push('COHERENCE SCORE: ' + (pr.totalScore||0) + '/100');
+  var blob = new Blob([lines.join('\n')], {type:'text/plain'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = (pd.name||'resume').replace(/\s+/g,'_') + '_Pro_Google_Sheets.txt';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  setTimeout(function(){ alert('Downloaded. In Google Sheets: File -> Import -> Upload this file.'); }, 300);
+}
+
+/* Return from payment */
+document.addEventListener('DOMContentLoaded', function() {
+  if (window.location.search.indexOf('unlocked=true') !== -1) {
+    var stored = sessionStorage.getItem('pro_data');
+    if (stored) {
+      try {
+        _proData = JSON.parse(stored);
+        if (_proData.name) {
+          var result = buildProResult(_proData);
+          showPage('s6');
+          renderPreview(result);
+          _proResult = result;
+          unlockFull();
+        }
+      } catch(e) {}
+    }
+  }
+});
+</script>
+</body>
+</html>
