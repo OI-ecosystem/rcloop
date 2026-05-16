@@ -1411,7 +1411,7 @@ function renderAI(d) {
 function callAPI(intent, income, out, debt, savings, concern, onSuccess) {
   var system = 'You are a financial clarity engine for RC Loop. Analyse the user situation and return ONLY valid JSON with these keys: diagnosis, pressure, pressureClass, concerns (array), overviewHTML, dispHTML, planHeader, planHTML, bufferHTML, score (number), scoreComponents (array of {label,score,max}), conflicts (array), scenarioHTML, recs (array of {title,body}), actionWeeks (array of {week, actions array}), summary, intent. No markdown.';
   var prompt = 'Intent: ' + intent + '. Income: ' + fmt(income) + '/mo. Outgoings: ' + fmt(out) + '/mo. Debt: ' + fmt(debt) + '. Savings: ' + fmt(savings) + '. Concern: ' + concern + '. Specific items: ' + JSON.stringify(_specificSpend) + '. Generate all 10 sections.';
-  fetch('https://your-vercel-app.vercel.app/api/ai', {
+  fetch('https://rcloop-proxy.vercel.app/api/ai', {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ system:system, prompt:prompt })
   })
