@@ -2825,7 +2825,22 @@ document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('out-intent').textContent = '\u201c' + d.intent + '\u201d';
       showPage('s2');
       renderPreview(_proResult);
-      unlockFull();
+      // Payment confirmed - call AI directly, bypass PREMIUM_GATED check
+      document.getElementById('unlock-card').style.display = 'none';
+      document.getElementById('ai-loader').style.display = 'block';
+      var msgs2 = ['Rendering your financial position dashboard...','Building debt snowball and avalanche tables...','Calculating opportunity cost engine...','Projecting 3-scenario trajectories...','Completing your stability timeline...'];
+      var idx2 = 0; var el2 = document.getElementById('ai-loader-msg');
+      var iv2 = setInterval(function(){ idx2=(idx2+1)%msgs2.length; if(el2) el2.textContent=msgs2[idx2]; }, 700);
+      var prompt2 = 'You are a personal finance advisor. Refine this financial summary to sound personal, clear and actionable. Fix any grammar. Keep all figures accurate. Speak directly to the person (you/your).\n\nSUMMARY:\n' + _proResult.summary + '\n\nReturn ONLY valid JSON: {"summary": "..."}';
+      fetch('https://rcloop-proxy.vercel.app/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ system: 'You are a personal finance advisor. Return only valid JSON.', prompt: prompt2 })
+      }).then(function(r){ return r.json(); }).then(function(data){
+        clearInterval(iv2); document.getElementById('ai-loader').style.display='none';
+        try { var parsed2=JSON.parse(data.content[0].text); if(parsed2.summary) _proResult.summary=parsed2.summary; } catch(e){}
+        renderFull(_proResult);
+      }).catch(function(){ clearInterval(iv2); document.getElementById('ai-loader').style.display='none'; renderFull(_proResult); });
     }
   }
 });
