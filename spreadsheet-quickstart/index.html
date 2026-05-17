@@ -189,6 +189,18 @@ textarea{min-height:70px;resize:vertical}
 .scenario-structured td{font-weight:500}
 .scenario-structured td:first-child::after{content:' ★';color:var(--gold)}
 
+/* PRINT STYLES */
+@media print {
+  nav, .page:not(#s2), .dl-btn, .nav-back,
+  button, .output-footer-btns { display: none !important; }
+  body { background: #fff; font-size: 11pt; }
+  .wrap { max-width: 100%; padding: 0; }
+  .card, .score-card, .conflicts-card, .action-plan,
+  .positioning-summary { break-inside: avoid; margin-bottom: 8px; border: 0.5px solid #ddd; }
+  table { font-size: 9pt; }
+  a { text-decoration: none; color: inherit; }
+}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
@@ -356,6 +368,7 @@ textarea{min-height:70px;resize:vertical}
         <div class="sheet-header">
           <h4>Monthly financial overview</h4>
           <div class="dl-row">
+            <button class="dl-btn" onclick="window.print()" style="background:#1a1a14;color:#fff;border-color:#1a1a14;">&#128438; Save as PDF</button>
             <button class="dl-btn pri" onclick="dlXLSX()">&#8595; XLSX</button>
             <button class="dl-btn" onclick="dlGoogleSheets()">&#8595; Google Sheets</button>
           </div>
@@ -378,7 +391,7 @@ textarea{min-height:70px;resize:vertical}
 
     <!-- UNLOCK CARD -->
     <div class="unlock-card" id="unlock-card" style="display:none;">
-      <div class="dev-pill">DEV MODE &mdash; Mock response. Zero tokens.</div>
+      <div class="dev-pill" id="dev-pill" style="display:none;">DEV MODE &mdash; Mock response. Zero tokens.</div>
       <p class="unlock-heading">Get your personalised financial clarity system.</p>
       <p class="unlock-sub">10 structured sections built from your exact situation &mdash; not a template. A coherence score, debt snowball plan, disposable income analysis, scenario modelling and a monthly action plan.</p>
       <div class="unlock-features">
@@ -416,6 +429,7 @@ textarea{min-height:70px;resize:vertical}
         <div class="sheet-header">
           <h4>Monthly financial snapshot</h4>
           <div class="dl-row">
+            <button class="dl-btn" onclick="window.print()" style="background:#1a1a14;color:#fff;border-color:#1a1a14;">&#128438; Save as PDF</button>
             <button class="dl-btn pri" onclick="dlXLSX()">&#8595; XLSX</button>
             <button class="dl-btn" onclick="dlGoogleSheets()">&#8595; Google Sheets</button>
           </div>
