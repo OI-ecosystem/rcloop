@@ -1,3 +1,4 @@
+<!-- © 2025 RC Loop. All rights reserved. Unauthorised copying or distribution prohibited. -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -750,8 +751,8 @@ footer{border-top:0.5px solid var(--border);padding:24px 32px;display:flex;align
    No adjacent string literals without +
 ============================================================ */
 
-var DEV_MODE      = true;
-var PREMIUM_GATED = false;
+var DEV_MODE      = false;
+var PREMIUM_GATED = true;
 
 var _proData   = {};
 var _proResult = {};
@@ -1331,7 +1332,7 @@ function renderPreview(d) {
 function unlockFull() {
   if (PREMIUM_GATED) {
     sessionStorage.setItem('pro_data', JSON.stringify(_proData));
-    window.location.href = 'https://your-lemon-squeezy-link.com';
+    window.location.href = 'https://opportunity-intelligence.lemonsqueezy.com/checkout/buy/b3d2ecf8-1700-45eb-81cc-2f1a40d4302f';
     return;
   }
   document.getElementById('unlock-card').style.display = 'none';
@@ -1342,11 +1343,47 @@ function unlockFull() {
   var el  = document.getElementById('ai-loader-msg');
   var iv  = setInterval(function() { idx = (idx+1)%msgs.length; if (el) el.textContent = msgs[idx]; }, 700);
 
-  setTimeout(function() {
+  if (DEV_MODE) {
+    setTimeout(function() {
+      clearInterval(iv);
+      document.getElementById('ai-loader').style.display = 'none';
+      renderFull(_proResult);
+    }, 3000);
+    return;
+  }
+
+  /* AI refinement pass */
+  var pd = _proData;
+  var prompt = 'You are a professional CV writer. Refine the following two sections for ' + pd.name + ' who is positioning as ' + pd.target + '.\n\n'
+    + 'PROFESSIONAL SUMMARY (refine to flow naturally, fix grammar, keep all facts):\n' + _proResult.proSummary + '\n\n'
+    + 'COVER LETTER (refine to sound natural and compelling, fix any grammar or truncated sentences):\n' + _proResult.coverLetter + '\n\n'
+    + 'Return ONLY valid JSON with exactly these two keys: {"proSummary": "...", "coverLetter": "..."}. No other text.';
+
+  fetch('https://rcloop-proxy.vercel.app/api/ai', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      system: 'You are an expert CV and cover letter writer. Return only valid JSON.',
+      prompt: prompt
+    })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    clearInterval(iv);
+    document.getElementById('ai-loader').style.display = 'none';
+    try {
+      var text = data.content[0].text;
+      var parsed = JSON.parse(text);
+      if (parsed.proSummary) _proResult.proSummary = parsed.proSummary;
+      if (parsed.coverLetter) _proResult.coverLetter = parsed.coverLetter;
+    } catch(e) {}
+    renderFull(_proResult);
+  })
+  .catch(function() {
     clearInterval(iv);
     document.getElementById('ai-loader').style.display = 'none';
     renderFull(_proResult);
-  }, 3000);
+  });
 }
 
 /* ── RENDER FULL ── */
