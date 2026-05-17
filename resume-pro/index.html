@@ -622,7 +622,7 @@ footer{border-top:0.5px solid var(--border);padding:24px 32px;display:flex;align
 
   <!-- UNLOCK -->
   <div class="unlock-card" id="unlock-card">
-    <div class="dev-pill">DEV MODE &mdash; Mock response. Zero tokens.</div>
+    <div class="dev-pill" id="dev-pill" style="display:none;">DEV MODE &mdash; Mock response. Zero tokens.</div>
     <p class="unlock-heading">Unlock your full professional positioning.</p>
     <p class="unlock-sub">5-pass identity coherence. Strategic ATS optimisation. Keyword synchronisation. Perception engineering. Positioning statement. Identity-coherent cover letter.</p>
     <div class="unlock-features">
@@ -1310,6 +1310,9 @@ function buildProResult(d) {
 
 /* ── RENDER PREVIEW ── */
 function renderPreview(d) {
+  var devPill = document.getElementById('dev-pill');
+  if (devPill) devPill.style.display = DEV_MODE ? 'inline-block' : 'none';
+
   document.getElementById('prev-score').innerHTML = d.totalScore + '<span>/100</span>';
   var catEl = document.getElementById('prev-score-cat');
   catEl.textContent = d.scoreCategory;
@@ -1353,20 +1356,40 @@ function unlockFull() {
     return;
   }
 
-  /* AI refinement pass */
+  /* AI refinement pass — full Pro quality */
   var pd = _proData;
-  var prompt = 'You are a professional CV writer. Refine the following two sections for ' + pd.name + ' who is positioning as ' + pd.target + '.\n\n'
-    + 'PROFESSIONAL SUMMARY (refine to flow naturally, fix grammar, keep all facts):\n' + _proResult.proSummary + '\n\n'
-    + 'COVER LETTER (refine to sound natural and compelling, fix any grammar or truncated sentences):\n' + _proResult.coverLetter + '\n\n'
-    + 'Return ONLY valid JSON with exactly these two keys: {"proSummary": "...", "coverLetter": "..."}. No other text.';
+  var system = 'You are a senior CV writer and career positioning specialist with 20 years of experience writing CVs for UK professionals that secure interviews at top organisations. You write with precision, authority and clarity. Every sentence is complete, grammatically correct and purposeful. You never use filler phrases, never truncate sentences with ellipsis, and never produce generic output. Respond ONLY in valid JSON with no markdown, no preamble, no explanation.';
+  var prompt = 'Write a professionally positioned CV and cover letter for a premium £29 product. Every field must be complete, polished and ready to send to a recruiter. This person has reflected deeply on their career — honour that with exceptional output.\n\n'
+    + 'CANDIDATE: ' + pd.name + '\n'
+    + 'TARGET ROLE: ' + pd.target + '\n'
+    + 'CURRENT ROLE: ' + pd.current + '\n'
+    + (pd.prev ? 'PREVIOUS ROLE: ' + pd.prev + '\n' : '')
+    + 'SECTOR: ' + (pd.sector || 'not specified') + '\n'
+    + 'CORE STRENGTHS: ' + pd.strengths.join(', ') + '\n'
+    + 'ENVIRONMENTS: ' + (pd.environments ? pd.environments.join(', ') : 'not specified') + '\n'
+    + 'KEY ACHIEVEMENTS:\n' + splitBullets(pd.achievements).map(function(b,i){ return (i+1)+'. '+b; }).join('\n') + '\n'
+    + (pd.proud ? 'PROUD OF: ' + pd.proud + '\n' : '')
+    + (pd.perception ? 'HOW THEY WANT TO BE PERCEIVED: ' + pd.perception + '\n' : '')
+    + (pd.diff ? 'WHAT DIFFERENTIATES THEM: ' + pd.diff + '\n' : '')
+    + (pd.why ? 'WHY MAKING THIS MOVE: ' + pd.why + '\n' : '')
+    + (pd.trust ? 'TRUSTED COLLEAGUES KNOW THEM FOR: ' + pd.trust + '\n' : '')
+    + (pd.energise ? 'ENERGISED BY: ' + pd.energise + '\n' : '')
+    + (pd.undersells ? 'CV CURRENTLY UNDERSELLS: ' + pd.undersells + '\n' : '')
+    + (pd.skills ? 'SKILLS: ' + pd.skills + '\n' : '')
+    + (pd.edu ? 'EDUCATION: ' + pd.edu + '\n' : '')
+    + '\nINSTRUCTIONS:\n'
+    + '1. proSummary: 3-4 complete sentences. Open with name and target role. Reference the strongest metric achievement. Weave in what makes them distinctive from the perception and differentiator fields. Close with their impact. No ellipsis. No generic phrases like results-driven or dynamic. Reference their actual sector.\n'
+    + '2. rewrittenBullets: Rewrite every achievement bullet. Start each with a strong past-tense action verb (Spearheaded, Delivered, Architected, Championed, Orchestrated, Accelerated etc). Keep all metrics exactly. Complete grammatical sentence under 160 chars. Never truncate with ellipsis. Write all of them.\n'
+    + '3. coverLetter: 4 paragraphs. Para 1: Express interest in the target role and summarise career in 2 sentences using their actual background. Para 2: 2-3 specific achievements with metrics woven naturally into narrative prose — not a list. Para 3: Why this role excites them, referencing their sector preference and what energises them. Para 4: Confident close. Sign off "Yours sincerely," then name. Natural human voice, not a template. Every sentence complete.\n'
+    + '4. positioningStatement: One powerful sentence that captures exactly how this person should be perceived professionally. Use their perception and differentiator fields.\n'
+    + '5. posSum: 2-3 sentences summarising the overall positioning assessment and the single highest-leverage action they should take.\n'
+    + '\nReturn ONLY this JSON, no other text:\n'
+    + '{"proSummary":"","rewrittenBullets":[],"coverLetter":"","positioningStatement":"","posSum":""}';
 
   fetch('https://rcloop-proxy.vercel.app/api/ai', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      system: 'You are an expert CV and cover letter writer. Return only valid JSON.',
-      prompt: prompt
-    })
+    body: JSON.stringify({ system: system, prompt: prompt })
   })
   .then(function(r) { return r.json(); })
   .then(function(data) {
@@ -1374,9 +1397,15 @@ function unlockFull() {
     document.getElementById('ai-loader').style.display = 'none';
     try {
       var text = data.content[0].text;
-      var parsed = JSON.parse(text);
-      if (parsed.proSummary) _proResult.proSummary = parsed.proSummary;
-      if (parsed.coverLetter) _proResult.coverLetter = parsed.coverLetter;
+      var clean = text.replace(/```json|```/g,'').trim();
+      var s = clean.indexOf('{'); var e = clean.lastIndexOf('}');
+      if (s >= 0 && e > s) { clean = clean.substring(s, e+1); }
+      var parsed = JSON.parse(clean);
+      if (parsed.proSummary)         _proResult.proSummary    = parsed.proSummary;
+      if (parsed.rewrittenBullets)   _proResult.rewrittenBullets = parsed.rewrittenBullets;
+      if (parsed.coverLetter)        _proResult.coverLetter   = parsed.coverLetter;
+      if (parsed.positioningStatement) _proResult.posStatement = parsed.positioningStatement;
+      if (parsed.posSum)             _proResult.posSum        = parsed.posSum;
     } catch(e) {}
     renderFull(_proResult);
   })
@@ -1389,6 +1418,10 @@ function unlockFull() {
 
 /* ── RENDER FULL ── */
 function renderFull(d) {
+  /* Hide preview gating — user has paid */
+  document.getElementById('free-preview').style.display = 'none';
+  document.getElementById('unlock-card').style.display = 'none';
+
   var pd = _proData;
 
   document.getElementById('out-pos-stmt').textContent = '\u201c' + d.posStatement + '\u201d';
@@ -1742,16 +1775,52 @@ document.addEventListener('DOMContentLoaded', function() {
           var idx = 0;
           var el = document.getElementById('ai-loader-msg');
           var iv = setInterval(function() { idx=(idx+1)%msgs.length; if(el) el.textContent=msgs[idx]; }, 700);
-          var pd = _proData;
-          var prompt = 'You are a senior CV writer. Refine the following two sections for ' + pd.name + ' positioning as ' + pd.target + '.\n\nPROFESSIONAL SUMMARY (refine to flow naturally, fix grammar, keep all facts, no ellipsis, no generic phrases):\n' + _proResult.proSummary + '\n\nCOVER LETTER (refine to sound natural and compelling, fix any grammar or truncated sentences, 4 complete paragraphs):\n' + _proResult.coverLetter + '\n\nReturn ONLY valid JSON: {"proSummary": "...", "coverLetter": "..."}';
+          var system2 = 'You are a senior CV writer and career positioning specialist with 20 years of experience writing CVs for UK professionals that secure interviews at top organisations. You write with precision, authority and clarity. Every sentence is complete, grammatically correct and purposeful. You never use filler phrases, never truncate sentences with ellipsis, and never produce generic output. Respond ONLY in valid JSON with no markdown, no preamble, no explanation.';
+          var prompt = 'Write a professionally positioned CV and cover letter for a premium £29 product. Every field must be complete, polished and ready to send to a recruiter. This person has reflected deeply on their career — honour that with exceptional output.\n\n'
+            + 'CANDIDATE: ' + pd.name + '\n'
+            + 'TARGET ROLE: ' + pd.target + '\n'
+            + 'CURRENT ROLE: ' + pd.current + '\n'
+            + (pd.prev ? 'PREVIOUS ROLE: ' + pd.prev + '\n' : '')
+            + 'SECTOR: ' + (pd.sector || 'not specified') + '\n'
+            + 'CORE STRENGTHS: ' + pd.strengths.join(', ') + '\n'
+            + 'ENVIRONMENTS: ' + (pd.environments ? pd.environments.join(', ') : 'not specified') + '\n'
+            + 'KEY ACHIEVEMENTS:\n' + splitBullets(pd.achievements).map(function(b,i){ return (i+1)+'. '+b; }).join('\n') + '\n'
+            + (pd.proud ? 'PROUD OF: ' + pd.proud + '\n' : '')
+            + (pd.perception ? 'HOW THEY WANT TO BE PERCEIVED: ' + pd.perception + '\n' : '')
+            + (pd.diff ? 'WHAT DIFFERENTIATES THEM: ' + pd.diff + '\n' : '')
+            + (pd.why ? 'WHY MAKING THIS MOVE: ' + pd.why + '\n' : '')
+            + (pd.trust ? 'TRUSTED COLLEAGUES KNOW THEM FOR: ' + pd.trust + '\n' : '')
+            + (pd.energise ? 'ENERGISED BY: ' + pd.energise + '\n' : '')
+            + (pd.undersells ? 'CV CURRENTLY UNDERSELLS: ' + pd.undersells + '\n' : '')
+            + (pd.skills ? 'SKILLS: ' + pd.skills + '\n' : '')
+            + (pd.edu ? 'EDUCATION: ' + pd.edu + '\n' : '')
+            + '\nINSTRUCTIONS:\n'
+            + '1. proSummary: 3-4 complete sentences. Open with name and target role. Reference the strongest metric achievement. Weave in what makes them distinctive from the perception and differentiator fields. Close with their impact. No ellipsis. No generic phrases like results-driven or dynamic. Reference their actual sector.\n'
+            + '2. rewrittenBullets: Rewrite every achievement bullet. Start each with a strong past-tense action verb (Spearheaded, Delivered, Architected, Championed, Orchestrated, Accelerated etc). Keep all metrics exactly. Complete grammatical sentence under 160 chars. Never truncate with ellipsis. Write all of them.\n'
+            + '3. coverLetter: 4 paragraphs. Para 1: Express interest in the target role and summarise career in 2 sentences using their actual background. Para 2: 2-3 specific achievements with metrics woven naturally into narrative prose — not a list. Para 3: Why this role excites them, referencing their sector preference and what energises them. Para 4: Confident close. Sign off "Yours sincerely," then name. Natural human voice, not a template. Every sentence complete.\n'
+            + '4. positioningStatement: One powerful sentence that captures exactly how this person should be perceived professionally. Use their perception and differentiator fields.\n'
+            + '5. posSum: 2-3 sentences summarising the overall positioning assessment and the single highest-leverage action they should take.\n'
+            + '\nReturn ONLY this JSON, no other text:\n'
+            + '{"proSummary":"","rewrittenBullets":[],"coverLetter":"","positioningStatement":"","posSum":""}';
           fetch('https://rcloop-proxy.vercel.app/api/ai', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ system: 'You are an expert CV writer. Return only valid JSON.', prompt: prompt })
+            body: JSON.stringify({ system: system2, prompt: prompt })
           }).then(function(r){ return r.json(); }).then(function(data){
             clearInterval(iv);
             document.getElementById('ai-loader').style.display = 'none';
-            try { var parsed = JSON.parse(data.content[0].text); if(parsed.proSummary) _proResult.proSummary=parsed.proSummary; if(parsed.coverLetter) _proResult.coverLetter=parsed.coverLetter; } catch(e){}
+            try {
+              var text = data.content[0].text;
+              var clean = text.replace(/```json|```/g,'').trim();
+              var s2 = clean.indexOf('{'); var e2 = clean.lastIndexOf('}');
+              if (s2 >= 0 && e2 > s2) { clean = clean.substring(s2, e2+1); }
+              var parsed = JSON.parse(clean);
+              if (parsed.proSummary)           _proResult.proSummary        = parsed.proSummary;
+              if (parsed.rewrittenBullets)     _proResult.rewrittenBullets  = parsed.rewrittenBullets;
+              if (parsed.coverLetter)          _proResult.coverLetter       = parsed.coverLetter;
+              if (parsed.positioningStatement) _proResult.posStatement      = parsed.positioningStatement;
+              if (parsed.posSum)               _proResult.posSum            = parsed.posSum;
+            } catch(e) {}
             renderFull(_proResult);
           }).catch(function(){ clearInterval(iv); document.getElementById('ai-loader').style.display='none'; renderFull(_proResult); });
         }
