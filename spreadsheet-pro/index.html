@@ -1304,7 +1304,7 @@ footer {
 
   <!-- UNLOCK -->
   <div class="unlock-card" id="unlock-card">
-    <div class="dev-pill">DEV MODE &mdash; Mock response. Zero tokens.</div>
+    <div class="dev-pill" id="dev-pill" style="display:none;">DEV MODE &mdash; Mock response. Zero tokens.</div>
     <p class="unlock-heading">Unlock your full financial positioning.</p>
     <p class="unlock-sub">15 structured sections built deterministically from your situation. A 5-pass coherence engine, debt strategy, opportunity cost analysis and a 24-month stability timeline.</p>
     <div class="unlock-features">
@@ -2095,6 +2095,10 @@ function runProcessing() {
 
 /* ── PREVIEW (free) ── */
 function renderPreview(d) {
+  /* Show DEV pill only in dev mode */
+  var devPill = document.getElementById('dev-pill');
+  if (devPill) devPill.style.display = DEV_MODE ? 'inline-block' : 'none';
+
   /* Score */
   document.getElementById('prev-score').innerHTML = d.score + '<span>/100</span>';
   var scoreCat = document.getElementById('prev-score-cat');
@@ -2831,6 +2835,10 @@ function renderFull(d) {
     riskEl.innerHTML = '<strong>Risk if you do nothing:</strong> ' + d.riskWarning;
     riskEl.style.display = 'block';
   }
+
+  /* HIDE PREVIEW / UNLOCK — user has paid, nothing should be gated */
+  document.getElementById('free-preview').style.display = 'none';
+  document.getElementById('unlock-card').style.display = 'none';
 
   /* SHOW */
   var fullOut = document.getElementById('full-output');
