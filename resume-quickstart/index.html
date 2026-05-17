@@ -1,3 +1,4 @@
+<!-- RC Loop Resume QuickStart v4.1 | Updated: 17 May 2026 11:45 -->
 <!-- © 2025 RC Loop. All rights reserved. Unauthorised copying or distribution prohibited. -->
 <!DOCTYPE html>
 <html lang="en">
@@ -419,8 +420,8 @@ footer{border-top:0.5px solid var(--border);padding:24px 32px;display:flex;align
       <div class="doc-header">
         <h4>Resume &mdash; AI-positioned</h4>
         <div class="dl-row">
-          <button class="dl-btn" onclick="dlXLSX()">&#8595; XLSX</button>
-          <button class="dl-btn sec" onclick="dlGoogleSheets()">&#8595; Google Sheets</button>
+          <button class="dl-btn" onclick="dlCVDoc()">&#8595; Download CV (.doc)</button>
+          <button class="dl-btn sec" onclick="dlCVGoogleDocs()">&#8595; Google Docs</button>
           <button class="dl-btn sec" onclick="dlATS()" title="ATS-safe plain text version">&#8595; ATS .txt</button>
         </div>
       </div>
@@ -437,8 +438,8 @@ footer{border-top:0.5px solid var(--border);padding:24px 32px;display:flex;align
       <div class="doc-header">
         <h4>Cover letter &mdash; directionally positioned</h4>
         <div class="dl-row">
-          <button class="dl-btn" onclick="dlXLSX()">&#8595; XLSX</button>
-          <button class="dl-btn sec" onclick="dlGoogleSheets()">&#8595; Google Sheets</button>
+          <button class="dl-btn" onclick="dlCoverDoc()">&#8595; Download Cover Letter (.doc)</button>
+          <button class="dl-btn sec" onclick="dlCoverGoogleDocs()">&#8595; Google Docs</button>
         </div>
       </div>
       <div class="cover-body" id="ai-cover-out"></div>
@@ -1456,6 +1457,7 @@ function buildAIOutput(d) {
 
 /* ── RENDER AI OUTPUT ── */
 function renderAIOutput(data) {
+  _proResult = data; /* Store AI result for downloads */
   document.getElementById('ai-loader').style.display = 'none';
   document.getElementById('free-output').style.display = 'none';
 
@@ -1603,80 +1605,103 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
-function dlXLSX() {
-  var d  = _aiData && _aiData.d ? _aiData.d : _cvData;
-  var pr = _proResult || {};
-  if (!d || !d.name) { alert('Please generate your resume first.'); return; }
-  var wb = XLSX.utils.book_new();
-  var resumeRows = [];
-  resumeRows.push([d.name || '']);
-  resumeRows.push([d.target || '']);
-  resumeRows.push(['']);
-  resumeRows.push(['PROFESSIONAL SUMMARY']);
-  resumeRows.push([pr.aiSummary || (_aiData && _aiData.summary) || '']);
-  resumeRows.push(['']);
-  resumeRows.push(['CORE STRENGTHS']);
-  resumeRows.push([(d.strengths || []).join(' | ')]);
-  resumeRows.push(['']);
-  resumeRows.push(['PROFESSIONAL EXPERIENCE']);
-  resumeRows.push([d.current || '']);
+function buildCVHTML(d, pr) {
   var bullets = pr.rewrittenBullets || d.ranked || [];
-  bullets.slice(0, 8).forEach(function(b) { resumeRows.push(['  - ' + b]); });
-  if (d.prev) { resumeRows.push(['']); resumeRows.push([d.prev]); }
-  if (d.skills) { resumeRows.push(['']); resumeRows.push(['TECHNICAL SKILLS']); resumeRows.push([d.skills]); }
-  if (d.edu)    { resumeRows.push(['']); resumeRows.push(['EDUCATION']); resumeRows.push([d.edu]); }
-  var ws1 = XLSX.utils.aoa_to_sheet(resumeRows);
-  ws1['!cols'] = [{wch:90}];
-  XLSX.utils.book_append_sheet(wb, ws1, 'Resume');
-  var coverText = pr.coverLetter || (_aiData && _aiData.coverLetter) || '';
-  var coverRows = coverText.split('\n').map(function(l) { return [l]; });
-  var ws2 = XLSX.utils.aoa_to_sheet(coverRows);
-  ws2['!cols'] = [{wch:90}];
-  XLSX.utils.book_append_sheet(wb, ws2, 'Cover Letter');
-  var sigRows = [['Signal','Score (%)'],
-    ['Metric signal strength', pr.metricScore || 0],
-    ['Strength profile depth', pr.strengthScore || 0],
-    ['Verb power rating', pr.verbScore || 0],
-    ['Role positioning clarity', pr.positionScore || 0]];
-  (pr.recs || []).forEach(function(r, i) { sigRows.push([String(i+1).padStart(2,'0') + '. ' + (r.title||''), r.body||'']); });
-  var ws3 = XLSX.utils.aoa_to_sheet(sigRows);
-  ws3['!cols'] = [{wch:35},{wch:70}];
-  XLSX.utils.book_append_sheet(wb, ws3, 'Signal Analysis');
-  var filename = (d.name || 'resume').replace(/\s+/g,'_') + '_RC_Loop_QuickStart.xlsx';
-  XLSX.writeFile(wb, filename);
+  var summary = pr.aiSummary || '';
+  var strengths = (d.strengths || []).join(' | ');
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;font-size:11pt;margin:2cm;color:#1a1a1a;line-height:1.4;}h1{font-size:18pt;margin:0 0 2px 0;}.role{font-size:12pt;color:#8B7355;margin:0 0 16px 0;}h2{font-size:10pt;letter-spacing:0.1em;text-transform:uppercase;color:#666;border-bottom:1px solid #ddd;padding-bottom:3px;margin:20px 0 8px 0;}p{margin:0 0 10px 0;}ul{margin:4px 0 10px 0;padding-left:20px;}li{margin-bottom:3px;}</style></head><body>';
+  html += '<h1>' + (d.name||'') + '</h1><div class="role">' + (d.target||'') + '</div>';
+  html += '<h2>Professional Summary</h2><p>' + summary + '</p>';
+  if (strengths) { html += '<h2>Core Strengths</h2><p>' + strengths + '</p>'; }
+  html += '<h2>Professional Experience</h2><p><strong>' + (d.current||'') + '</strong></p><ul>';
+  bullets.slice(0,6).forEach(function(b){ html += '<li>' + b + '</li>'; });
+  html += '</ul>';
+  if (d.prev) { var pb = bullets.slice(6,9); if(pb.length){ html += '<p><strong>'+d.prev+'</strong></p><ul>'; pb.forEach(function(b){ html+='<li>'+b+'</li>'; }); html+='</ul>'; } }
+  if (d.skills) { html += '<h2>Technical Skills</h2><p>' + d.skills + '</p>'; }
+  if (d.edu) { html += '<h2>Education</h2><p>' + d.edu + '</p>'; }
+  html += '</body></html>';
+  return html;
 }
-function dlGoogleSheets() {
-  var d  = _aiData && _aiData.d ? _aiData.d : _cvData;
-  var pr = _proResult || {};
+
+function buildCoverHTML(d, pr) {
+  var cover = pr.coverLetter || '';
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;font-size:11pt;margin:2cm;color:#1a1a1a;line-height:1.7;}p{margin:0 0 14px 0;}</style></head><body>';
+  cover.split('\n').forEach(function(line){ html += line ? '<p>'+line+'</p>' : '<p>&nbsp;</p>'; });
+  html += '</body></html>';
+  return html;
+}
+
+function dlCVDoc() {
+  var d = _aiData && _aiData.d ? _aiData.d : _cvData; var pr = _proResult || {};
   if (!d || !d.name) { alert('Please generate your resume first.'); return; }
-  var lines = [d.name, d.target, '', 'PROFESSIONAL SUMMARY', pr.aiSummary || '', '', 'CORE STRENGTHS', (d.strengths||[]).join(' | '), '', 'EXPERIENCE', d.current];
-  (pr.rewrittenBullets || d.ranked || []).slice(0,8).forEach(function(b){ lines.push('  - ' + b); });
-  if (d.prev) { lines.push(''); lines.push(d.prev); }
-  if (d.skills) { lines.push(''); lines.push('SKILLS'); lines.push(d.skills); }
-  if (d.edu)    { lines.push(''); lines.push('EDUCATION'); lines.push(d.edu); }
-  lines.push(''); lines.push('--- COVER LETTER ---'); lines.push(pr.coverLetter || '');
-  var blob = new Blob([lines.join('\n')], {type:'text/plain'});
-  var url = URL.createObjectURL(blob);
-  var a = document.createElement('a');
-  a.href = url; a.download = (d.name||'resume').replace(/\s+/g,'_') + '_for_Google_Sheets.txt';
+  var blob = new Blob([buildCVHTML(d,pr)], {type:'application/msword'});
+  var url = URL.createObjectURL(blob); var a = document.createElement('a');
+  a.href=url; a.download=(d.name||'resume').replace(/\s+/g,'_')+'_CV.doc';
   document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-  setTimeout(function(){ alert('Downloaded. In Google Sheets: File -> Import -> Upload this file.'); }, 300);
+}
+
+function dlCVGoogleDocs() {
+  var d = _aiData && _aiData.d ? _aiData.d : _cvData; var pr = _proResult || {};
+  if (!d || !d.name) { alert('Please generate your resume first.'); return; }
+  var blob = new Blob([buildCVHTML(d,pr)], {type:'text/html'});
+  var url = URL.createObjectURL(blob); var a = document.createElement('a');
+  a.href=url; a.download=(d.name||'resume').replace(/\s+/g,'_')+'_CV.html';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  setTimeout(function(){ alert('To open in Google Docs: docs.google.com -> File -> Open -> Upload this file.'); },300);
+}
+
+function dlCoverDoc() {
+  var d = _aiData && _aiData.d ? _aiData.d : _cvData; var pr = _proResult || {};
+  if (!pr.coverLetter) { alert('Please generate your resume first.'); return; }
+  var blob = new Blob([buildCoverHTML(d,pr)], {type:'application/msword'});
+  var url = URL.createObjectURL(blob); var a = document.createElement('a');
+  a.href=url; a.download=(d.name||'resume').replace(/\s+/g,'_')+'_CoverLetter.doc';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+function dlCoverGoogleDocs() {
+  var d = _aiData && _aiData.d ? _aiData.d : _cvData; var pr = _proResult || {};
+  if (!pr.coverLetter) { alert('Please generate your resume first.'); return; }
+  var blob = new Blob([buildCoverHTML(d,pr)], {type:'text/html'});
+  var url = URL.createObjectURL(blob); var a = document.createElement('a');
+  a.href=url; a.download=(d.name||'resume').replace(/\s+/g,'_')+'_CoverLetter.html';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  setTimeout(function(){ alert('To open in Google Docs: docs.google.com -> File -> Open -> Upload this file.'); },300);
 }
 
 function dlATS() {
-  /* Generate ATS plain text and trigger download */
-  var d = _aiData.d;
-  if (!d) { alert('Please generate your resume first.'); return; }
-  var summary  = document.getElementById('ai-resume-out') ? document.getElementById('ai-resume-out').innerText.split('Professional summary')[1] : '';
-  /* Build from stored data */
-  var atsText = buildATSResumeText(
-    d.name, d.target,
-    buildSummary(d.name, d.current, d.target, d.strengths, d.ranked),
-    d.strengths, d.ranked.slice(0,8), d.current, d.prev,
-    d.skills, d.edu
-  );
-  /* Download as .txt */
-  var blob = new Blob([atsText], { type: 'text/plain' });
+  var d = _aiData && _aiData.d ? _aiData.d : _cvData;
+  var pr = _proResult || {};
+  if (!d || !d.name) { alert('Please generate your resume first.'); return; }
+  var bullets = pr.rewrittenBullets || d.ranked || [];
+  var summary = pr.aiSummary || buildSummary(d.name, d.current, d.target, d.strengths, d.ranked);
+  var lines = [];
+  lines.push(d.name || '');
+  lines.push(d.target || '');
+  lines.push('');
+  lines.push('PROFESSIONAL SUMMARY');
+  lines.push(summary);
+  lines.push('');
+  lines.push('EXPERIENCE');
+  lines.push(d.current || '');
+  bullets.slice(0,6).forEach(function(b){ lines.push('- ' + atsClean(b)); });
+  if (d.prev) {
+    var prevBullets = bullets.slice(6,9);
+    if (prevBullets.length > 0) {
+      lines.push('');
+      lines.push(d.prev);
+      prevBullets.forEach(function(b){ lines.push('- ' + atsClean(b)); });
+    }
+  }
+  if (d.strengths && d.strengths.length > 0) {
+    lines.push('');
+    lines.push('CORE COMPETENCIES');
+    lines.push(d.strengths.join(' | '));
+  }
+  if (d.skills) { lines.push(''); lines.push('TECHNICAL SKILLS'); lines.push(d.skills); }
+  if (d.edu) { lines.push(''); lines.push('EDUCATION'); lines.push(d.edu); }
+  if (pr.coverLetter) { lines.push(''); lines.push('--- COVER LETTER ---'); lines.push(pr.coverLetter); }
+  var blob = new Blob([lines.join('\n')], { type: 'text/plain' });
   var url  = URL.createObjectURL(blob);
   var a    = document.createElement('a');
   a.href   = url;
