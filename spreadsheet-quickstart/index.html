@@ -1,4 +1,4 @@
-<!-- RC Loop Spreadsheet QuickStart v4.2 | Updated: 17 May 2026 12:30 -->
+<!-- RC Loop Spreadsheet QuickStart v4.4 | Updated: 17 May 2026 13:00 -->
 <!-- © 2025 RC Loop. All rights reserved. Unauthorised copying or distribution prohibited. -->
 
 <style>
@@ -1420,12 +1420,29 @@ function callAPI(intent, income, out, debt, savings, concern, onSuccess) {
   .then(function(r){ return r.json(); })
   .then(function(data) {
     var text = data.content && data.content[0] ? data.content[0].text : '';
-    onSuccess(JSON.parse(text.replace(/```json|```/g,'').trim()));
+    // Always build full deterministic data first
+    var base = buildAIData(intent, income, out, debt, savings, concern);
+    try {
+      var clean = text.replace(/```json|```/g,'').trim();
+      var start = clean.indexOf('{');
+      var end = clean.lastIndexOf('}');
+      if (start >= 0 && end > start) { clean = clean.substring(start, end+1); }
+      var aiResult = JSON.parse(clean);
+      // Merge AI text fields into deterministic base
+      if (aiResult.diagnosis) base.diagnosis = aiResult.diagnosis;
+      if (aiResult.summary) base.summary = aiResult.summary;
+      if (aiResult.planHeader) base.planHeader = aiResult.planHeader;
+      if (aiResult.pressure) base.pressure = aiResult.pressure;
+      if (aiResult.pressureClass) base.pressureClass = aiResult.pressureClass;
+      if (aiResult.conflicts && aiResult.conflicts.length) base.conflicts = aiResult.conflicts;
+      if (aiResult.recs && aiResult.recs.length) base.recs = aiResult.recs;
+    } catch(e) {
+      // AI parse failed - use deterministic base as-is
+    }
+    onSuccess(base);
   })
   .catch(function() {
-    document.getElementById('ai-loader').style.display = 'none';
-    document.getElementById('unlock-card').style.display = 'block';
-    alert('Something went wrong. Please try again.');
+    onSuccess(buildAIData(intent, income, out, debt, savings, concern));
   });
 }
 
