@@ -1,3 +1,4 @@
+<!-- © 2025 RC Loop. All rights reserved. Unauthorised copying or distribution prohibited. -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -489,8 +490,8 @@ footer{border-top:0.5px solid var(--border);padding:24px 32px;display:flex;align
    - Readable loops — no minified one-liners
 ============================================================ */
 
-var DEV_MODE      = true;
-var PREMIUM_GATED = false;
+var DEV_MODE      = false;
+var PREMIUM_GATED = true;
 
 var _method   = 'upload';
 var _fileText = '';
@@ -1315,7 +1316,7 @@ function buildFreeRecs(d) {
 function unlockAI() {
   if (PREMIUM_GATED) {
     sessionStorage.setItem('resume_data', JSON.stringify(_aiData));
-    window.location.href = 'https://your-lemon-squeezy-link.com';
+    window.location.href = 'https://opportunity-intelligence.lemonsqueezy.com/checkout/buy/5bc08e9b-b517-4189-ada7-aa904f57d3b6';
     return;
   }
   runAIEnhancement();
@@ -1566,8 +1567,8 @@ function renderAIOutput(data) {
 
 /* ── PRODUCTION API CALL ── */
 function callAnthropicAPI(d, onSuccess) {
-  var system = 'You are an expert CV and resume writer for UK professionals. Rewrite the career data into a polished, targeted resume and cover letter. Respond ONLY in valid JSON: {"name":"","target":"","current":"","prev":"","aiSummary":"","strengths":[],"skills":"","edu":"","rewrittenBullets":[],"coverLetter":"","metricScore":0,"strengthScore":0,"verbScore":0,"positionScore":0,"recs":[{"title":"","body":""}]}. Use strong action verbs. Be specific and professional. UK English. No markdown.';
-  var prompt = 'Name: ' + d.name + '. Target role: ' + d.target + '. Current: ' + d.current + '. Sector: ' + (d.sector || 'not specified') + '. Intent: ' + (d.intent || 'not provided') + '. Achievements: ' + d.ranked.join(' | ') + '. Strengths: ' + d.strengths.join(', ') + '. Skills: ' + d.skills + '. Education: ' + d.edu + '. Rewrite all bullets with strong verbs. Write a professional summary and UK-style cover letter for the target role.';
+  var system = 'You are a senior CV writer and career positioning specialist with 20 years of experience writing CVs for UK professionals that secure interviews at top organisations. You write with precision, authority and clarity. Every sentence is complete, grammatically correct and purposeful. You never use filler phrases, never truncate sentences, and never produce generic output. Respond ONLY in valid JSON with no markdown, no preamble, no explanation.';
+  var prompt = 'Write a professionally positioned CV and cover letter. Every field must be complete, polished and ready to send to a recruiter.\n\nCANDIDATE: ' + d.name + '\nTARGET ROLE: ' + d.target + '\nCURRENT ROLE: ' + d.current + '\n' + (d.prev ? 'PREVIOUS ROLE: ' + d.prev + '\n' : '') + 'SECTOR: ' + (d.sector || 'not specified') + '\nCORE STRENGTHS: ' + d.strengths.join(', ') + '\nKEY ACHIEVEMENTS:\n' + d.ranked.map(function(b,i){ return (i+1)+'. '+b; }).join('\n') + '\n' + (d.skills ? 'SKILLS: ' + d.skills + '\n' : '') + (d.edu ? 'EDUCATION: ' + d.edu + '\n' : '') + (d.intent ? 'POSITIONING INTENT: ' + d.intent + '\n' : '') + '\nINSTRUCTIONS:\n1. aiSummary: 3-4 complete sentences. Open with name and target role. Reference strongest metric achievement. Close with what makes them distinctive. No ellipsis. No generic phrases like results-driven or dynamic.\n2. rewrittenBullets: Rewrite every achievement. Start each with a strong past-tense action verb (Spearheaded, Delivered, Architected, Championed etc). Keep all metrics. Complete grammatical sentence under 160 chars. Never truncate with ellipsis.\n3. coverLetter: 4 paragraphs. Para 1: interest and career summary in 2 sentences. Para 2: 2-3 specific achievements with metrics woven naturally into narrative. Para 3: why this role and sector. Para 4: confident close. Sign off Yours sincerely then name. Natural human voice not template.\n4. metricScore, strengthScore, verbScore, positionScore: 0-100 each.\n5. recs: 3-4 specific actionable recommendations.\n\nReturn ONLY this JSON, no other text: {"name":"","target":"","current":"","prev":"","aiSummary":"","strengths":[],"skills":"","edu":"","rewrittenBullets":[],"coverLetter":"","metricScore":0,"strengthScore":0,"verbScore":0,"positionScore":0,"recs":[{"title":"","body":""}]}';
   fetch('https://rcloop-proxy.vercel.app/api/ai', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
