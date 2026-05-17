@@ -2876,7 +2876,17 @@ document.addEventListener('DOMContentLoaded', function() {
         body: JSON.stringify({ system: 'You are a personal finance advisor. Return only valid JSON.', prompt: prompt2 })
       }).then(function(r){ return r.json(); }).then(function(data){
         clearInterval(iv2); document.getElementById('ai-loader').style.display='none';
-        try { var parsed2=JSON.parse(data.content[0].text); if(parsed2.summary) _proResult.summary=parsed2.summary; } catch(e){}
+        try {
+          var text2 = data.content[0].text;
+          var clean2 = text2.replace(/```json|```/g,'').trim();
+          var s2 = clean2.indexOf('{'); var e2 = clean2.lastIndexOf('}');
+          if (s2 >= 0 && e2 > s2) { clean2 = clean2.substring(s2, e2+1); }
+          var parsed2 = JSON.parse(clean2);
+          if (parsed2.summary)          _proResult.summary          = parsed2.summary;
+          if (parsed2.executiveInsight)  _proResult.executiveInsight = parsed2.executiveInsight;
+          if (parsed2.topPriority)       _proResult.topPriority      = parsed2.topPriority;
+          if (parsed2.riskWarning)       _proResult.riskWarning      = parsed2.riskWarning;
+        } catch(e) {}
         renderFull(_proResult);
       }).catch(function(){ clearInterval(iv2); document.getElementById('ai-loader').style.display='none'; renderFull(_proResult); });
     }
