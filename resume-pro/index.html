@@ -1,3 +1,4 @@
+<!-- RC Loop Resume Pro v1.1 | Updated: 17 May 2026 11:45 -->
 <!-- © 2025 RC Loop. All rights reserved. Unauthorised copying or distribution prohibited. -->
 <!DOCTYPE html>
 <html lang="en">
@@ -680,8 +681,8 @@ footer{border-top:0.5px solid var(--border);padding:24px 32px;display:flex;align
       <div class="doc-header">
         <h4>Resume &mdash; 5-pass identity positioned</h4>
         <div class="dl-row">
-          <button class="dl-btn" onclick="dlXLSX()">&#8595; XLSX</button>
-          <button class="dl-btn sec" onclick="dlGoogleSheets()">&#8595; Google Sheets</button>
+          <button class="dl-btn" onclick="dlCVDoc()">&#8595; Download CV (.doc)</button>
+          <button class="dl-btn sec" onclick="dlCVGoogleDocs()">&#8595; Google Docs</button>
           <button class="dl-btn sec" onclick="dlATS()">&#8595; ATS .txt</button>
         </div>
       </div>
@@ -694,8 +695,8 @@ footer{border-top:0.5px solid var(--border);padding:24px 32px;display:flex;align
       <div class="doc-header">
         <h4>Cover letter &mdash; identity-coherent</h4>
         <div class="dl-row">
-          <button class="dl-btn" onclick="dlXLSX()">&#8595; XLSX</button>
-          <button class="dl-btn sec" onclick="dlGoogleSheets()">&#8595; Google Sheets</button>
+          <button class="dl-btn" onclick="dlCoverDoc()">&#8595; Download Cover Letter (.doc)</button>
+          <button class="dl-btn sec" onclick="dlCoverGoogleDocs()">&#8595; Google Docs</button>
         </div>
       </div>
       <div class="cover-body" id="out-cover"></div>
@@ -1474,6 +1475,174 @@ function renderFull(d) {
 }
 
 /* ── ATS DOWNLOAD ── */
+function dlATS() {
+  var pd = _proData;
+  if (!pd || !pd.name) { alert('Please generate your positioning first.'); return; }
+  var lines = [pd.name, pd.target, '', 'PROFESSIONAL SUMMARY', atsClean(pd.proSummary || ''), '', 'EXPERIENCE', pd.current];
+  (pd.rewrittenBullets || pd.ranked).slice(0,8).forEach(function(b) { lines.push('- ' + atsClean(b)); });
+  if (pd.prev) { lines.push(''); lines.push(pd.prev); }
+  if (pd.strengths && pd.strengths.length > 0) { lines.push(''); lines.push('CORE COMPETENCIES'); lines.push(pd.strengths.join(' | ')); }
+  if (pd.skills) { lines.push(''); lines.push('TECHNICAL SKILLS & CERTIFICATIONS'); lines.push(pd.skills); }
+  if (pd.edu) { lines.push(''); lines.push('EDUCATION'); lines.push(pd.edu); }
+  var blob = new Blob([lines.join('\n')], { type:'text/plain' });
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href = url; a.download = (pd.name||'resume').replace(/\s+/g,'_') + '_ATS_Pro.txt';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+function buildCVHTMLPro(pd, pr) {
+  var bullets = pr.rewrittenBullets || [];
+  var summary = pr.proSummary || '';
+  var strengths = (pd.strengths || []).join(' | ');
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;font-size:11pt;margin:2cm;color:#1a1a1a;line-height:1.4;}h1{font-size:18pt;margin:0 0 2px 0;}.role{font-size:12pt;color:#8B7355;margin:0 0 4px 0;}.pos-stmt{font-style:italic;color:#444;margin:0 0 16px 0;font-size:10.5pt;}h2{font-size:10pt;letter-spacing:0.1em;text-transform:uppercase;color:#666;border-bottom:1px solid #ddd;padding-bottom:3px;margin:20px 0 8px 0;}p{margin:0 0 10px 0;}ul{margin:4px 0 10px 0;padding-left:20px;}li{margin-bottom:3px;}</style></head><body>';
+  html += '<h1>' + (pd.name||'') + '</h1><div class="role">' + (pd.target||'') + '</div>';
+  if (pr.posStatement) { html += '<div class="pos-stmt">' + pr.posStatement + '</div>'; }
+  html += '<h2>Professional Summary</h2><p>' + summary + '</p>';
+  if (strengths) { html += '<h2>Core Competencies</h2><p>' + strengths + '</p>'; }
+  html += '<h2>Professional Experience</h2><p><strong>' + (pd.current||'') + '</strong></p><ul>';
+  bullets.slice(0,6).forEach(function(b){ html += '<li>' + b + '</li>'; });
+  html += '</ul>';
+  if (pd.prev) { var pb = bullets.slice(6,9); if(pb.length){ html += '<p><strong>'+pd.prev+'</strong></p><ul>'; pb.forEach(function(b){ html+='<li>'+b+'</li>'; }); html+='</ul>'; } }
+  if (pd.skills) { html += '<h2>Technical Skills</h2><p>' + pd.skills + '</p>'; }
+  if (pd.edu) { html += '<h2>Education</h2><p>' + pd.edu + '</p>'; }
+  html += '</body></html>';
+  return html;
+}
+
+function buildCoverHTMLPro(pd, pr) {
+  var cover = pr.coverLetter || '';
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;font-size:11pt;margin:2cm;color:#1a1a1a;line-height:1.7;}p{margin:0 0 14px 0;}</style></head><body>';
+  cover.split('\n').forEach(function(line){ html += line ? '<p>'+line+'</p>' : '<p>&nbsp;</p>'; });
+  html += '</body></html>';
+  return html;
+}
+
+function dlCVDoc() {
+  var pd = _proData; var pr = _proResult || {};
+  if (!pd || !pd.name) { alert('Please generate your positioning first.'); return; }
+  var blob = new Blob([buildCVHTMLPro(pd,pr)], {type:'application/msword'});
+  var url = URL.createObjectURL(blob); var a = document.createElement('a');
+  a.href=url; a.download=(pd.name||'resume').replace(/\s+/g,'_')+'_Pro_CV.doc';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+function dlCVGoogleDocs() {
+  var pd = _proData; var pr = _proResult || {};
+  if (!pd || !pd.name) { alert('Please generate your positioning first.'); return; }
+  var blob = new Blob([buildCVHTMLPro(pd,pr)], {type:'text/html'});
+  var url = URL.createObjectURL(blob); var a = document.createElement('a');
+  a.href=url; a.download=(pd.name||'resume').replace(/\s+/g,'_')+'_Pro_CV.html';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  setTimeout(function(){ alert('To open in Google Docs: docs.google.com -> File -> Open -> Upload this file.'); },300);
+}
+
+function dlCoverDoc() {
+  var pd = _proData; var pr = _proResult || {};
+  if (!pr.coverLetter) { alert('Please generate your positioning first.'); return; }
+  var blob = new Blob([buildCoverHTMLPro(pd,pr)], {type:'application/msword'});
+  var url = URL.createObjectURL(blob); var a = document.createElement('a');
+  a.href=url; a.download=(pd.name||'resume').replace(/\s+/g,'_')+'_Pro_CoverLetter.doc';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+function dlCoverGoogleDocs() {
+  var pd = _proData; var pr = _proResult || {};
+  if (!pr.coverLetter) { alert('Please generate your positioning first.'); return; }
+  var blob = new Blob([buildCoverHTMLPro(pd,pr)], {type:'text/html'});
+  var url = URL.createObjectURL(blob); var a = document.createElement('a');
+  a.href=url; a.download=(pd.name||'resume').replace(/\s+/g,'_')+'_Pro_CoverLetter.html';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  setTimeout(function(){ alert('To open in Google Docs: docs.google.com -> File -> Open -> Upload this file.'); },300);
+}
+
+function dlATS() {
+  var pd = _proData;
+  if (!pd || !pd.name) { alert('Please generate your positioning first.'); return; }
+  var lines = [pd.name, pd.target, '', 'PROFESSIONAL SUMMARY', atsClean(pd.proSummary || ''), '', 'EXPERIENCE', pd.current];
+  (pd.rewrittenBullets || pd.ranked).slice(0,8).forEach(function(b) { lines.push('- ' + atsClean(b)); });
+  if (pd.prev) { lines.push(''); lines.push(pd.prev); }
+  if (pd.strengths && pd.strengths.length > 0) { lines.push(''); lines.push('CORE COMPETENCIES'); lines.push(pd.strengths.join(' | ')); }
+  if (pd.skills) { lines.push(''); lines.push('TECHNICAL SKILLS & CERTIFICATIONS'); lines.push(pd.skills); }
+  if (pd.edu) { lines.push(''); lines.push('EDUCATION'); lines.push(pd.edu); }
+  var blob = new Blob([lines.join('\n')], { type:'text/plain' });
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href = url; a.download = (pd.name||'resume').replace(/\s+/g,'_') + '_ATS_Pro.txt';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+function buildResumeHTMLPro(pd, pr) {
+  var bullets = pr.rewrittenBullets || [];
+  var summary = pr.proSummary || '';
+  var cover = pr.coverLetter || '';
+  var strengths = (pd.strengths || []).join(' | ');
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>';
+  html += 'body{font-family:Arial,sans-serif;font-size:11pt;margin:2cm;color:#1a1a1a;line-height:1.4;}';
+  html += 'h1{font-size:18pt;margin:0 0 2px 0;}';
+  html += '.role{font-size:12pt;color:#8B7355;margin:0 0 4px 0;}';
+  html += '.pos-stmt{font-style:italic;color:#444;margin:0 0 16px 0;font-size:10.5pt;}';
+  html += 'h2{font-size:10pt;letter-spacing:0.1em;text-transform:uppercase;color:#666;border-bottom:1px solid #ddd;padding-bottom:3px;margin:20px 0 8px 0;}';
+  html += 'p{margin:0 0 10px 0;}ul{margin:4px 0 10px 0;padding-left:20px;}li{margin-bottom:3px;}';
+  html += '.page-break{page-break-before:always;margin-top:40px;}';
+  html += '</style></head><body>';
+  html += '<h1>' + (pd.name || '') + '</h1>';
+  html += '<div class="role">' + (pd.target || '') + '</div>';
+  if (pr.posStatement) { html += '<div class="pos-stmt">' + pr.posStatement + '</div>'; }
+  html += '<h2>Professional Summary</h2><p>' + summary + '</p>';
+  if (strengths) { html += '<h2>Core Competencies</h2><p>' + strengths + '</p>'; }
+  html += '<h2>Professional Experience</h2>';
+  html += '<p><strong>' + (pd.current || '') + '</strong></p><ul>';
+  bullets.slice(0, 6).forEach(function(b) { html += '<li>' + b + '</li>'; });
+  html += '</ul>';
+  if (pd.prev) {
+    var prevBullets = bullets.slice(6, 9);
+    if (prevBullets.length > 0) {
+      html += '<p><strong>' + pd.prev + '</strong></p><ul>';
+      prevBullets.forEach(function(b) { html += '<li>' + b + '</li>'; });
+      html += '</ul>';
+    }
+  }
+  if (pd.skills) { html += '<h2>Technical Skills</h2><p>' + pd.skills + '</p>'; }
+  if (pd.edu) { html += '<h2>Education</h2><p>' + pd.edu + '</p>'; }
+  if (cover) {
+    html += '<div class="page-break"><h2>Cover Letter</h2>';
+    cover.split('\n').forEach(function(line) {
+      html += line ? '<p>' + line + '</p>' : '<p>&nbsp;</p>';
+    });
+    html += '</div>';
+  }
+  html += '</body></html>';
+  return html;
+}
+
+function dlDOCX() {
+  var pd = _proData; var pr = _proResult || {};
+  if (!pd || !pd.name) { alert('Please generate your positioning first.'); return; }
+  var html = buildResumeHTMLPro(pd, pr);
+  var blob = new Blob([html], {type: 'application/msword'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = (pd.name || 'resume').replace(/\s+/g, '_') + '_RC_Loop_Pro.doc';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function dlGoogleDocs() {
+  var pd = _proData; var pr = _proResult || {};
+  if (!pd || !pd.name) { alert('Please generate your positioning first.'); return; }
+  var html = buildResumeHTMLPro(pd, pr);
+  var blob = new Blob([html], {type: 'text/html'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = (pd.name || 'resume').replace(/\s+/g, '_') + '_RC_Loop_Pro.html';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  setTimeout(function(){ alert('Downloaded as HTML. To open in Google Docs: go to docs.google.com -> File -> Open -> Upload this file.'); }, 300);
+}
+
 function dlATS() {
   var pd = _proData;
   if (!pd || !pd.name) { alert('Please generate your positioning first.'); return; }
