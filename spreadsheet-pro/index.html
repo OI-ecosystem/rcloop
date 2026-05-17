@@ -1,3 +1,4 @@
+<!-- © 2025 RC Loop. All rights reserved. Unauthorised copying or distribution prohibited. -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1516,8 +1517,8 @@ footer {
    NO minified one-liners in loops
 ============================================================ */
 
-var DEV_MODE       = true;
-var PREMIUM_GATED  = false;
+var DEV_MODE       = false;
+var PREMIUM_GATED  = true;
 
 /* ── SPELL CHECKER (sc_ prefix throughout) ── */
 var sc_checked  = false;
@@ -2126,7 +2127,7 @@ function unlockFull() {
     Object.keys(_proData).forEach(function(k) {
       sessionStorage.setItem('pro_' + k, _proData[k]);
     });
-    window.location.href = 'https://your-lemon-squeezy-link.com';
+    window.location.href = 'https://opportunity-intelligence.lemonsqueezy.com/checkout/buy/ba1d0c7f-97ed-4347-b887-e285df8c1a8c';
     return;
   }
 
@@ -2147,11 +2148,45 @@ function unlockFull() {
     if (el) el.textContent = msgs[idx];
   }, 700);
 
-  setTimeout(function() {
+  if (DEV_MODE) {
+    setTimeout(function() {
+      clearInterval(iv);
+      document.getElementById('ai-loader').style.display = 'none';
+      renderFull(_proResult);
+    }, 3000);
+    return;
+  }
+
+  /* AI refinement pass */
+  var pd = _proData;
+  var prompt = 'You are a personal finance advisor. Refine the following financial summary for someone whose situation is: "' + pd.intent + '".\n\n'
+    + 'FINANCIAL SUMMARY (refine to sound personal, clear and actionable — fix any grammar or awkward phrasing, keep all figures accurate):\n' + _proResult.summary + '\n\n'
+    + 'Return ONLY valid JSON with exactly this key: {"summary": "..."}. No other text.';
+
+  fetch('https://rcloop-proxy.vercel.app/api/ai', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      system: 'You are a personal finance advisor. Return only valid JSON.',
+      prompt: prompt
+    })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    clearInterval(iv);
+    document.getElementById('ai-loader').style.display = 'none';
+    try {
+      var text = data.content[0].text;
+      var parsed = JSON.parse(text);
+      if (parsed.summary) _proResult.summary = parsed.summary;
+    } catch(e) {}
+    renderFull(_proResult);
+  })
+  .catch(function() {
     clearInterval(iv);
     document.getElementById('ai-loader').style.display = 'none';
     renderFull(_proResult);
-  }, 3000);
+  });
 }
 
 /* ── BUILD ALL 15 SECTIONS (deterministic) ── */
