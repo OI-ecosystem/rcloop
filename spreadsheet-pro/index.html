@@ -1,3 +1,4 @@
+<!-- RC Loop Spreadsheet Pro v1.2 | Updated: 17 May 2026 14:00 -->
 <!-- © 2025 RC Loop. All rights reserved. Unauthorised copying or distribution prohibited. -->
 <!DOCTYPE html>
 <html lang="en">
@@ -1474,6 +1475,9 @@ footer {
     <div class="pos-summary">
       <div class="section-eyebrow" style="margin-bottom:12px;">Financial positioning summary</div>
       <p id="s-summary"></p>
+      <div id="s-executive" style="display:none;margin-top:16px;padding:16px 20px;background:var(--ink);color:var(--white);border-radius:8px;font-size:0.88rem;line-height:1.6;font-style:italic;"></div>
+      <div id="s-priority" style="display:none;margin-top:12px;padding:14px 18px;background:var(--gold-bg);border-left:3px solid var(--gold);border-radius:0 8px 8px 0;font-size:0.84rem;line-height:1.6;"></div>
+      <div id="s-risk" style="display:none;margin-top:12px;padding:14px 18px;background:#fff0f0;border-left:3px solid #c83c3c;border-radius:0 8px 8px 0;font-size:0.84rem;line-height:1.6;color:#c83c3c;"></div>
     </div>
 
     <div class="output-footer">
@@ -2157,18 +2161,23 @@ function unlockFull() {
     return;
   }
 
-  /* AI refinement pass */
+  /* AI refinement pass — Pro level */
   var pd = _proData;
-  var prompt = 'You are a personal finance advisor. Refine the following financial summary for someone whose situation is: "' + pd.intent + '".\n\n'
-    + 'FINANCIAL SUMMARY (refine to sound personal, clear and actionable — fix any grammar or awkward phrasing, keep all figures accurate):\n' + _proResult.summary + '\n\n'
-    + 'Return ONLY valid JSON with exactly this key: {"summary": "..."}. No other text.';
+  var proPrompt = 'You are a senior personal finance advisor writing for a premium £29 financial clarity product. Refine these sections for someone whose situation is: "' + pd.intent + '"\n'
+    + 'Income: £' + pd.income + '/mo | Debt: £' + pd.debt + ' | Savings: £' + pd.savings + ' | Essential spend: £' + pd.ess + '/mo\n\n'
+    + 'SUMMARY (3-4 sentences, honest, specific, reference actual numbers, speak directly to them):\n' + _proResult.summary + '\n\n'
+    + 'Write also:\n'
+    + '- executiveInsight: One powerful sentence that cuts to the heart of their financial position. Honest, direct, no sugarcoating.\n'
+    + '- topPriority: The single most important thing they must do first and why, in 2 sentences referencing their actual figures.\n'
+    + '- riskWarning: The biggest financial risk they face if they do nothing, in 1-2 sentences.\n\n'
+    + 'Return ONLY valid JSON: {"summary":"...","executiveInsight":"...","topPriority":"...","riskWarning":"..."}';
 
   fetch('https://rcloop-proxy.vercel.app/api/ai', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      system: 'You are a personal finance advisor. Return only valid JSON.',
-      prompt: prompt
+      system: 'You are a senior personal finance advisor writing premium financial analysis. Return only valid JSON. No markdown.',
+      prompt: proPrompt
     })
   })
   .then(function(r) { return r.json(); })
@@ -2177,8 +2186,14 @@ function unlockFull() {
     document.getElementById('ai-loader').style.display = 'none';
     try {
       var text = data.content[0].text;
-      var parsed = JSON.parse(text);
+      var clean = text.replace(/```json|```/g,'').trim();
+      var start = clean.indexOf('{'); var end = clean.lastIndexOf('}');
+      if (start >= 0 && end > start) { clean = clean.substring(start, end+1); }
+      var parsed = JSON.parse(clean);
       if (parsed.summary) _proResult.summary = parsed.summary;
+      if (parsed.executiveInsight) _proResult.executiveInsight = parsed.executiveInsight;
+      if (parsed.topPriority) _proResult.topPriority = parsed.topPriority;
+      if (parsed.riskWarning) _proResult.riskWarning = parsed.riskWarning;
     } catch(e) {}
     renderFull(_proResult);
   })
@@ -2801,6 +2816,21 @@ function renderFull(d) {
 
   /* POSITIONING SUMMARY */
   document.getElementById('s-summary').textContent = d.summary;
+  if (d.executiveInsight) {
+    var execEl = document.getElementById('s-executive');
+    execEl.textContent = '\u201c' + d.executiveInsight + '\u201d';
+    execEl.style.display = 'block';
+  }
+  if (d.topPriority) {
+    var prioEl = document.getElementById('s-priority');
+    prioEl.innerHTML = '<strong>Top priority:</strong> ' + d.topPriority;
+    prioEl.style.display = 'block';
+  }
+  if (d.riskWarning) {
+    var riskEl = document.getElementById('s-risk');
+    riskEl.innerHTML = '<strong>Risk if you do nothing:</strong> ' + d.riskWarning;
+    riskEl.style.display = 'block';
+  }
 
   /* SHOW */
   var fullOut = document.getElementById('full-output');
@@ -2831,7 +2861,7 @@ document.addEventListener('DOMContentLoaded', function() {
       var msgs2 = ['Rendering your financial position dashboard...','Building debt snowball and avalanche tables...','Calculating opportunity cost engine...','Projecting 3-scenario trajectories...','Completing your stability timeline...'];
       var idx2 = 0; var el2 = document.getElementById('ai-loader-msg');
       var iv2 = setInterval(function(){ idx2=(idx2+1)%msgs2.length; if(el2) el2.textContent=msgs2[idx2]; }, 700);
-      var prompt2 = 'You are a personal finance advisor. Refine this financial summary to sound personal, clear and actionable. Fix any grammar. Keep all figures accurate. Speak directly to the person (you/your).\n\nSUMMARY:\n' + _proResult.summary + '\n\nReturn ONLY valid JSON: {"summary": "..."}';
+      var prompt2 = 'You are a senior personal finance advisor writing for a premium £29 financial clarity product. Refine these sections for someone whose situation is: "' + _proData.intent + '"\nIncome: £' + _proData.income + '/mo | Debt: £' + _proData.debt + ' | Savings: £' + _proData.savings + '/mo\n\nSUMMARY (3-4 sentences, honest, specific, reference actual numbers):\n' + _proResult.summary + '\n\nAlso write:\n- executiveInsight: One powerful sentence cutting to the heart of their position.\n- topPriority: Most important action in 2 sentences referencing actual figures.\n- riskWarning: Biggest risk if they do nothing, 1-2 sentences.\n\nReturn ONLY valid JSON: {"summary":"...","executiveInsight":"...","topPriority":"...","riskWarning":"..."}';
       fetch('https://rcloop-proxy.vercel.app/api/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
