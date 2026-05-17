@@ -1072,6 +1072,22 @@ footer {
   text-decoration: none;
 }
 .footer-links a:hover { color: var(--ink-mid); }
+
+/* PRINT STYLES */
+@media print {
+  nav, footer, .page:not(#s2), #free-preview, #unlock-card, #ai-loader,
+  .dl-row, .output-footer, .buseful-badge { display: none !important; }
+  body { background: #fff; font-size: 11pt; }
+  .wrap-wide { max-width: 100%; padding: 0; }
+  .section-block { border: 0.5px solid #ddd; break-inside: avoid; margin-bottom: 8px; padding: 14px 16px; }
+  .full-output { display: block !important; }
+  .pro-table { font-size: 9pt; }
+  .dash-grid { grid-template-columns: repeat(3,1fr); }
+  .pos-summary { break-inside: avoid; }
+  #s-executive, #s-priority, #s-risk { break-inside: avoid; }
+  .timeline-row { font-size: 9pt; }
+  a { text-decoration: none; color: inherit; }
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
@@ -1333,6 +1349,7 @@ footer {
     <!-- DL ROW -->
     <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
       <div class="dl-row">
+        <button class="dl-btn" onclick="window.print()" style="background:var(--ink);color:var(--white);border-color:var(--ink);">&#128438; Save as PDF</button>
         <button class="dl-btn" onclick="dlXLSX()">&#8595; XLSX</button>
         <button class="dl-btn sec" onclick="dlGoogleSheets()">&#8595; Google Sheets</button>
       </div>
