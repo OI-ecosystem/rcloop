@@ -1,4 +1,4 @@
-<!-- RC Loop Spreadsheet QuickStart v4.15 | Updated: 21 May 2026 -->
+<!-- RC Loop Spreadsheet QuickStart v4.16 | Updated: 21 May 2026 -->
 <!-- © 2025 RC Loop. All rights reserved. Unauthorised copying or distribution prohibited. -->
 
 <style>
@@ -2292,48 +2292,7 @@ function dlPDF() {
   setTimeout(function(){ w.print(); }, 500);
 }
 
-function dlXLSX() {
-  var d = _proData;
-  if (!d || !d.income) { alert('Please generate your financial overview first.'); return; }
-  var wb = XLSX.utils.book_new();
-  var month = new Date().toLocaleString('en-GB',{month:'long',year:'numeric'});
-  var surplus = (d.income||0) - (d.out||0);
-  var ws1 = XLSX.utils.aoa_to_sheet([
-    ['RC Loop Financial QuickStart', month], [''],
-    ['Your situation', d.intent||''], [''],
-    ['Monthly income', d.income||0], ['Monthly outgoings', d.out||0],
-    ['Monthly surplus', '=B5-B6'], ['Savings rate (%)', '=ROUND(B7/B5*100,1)'], [''],
-    ['Total debt', d.debt||0], ['Current savings', d.savings||0],
-    ['Emergency runway (mths)', d.savings&&d.out?'=ROUND(B11/B6,1)':0],
-    ['Months to debt free', surplus>0&&d.debt?'=CEILING(B10/B7,1)':'N/A']
-  ]);
-  ws1['!cols'] = [{wch:30},{wch:20}];
-  XLSX.utils.book_append_sheet(wb, ws1, 'Overview');
-  var trackerRows = [
-    ['Category','Budgeted','Actual'],
-    ['Housing / rent','',''], ['Food & groceries','',''], ['Transport','',''],
-    ['Utilities','',''], ['Subscriptions','',''], ['Dining & takeaways','',''],
-    ['Entertainment','',''], ['Debt repayments', Math.round((d.debt||0)*0.05),''],
-    ['Savings', Math.round((d.income||0)*0.10),''], ['Other','',''],
-    [''], ['TOTAL','=SUM(B2:B11)','=SUM(C2:C11)'],
-    ['Income',d.income||0,d.income||0], ['Surplus','=B13-B12','=C13-C12']
-  ];
-  var ws2 = XLSX.utils.aoa_to_sheet(trackerRows);
-  ws2['!cols'] = [{wch:25},{wch:18},{wch:18}];
-  XLSX.utils.book_append_sheet(wb, ws2, 'Spending Tracker');
-  var recRows = [['Recommendations','']];
-  var recs = typeof _aiRecs !== 'undefined' ? _aiRecs : [];
-  recs.forEach(function(r,i){ recRows.push([String(i+1).padStart(2,'0')+'. '+(r.title||r), r.body||'']); });
-  if (recs.length === 0) {
-    recRows.push(['01. Review your largest spending category and find one reduction','']);
-    recRows.push(['02. Set up an automatic savings transfer on payday','']);
-    recRows.push(['03. Direct surplus to debt repayment first, then savings','']);
-  }
-  var ws3 = XLSX.utils.aoa_to_sheet(recRows);
-  ws3['!cols'] = [{wch:55},{wch:50}];
-  XLSX.utils.book_append_sheet(wb, ws3, 'Recommendations');
-  XLSX.writeFile(wb, 'RC_Loop_QuickStart_' + month.replace(' ','_') + '.xlsx');
-}
+
 </script>
 <script data-goatcounter="https://signal333.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
