@@ -1,4 +1,4 @@
-<!-- RC Loop Spreadsheet QuickStart v4.8 | Updated: 21 May 2026 -->
+<!-- RC Loop Spreadsheet QuickStart v4.10 | Updated: 21 May 2026 -->
 <!-- © 2025 RC Loop. All rights reserved. Unauthorised copying or distribution prohibited. -->
 
 <style>
@@ -773,7 +773,7 @@ function buildOutput() {
   var dMo  = dPay > 0 ? Math.ceil(debt / dPay) : 0;
   var mRes = income > 0 ? Math.round((savings / income) * 10) / 10 : 0;
 
-  _aiIn = { intent:intent, income:income, out:outgoings, debt:debt, savings:savings, concern:concern };
+  _aiIn = { intent:intent, income:income, out:outgoings, debt:debt, savings:savings, concern:concern }; Object.keys(_aiIn).forEach(function(k){ sessionStorage.setItem('ai_'+k, _aiIn[k]); });
 
   var pill = concern === 'Reduce debt'
     ? 'Debt-reduction focused — ' + fmt(dPay) + '/mo allocation'
@@ -894,7 +894,13 @@ function buildOutput() {
   }).join('');
 
   showPage('s3');
-  document.getElementById('unlock-card').style.display = 'block';
+  if (window.location.search.indexOf('unlocked=true') !== -1) {
+    document.getElementById('free-output').style.display = 'none';
+    document.getElementById('unlock-card').style.display = 'none';
+    runAI(_aiIn.intent, _aiIn.income, _aiIn.out, _aiIn.debt, _aiIn.savings, _aiIn.concern);
+  } else {
+    document.getElementById('unlock-card').style.display = 'block';
+  }
 }
 
 function buildRecs(income, outgoings, debt, savings, disposable, debtPay, savPay, disc, debtMonths, concern, mRes, specificSpend) {
@@ -1447,19 +1453,7 @@ function callAPI(intent, income, out, debt, savings, concern, onSuccess) {
   });
 }
 
-/* Return from payment */
-document.addEventListener('DOMContentLoaded', function() {
-  if (window.location.search.indexOf('unlocked=true') !== -1) {
-    var keys = ['intent','income','out','debt','savings','concern'];
-    var vals = {};
-    keys.forEach(function(k){ vals[k] = sessionStorage.getItem('ai_'+k); });
-    if (vals.intent) {
-      showPage('s3');
-      document.getElementById('free-taster').style.display = 'none';
-      runAI(vals.intent, parseFloat(vals.income)||0, parseFloat(vals.out)||0, parseFloat(vals.debt)||0, parseFloat(vals.savings)||0, vals.concern||'Control spending');
-    }
-  }
-});
+
 
 function dlXLSX() {
   var d = _proData;
