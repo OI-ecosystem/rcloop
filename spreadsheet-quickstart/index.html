@@ -1,4 +1,4 @@
-<!-- RC Loop Spreadsheet QuickStart v4.12 | Updated: 21 May 2026 -->
+<!-- RC Loop Spreadsheet QuickStart v4.14 | Updated: 21 May 2026 -->
 <!-- © 2025 RC Loop. All rights reserved. Unauthorised copying or distribution prohibited. -->
 
 <style>
@@ -358,7 +358,6 @@ textarea{min-height:70px;resize:vertical}
           <div class="dl-row">
             <button class="dl-btn pri" onclick="dlXLSX()">&#8595; XLSX</button>
             <button class="dl-btn" onclick="dlGoogleSheets()">&#8595; Google Sheets</button>
-            <button class="dl-btn" onclick="dlPDF()">&#8595; Save as PDF</button>
           </div>
         </div>
         <table class="sheet-table" id="main-sheet"></table>
@@ -1458,6 +1457,7 @@ function callAPI(intent, income, out, debt, savings, concern, onSuccess) {
 
 
 function dlPDF() {
+  alert('Tip: In the print dialog that opens, change the Destination to \'Save as PDF\' to download your report.');
   var w = window.open('', '_blank');
   if (!w) { alert('Please allow popups to save as PDF.'); return; }
 
