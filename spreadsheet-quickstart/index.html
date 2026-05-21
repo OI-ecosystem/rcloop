@@ -1,4 +1,4 @@
-<!-- RC Loop Spreadsheet QuickStart v4.7 | Updated: 21 May 2026 06:03 -->
+<!-- RC Loop Spreadsheet QuickStart v4.8 | Updated: 21 May 2026 -->
 <!-- © 2025 RC Loop. All rights reserved. Unauthorised copying or distribution prohibited. -->
 
 <style>
@@ -894,16 +894,7 @@ function buildOutput() {
   }).join('');
 
   showPage('s3');
-  if (window.location.search.indexOf('unlocked=true') !== -1) {
-    /* Etsy buyer — free output already built, just hide it and fire AI */
-    document.getElementById('free-output').style.display = 'none';
-    document.getElementById('unlock-card').style.display = 'none';
-    setTimeout(function() {
-      runAI(_aiIn.intent, _aiIn.income, _aiIn.out, _aiIn.debt, _aiIn.savings, _aiIn.concern);
-    }, 100);
-  } else {
-    document.getElementById('unlock-card').style.display = 'block';
-  }
+  document.getElementById('unlock-card').style.display = 'block';
 }
 
 function buildRecs(income, outgoings, debt, savings, disposable, debtPay, savPay, disc, debtMonths, concern, mRes, specificSpend) {
