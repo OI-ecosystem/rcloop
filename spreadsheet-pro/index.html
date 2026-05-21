@@ -1,4 +1,4 @@
-<!-- RC Loop Spreadsheet Pro v3 | Updated: 21 May 2026 -->
+<!-- RC Loop Spreadsheet Pro v4 | Updated: 21 May 2026 -->
 <!-- © 2025 RC Loop. All rights reserved. Unauthorised copying or distribution prohibited. -->
 <!DOCTYPE html>
 <html lang="en">
@@ -1919,15 +1919,14 @@ function dlPDF() {
 
   /* Pull remaining sections from rendered DOM */
   var sections = [
-    {id:'income-table', title:'Income allocation engine', num:2},
-    {id:'debt-pressure-table', title:'Debt pressure analysis', num:3},
-    {id:'debt-tracker-table', title:'Debt repayment tracker', num:4},
-    {id:'emergency-table', title:'Emergency runway planner', num:5},
-    {id:'savings-table', title:'Savings velocity projection', num:6},
-    {id:'disposable-table', title:'Disposable income tracking', num:7},
-    {id:'leakage-table', title:'Behavioural leakage detection', num:8},
-    {id:'scenario-table', title:'3-scenario future projection', num:11},
-    {id:'stability-table', title:'Financial stability timeline', num:14},
+    {id:'s-allocation', title:'Income allocation engine', num:2},
+    {id:'s-debt-pressure', title:'Debt pressure analysis', num:3},
+    {id:'s-snowball', title:'Debt repayment tracker', num:4},
+    {id:'s-runway', title:'Emergency runway planner', num:5},
+    {id:'s-savings-velocity', title:'Savings velocity projection', num:6},
+    {id:'s-disposable', title:'Disposable income tracking', num:7},
+    {id:'s-leakage', title:'Behavioural leakage detection', num:8},
+    {id:'s-scenarios', title:'3-scenario future projection', num:11},
   ];
 
   sections.forEach(function(s){
@@ -1938,29 +1937,29 @@ function dlPDF() {
   });
 
   /* Score */
-  var scoreEl = document.getElementById('coherence-score-num');
+  var scoreEl = document.getElementById('s-score-num');
   if (scoreEl) {
     html += '<div class="sec"><div class="sec-title"><span class="sec-num">9</span>Financial coherence score</div>';
     html += '<div style="font-size:28px;font-weight:300;margin-bottom:6px">'+scoreEl.textContent+'<span style="font-size:14px;color:#888">/100</span></div></div>';
   }
 
   /* AI narrative sections */
-  var summaryEl = document.getElementById('ai-summary');
+  var summaryEl = document.getElementById('s-summary');
   if (summaryEl && summaryEl.textContent) {
     html += '<div class="sec"><div class="sec-title">Executive summary</div><div style="line-height:1.7;font-size:11px">'+summaryEl.textContent+'</div></div>';
   }
 
-  var insightEl = document.getElementById('ai-insight');
+  var insightEl = document.getElementById('s-insight');
   if (insightEl && insightEl.textContent) {
     html += '<div class="insight-box">'+insightEl.textContent+'</div>';
   }
 
-  var priorityEl = document.getElementById('ai-priority');
+  var priorityEl = document.getElementById('s-priority');
   if (priorityEl && priorityEl.textContent) {
     html += '<div class="sec" style="margin-top:12px"><div class="sec-title">Top priority</div><div style="line-height:1.6;font-size:11px">'+priorityEl.textContent+'</div></div>';
   }
 
-  var riskEl = document.getElementById('ai-risk');
+  var riskEl = document.getElementById('s-risk');
   if (riskEl && riskEl.textContent) {
     html += '<div class="risk-box"><strong>Risk if you do nothing:</strong> '+riskEl.textContent+'</div>';
   }
