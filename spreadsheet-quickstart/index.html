@@ -1,4 +1,4 @@
-<!-- RC Loop Spreadsheet QuickStart v4.5 | Updated: 18 May 2026 06:48 -->
+<!-- RC Loop Spreadsheet QuickStart v4.7 | Updated: 21 May 2026 06:03 -->
 <!-- © 2025 RC Loop. All rights reserved. Unauthorised copying or distribution prohibited. -->
 
 <style>
@@ -799,11 +799,12 @@ function buildOutput() {
   mRows += '<td class="' + (disc<100?'red':'grn') + '">' + (disc<100?'Tight':'Available') + '</td></tr>';
   mRows += '<tr><td>Current savings total</td><td class="num">' + fmt(savings) + '</td><td class="num">' + mRes.toFixed(1) + ' months reserve</td>';
   mRows += '<td class="' + (mRes<1?'red':mRes<2?'gold':'grn') + '">' + (mRes<1?'Critical':mRes<2?'Low':'Healthy') + '</td></tr>';
-  document.getElementById('main-sheet').innerHTML = mRows;
+  var msEl = document.getElementById('main-sheet'); if (msEl) msEl.innerHTML = mRows;
 
   /* Plan table */
   var ph = document.getElementById('plan-header');
   var ps = document.getElementById('plan-sheet');
+  if (!ph || !ps) { ph = { textContent: '' }; ps = { innerHTML: '' }; }
 
   if (debt > 0 && concern === 'Reduce debt') {
     ph.textContent = 'Debt reduction tracker';
@@ -893,11 +894,13 @@ function buildOutput() {
   }).join('');
 
   showPage('s3');
-  /* If arrived with ?unlocked=true (Etsy buyer) — skip teaser and unlock button */
   if (window.location.search.indexOf('unlocked=true') !== -1) {
-    document.getElementById('unlock-card').style.display = 'none';
+    /* Etsy buyer — free output already built, just hide it and fire AI */
     document.getElementById('free-output').style.display = 'none';
-    runAI(_aiIn.intent, _aiIn.income, _aiIn.out, _aiIn.debt, _aiIn.savings, _aiIn.concern);
+    document.getElementById('unlock-card').style.display = 'none';
+    setTimeout(function() {
+      runAI(_aiIn.intent, _aiIn.income, _aiIn.out, _aiIn.debt, _aiIn.savings, _aiIn.concern);
+    }, 100);
   } else {
     document.getElementById('unlock-card').style.display = 'block';
   }
