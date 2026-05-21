@@ -1,4 +1,4 @@
-<!-- RC Loop Spreadsheet Pro v7 | Updated: 21 May 2026 -->
+<!-- RC Loop Spreadsheet Pro v8 | Updated: 21 May 2026 -->
 <!-- © 2025 RC Loop. All rights reserved. Unauthorised copying or distribution prohibited. -->
 <!DOCTYPE html>
 <html lang="en">
@@ -1999,162 +1999,187 @@ function dlXLSX() {
   var apr       = d.apr||19.9;
   var mRate     = apr/100/12;
   var essPct    = Math.round((d.ess||0)/d.income*100);
+  var discPct   = Math.round((d.disc||0)/d.income*100);
   var savRate   = Math.round(savPay/d.income*100);
   var dti       = Math.round((d.debt||0)/d.income*100/12);
   var runway    = Math.round((d.savings||0)/d.income*10)/10;
-  var score     = r&&r.score?r.score:0;
+  var score     = r&&r.score ? r.score : 0;
+  var intMo     = Math.round((d.debt||0)*mRate);
+  var intYr     = Math.round(intMo*12);
   function tl(val,gFn,aFn){ return gFn(val)?'Good':aFn(val)?'Caution':'Critical'; }
 
-  /* SHEET 1 — Dashboard */
+  /* ── SHEET 1: Dashboard ── */
   var ws1 = XLSX.utils.aoa_to_sheet([
-    ['RC Loop Pro — Financial Position Dashboard', mnth, '', ''],
-    ['Your situation', d.intent||'', '', ''],
-    [''],
-    ['INCOME & OUTGOINGS',    'VALUE £',  'NOTE',                                        'STATUS'],
-    ['Monthly net income',    d.income,   '100% base',                                   'Base'],
-    ['Essential spend',       d.ess||0,   essPct+'% of income',                          tl(essPct,  function(v){return v<=65;},function(v){return v<=75;})],
-    ['Discretionary spend',   d.disc||0,  Math.round((d.disc||0)/d.income*100)+'% of income', tl(Math.round((d.disc||0)/d.income*100),function(v){return v<=20;},function(v){return v<=30;})],
-    ['Monthly surplus',       surplus,    'Available to allocate',                       surplus>0?'Good':'Critical'],
-    ['Savings allocation',    savPay,     savRate+'% of income',                         tl(savRate, function(v){return v>=10;},function(v){return v>=5;})],
-    [''],
-    ['DEBT & SAVINGS',        'VALUE £',  'NOTE',                                        'STATUS'],
-    ['Total debt',            d.debt||0,  'DTI: '+dti+'%',                               tl(dti,    function(v){return v<=15;},function(v){return v<=25;})],
-    ['Estimated APR',         apr,        '%',                                            tl(apr,    function(v){return v<=10;},function(v){return v<=20;})],
-    ['Monthly interest cost', Math.round((d.debt||0)*mRate), '£'+Math.round((d.debt||0)*mRate*12)+'/yr', (d.debt||0)>0?'Critical':'Good'],
-    ['Debt repayment',        debtPay,    Math.round(debtPay/d.income*100)+'% of income','Allocated'],
-    ['Current savings',       d.savings||0, runway+' months reserve',                   tl(runway, function(v){return v>=3;},function(v){return v>=1;})],
-    ['Emergency runway (mths)',runway,    'Months if income stopped',                    tl(runway, function(v){return v>=3;},function(v){return v>=1;})],
-    ['Savings goal target',   d.savGoal||0,'Your target',                                ''],
-    ['Gap to savings goal',   Math.max(0,(d.savGoal||0)-(d.savings||0)),'Remaining',    Math.max(0,(d.savGoal||0)-(d.savings||0))===0?'Reached':'In progress'],
-    [''],
-    ['COHERENCE SCORE',       score,      '/100',                                        tl(score,  function(v){return v>=70;},function(v){return v>=50;})],
-    [''],
-    ['KEY: Good = within healthy range  |  Caution = needs attention  |  Critical = action required','','',''],
+    ['RC Loop Pro — Financial Position Dashboard', mnth],
+    ['Your situation', d.intent||''],
+    [],
+    ['METRIC',                  'VALUE',      'NOTE',                         'STATUS'],
+    ['Monthly net income',      '£'+d.income,  '100% base',                'Base'],
+    ['Essential spend',         '£'+(d.ess||0), essPct+'% of income',      tl(essPct,  function(v){return v<=65;},function(v){return v<=75;})],
+    ['Discretionary spend',     '£'+(d.disc||0), discPct+'% of income',    tl(discPct, function(v){return v<=20;},function(v){return v<=30;})],
+    ['Monthly surplus',         '£'+surplus,  'Available to allocate',     surplus>0?'Good':'Critical'],
+    ['Savings allocation',      '£'+savPay,   savRate+'% of income',       tl(savRate, function(v){return v>=10;},function(v){return v>=5;})],
+    [],
+    ['Total debt',              '£'+(d.debt||0), 'DTI: '+dti+'%',          tl(dti,    function(v){return v<=15;},function(v){return v<=25;})],
+    ['Estimated APR',           apr+'%',        'Annual percentage rate',      tl(apr,    function(v){return v<=10;},function(v){return v<=20;})],
+    ['Monthly interest cost',   '£'+intMo,   '£'+intYr+'/yr',           (d.debt||0)>0?'Critical':'Good'],
+    ['Debt repayment',          '£'+debtPay,  Math.round(debtPay/d.income*100)+'% of income', 'Allocated'],
+    ['Current savings',         '£'+(d.savings||0), runway+' months reserve', tl(runway, function(v){return v>=3;},function(v){return v>=1;})],
+    ['Emergency runway',        runway+' months', 'Months if income stopped', tl(runway, function(v){return v>=3;},function(v){return v>=1;})],
+    ['Savings goal target',     '£'+(d.savGoal||0), 'Your target',         ''],
+    ['Gap to savings goal',     '£'+Math.max(0,(d.savGoal||0)-(d.savings||0)), 'Remaining', Math.max(0,(d.savGoal||0)-(d.savings||0))===0?'Reached':'In progress'],
+    [],
+    ['Financial coherence score', score+'/100', 'Out of 100',                 tl(score,  function(v){return v>=70;},function(v){return v>=50;})],
+    [],
+    ['STATUS KEY', 'Good = within healthy range', 'Caution = needs attention', 'Critical = action required'],
+    ['COLOUR GUIDE', 'Select D5:D21 > Home > Conditional Formatting > Highlight Cell Rules > Text that Contains', '', ''],
+    ['', 'Type "Good" > Green Fill   |   "Caution" > Yellow Fill   |   "Critical" > Red Fill', '', ''],
   ]);
-  ws1['!cols'] = [{wch:30},{wch:12},{wch:28},{wch:14}];
+  ws1['!cols'] = [{wch:28},{wch:16},{wch:28},{wch:12}];
   XLSX.utils.book_append_sheet(wb, ws1, 'Dashboard');
 
-  /* SHEET 2 — Income Allocation */
+  /* ── SHEET 2: Income Allocation ── */
   var ws2 = XLSX.utils.aoa_to_sheet([
-    ['Income Allocation Engine', mnth],[''],
-    ['Monthly net income', d.income, ''],[''],
-    ['CATEGORY','MONTHLY £','% INCOME','TARGET %','STATUS'],
-    ['Essential outgoings', d.ess||0,   Math.round((d.ess||0)/d.income*100)+'%','50-65%',(d.ess||0)/d.income<=0.65?'Within range':'Over target'],
-    ['Debt repayment',      debtPay,    Math.round(debtPay/d.income*100)+'%',   '15-20%','Allocated'],
-    ['Savings allocation',  savPay,     Math.round(savPay/d.income*100)+'%',    '10-20%',savPay/d.income>=0.10?'On target':'Below target'],
-    ['Discretionary',       d.disc||0,  Math.round((d.disc||0)/d.income*100)+'%','10-20%','Available'],
-    ['Remaining surplus',   Math.max(0,surplus-debtPay-savPay), Math.round(Math.max(0,surplus-debtPay-savPay)/d.income*100)+'%','Variable','Unallocated'],
-    [''],
-    ['TOTAL OUTGOINGS', outgoings, Math.round(outgoings/d.income*100)+'%','',''],
+    ['Income Allocation Engine', mnth],
+    [],
+    ['Monthly net income', '£'+d.income],
+    [],
+    ['CATEGORY',            'MONTHLY',          '% INCOME', 'TARGET %', 'STATUS'],
+    ['Essential outgoings', '£'+(d.ess||0),  essPct+'%', '50-65%',   (d.ess||0)/d.income<=0.65?'Within range':'Over target'],
+    ['Debt repayment',      '£'+debtPay,      Math.round(debtPay/d.income*100)+'%', '15-20%', 'Allocated'],
+    ['Savings allocation',  '£'+savPay,       savRate+'%','10-20%',   savPay/d.income>=0.10?'On target':'Below target'],
+    ['Discretionary',       '£'+(d.disc||0),  discPct+'%','10-20%',   'Available'],
+    ['Remaining surplus',   '£'+Math.max(0,surplus-debtPay-savPay), Math.round(Math.max(0,surplus-debtPay-savPay)/d.income*100)+'%', 'Variable', 'Unallocated'],
+    [],
+    ['TOTAL OUTGOINGS',     '£'+outgoings,    Math.round(outgoings/d.income*100)+'%', '', ''],
   ]);
-  ws2['!cols'] = [{wch:25},{wch:14},{wch:12},{wch:12},{wch:14}];
+  ws2['!cols'] = [{wch:25},{wch:12},{wch:10},{wch:10},{wch:14}];
   XLSX.utils.book_append_sheet(wb, ws2, 'Income Allocation');
 
-  /* SHEET 3 — Debt Tracker */
-  var debtRows = [['Debt Repayment Tracker',mnth],[''],
-    ['Opening balance',d.debt||0,''],['Monthly payment',debtPay,''],['Estimated APR',apr,'%'],[''],
-    ['MONTH','OPENING £','PAYMENT £','INTEREST £','CLOSING £','% CLEARED']
+  /* ── SHEET 3: Debt Tracker ── */
+  var debtRows = [
+    ['Debt Repayment Tracker', mnth],
+    [],
+    ['Opening balance', '£'+(d.debt||0)],
+    ['Monthly payment',  '£'+debtPay],
+    ['Estimated APR',    apr+'%'],
+    [],
+    ['MONTH', 'OPENING £', 'PAYMENT £', 'INTEREST £', 'CLOSING £', '% CLEARED']
   ];
-  var bal=d.debt||0;
-  for(var m=1;m<=24&&bal>0;m++){
-    var interest=Math.round(bal*mRate);
-    var closing=Math.max(0,bal+interest-debtPay);
-    var pct=Math.round((1-closing/(d.debt||1))*100);
-    debtRows.push(['Month '+m,bal,debtPay,-interest,closing,pct+'%']);
-    bal=closing;
+  var bal = d.debt||0;
+  for (var m=1; m<=24&&bal>0; m++) {
+    var interest = Math.round(bal*mRate);
+    var closing  = Math.max(0, bal+interest-debtPay);
+    var pct      = Math.round((1-closing/(d.debt||1))*100);
+    debtRows.push(['Month '+m, bal, debtPay, -interest, closing, pct+'%']);
+    bal = closing;
   }
-  var ws3=XLSX.utils.aoa_to_sheet(debtRows);
-  ws3['!cols']=[{wch:12},{wch:14},{wch:14},{wch:14},{wch:14},{wch:12}];
-  XLSX.utils.book_append_sheet(wb,ws3,'Debt Tracker');
+  var ws3 = XLSX.utils.aoa_to_sheet(debtRows);
+  ws3['!cols'] = [{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:10}];
+  XLSX.utils.book_append_sheet(wb, ws3, 'Debt Tracker');
 
-  /* SHEET 4 — Emergency Runway */
-  var ws4=XLSX.utils.aoa_to_sheet([
-    ['Emergency Runway Planner',mnth],[''],
-    ['Monthly income',d.income,''],['Essential monthly spend',d.ess||0,''],
-    ['Current savings',d.savings||0,''],['Current runway (months)',runway,'months of income'],[''],
-    ['SAFETY LEVEL','REQUIRED £','CURRENT £','GAP £','MONTHS TO REACH','STATUS'],
-    ['Level 1 — Essential cover (1 month)',  d.ess||0,   d.savings||0,Math.max(0,(d.ess||0)-(d.savings||0)),  savPay>0?Math.ceil(Math.max(0,(d.ess||0)-(d.savings||0))/savPay):0,  (d.savings||0)>=(d.ess||0)?'OK':'Critical'],
-    ['Level 2 — Income replacement (1 month)',d.income,  d.savings||0,Math.max(0,d.income-(d.savings||0)),    savPay>0?Math.ceil(Math.max(0,d.income-(d.savings||0))/savPay):0,    (d.savings||0)>=d.income?'OK':'Critical'],
-    ['Level 3 — Safety buffer (3 months)',   d.income*3, d.savings||0,Math.max(0,d.income*3-(d.savings||0)),  savPay>0?Math.ceil(Math.max(0,d.income*3-(d.savings||0))/savPay):0,  (d.savings||0)>=d.income*3?'OK':'Critical'],
-    ['Level 4 — Full security (6 months)',   d.income*6, d.savings||0,Math.max(0,d.income*6-(d.savings||0)),  savPay>0?Math.ceil(Math.max(0,d.income*6-(d.savings||0))/savPay):0,  (d.savings||0)>=d.income*6?'OK':'Critical'],
+  /* ── SHEET 4: Emergency Runway ── */
+  var ws4 = XLSX.utils.aoa_to_sheet([
+    ['Emergency Runway Planner', mnth],
+    [],
+    ['Monthly income',           '£'+d.income],
+    ['Essential monthly spend',  '£'+(d.ess||0)],
+    ['Current savings',          '£'+(d.savings||0)],
+    ['Current runway',           runway+' months'],
+    [],
+    ['SAFETY LEVEL', 'REQUIRED', 'CURRENT', 'GAP', 'MONTHS TO REACH', 'STATUS'],
+    ['Level 1 — Essential cover (1 month)',    '£'+(d.ess||0),    '£'+(d.savings||0), '£'+Math.max(0,(d.ess||0)-(d.savings||0)),    savPay>0?Math.ceil(Math.max(0,(d.ess||0)-(d.savings||0))/savPay):0,    (d.savings||0)>=(d.ess||0)?'OK':'Critical'],
+    ['Level 2 — Income replacement (1 month)', '£'+d.income,      '£'+(d.savings||0), '£'+Math.max(0,d.income-(d.savings||0)),        savPay>0?Math.ceil(Math.max(0,d.income-(d.savings||0))/savPay):0,      (d.savings||0)>=d.income?'OK':'Critical'],
+    ['Level 3 — Safety buffer (3 months)',     '£'+(d.income*3),  '£'+(d.savings||0), '£'+Math.max(0,d.income*3-(d.savings||0)),      savPay>0?Math.ceil(Math.max(0,d.income*3-(d.savings||0))/savPay):0,    (d.savings||0)>=d.income*3?'OK':'Critical'],
+    ['Level 4 — Full security (6 months)',     '£'+(d.income*6),  '£'+(d.savings||0), '£'+Math.max(0,d.income*6-(d.savings||0)),      savPay>0?Math.ceil(Math.max(0,d.income*6-(d.savings||0))/savPay):0,    (d.savings||0)>=d.income*6?'OK':'Critical'],
   ]);
-  ws4['!cols']=[{wch:35},{wch:14},{wch:14},{wch:14},{wch:18},{wch:10}];
-  XLSX.utils.book_append_sheet(wb,ws4,'Emergency Runway');
+  ws4['!cols'] = [{wch:32},{wch:12},{wch:12},{wch:12},{wch:16},{wch:10}];
+  XLSX.utils.book_append_sheet(wb, ws4, 'Emergency Runway');
 
-  /* SHEET 5 — Savings Velocity */
-  var svRows=[['Savings Velocity Projection',mnth],[''],
-    ['Current savings',d.savings||0,''],['Monthly saving (base)',savPay,''],[''],
-    ['SCENARIO','MONTHLY SAVING','3 MONTHS','6 MONTHS','12 MONTHS','24 MONTHS']
+  /* ── SHEET 5: Savings Velocity ── */
+  var svRows = [
+    ['Savings Velocity Projection', mnth],
+    [],
+    ['Current savings', '£'+(d.savings||0)],
+    ['Monthly saving (base)', '£'+savPay],
+    [],
+    ['SCENARIO', 'MONTHLY SAVING', '3 MONTHS', '6 MONTHS', '12 MONTHS', '24 MONTHS']
   ];
   [[savPay,'Current pace'],[Math.round(savPay*1.4),'Optimised'],[Math.round(savPay*2),'Accelerated']].forEach(function(sv){
-    svRows.push([sv[1],sv[0],(d.savings||0)+sv[0]*3,(d.savings||0)+sv[0]*6,(d.savings||0)+sv[0]*12,(d.savings||0)+sv[0]*24]);
+    svRows.push([sv[1], '£'+sv[0], '£'+((d.savings||0)+sv[0]*3), '£'+((d.savings||0)+sv[0]*6), '£'+((d.savings||0)+sv[0]*12), '£'+((d.savings||0)+sv[0]*24)]);
   });
-  var ws5=XLSX.utils.aoa_to_sheet(svRows);
-  ws5['!cols']=[{wch:18},{wch:16},{wch:12},{wch:12},{wch:12},{wch:12}];
-  XLSX.utils.book_append_sheet(wb,ws5,'Savings Velocity');
+  var ws5 = XLSX.utils.aoa_to_sheet(svRows);
+  ws5['!cols'] = [{wch:18},{wch:14},{wch:12},{wch:12},{wch:12},{wch:12}];
+  XLSX.utils.book_append_sheet(wb, ws5, 'Savings Velocity');
 
-  /* SHEET 6 — Spending Tracker */
-  var ws6=XLSX.utils.aoa_to_sheet([
-    ['Monthly Spending Tracker',mnth],[''],
-    ['CATEGORY','BUDGET £','ACTUAL £','VARIANCE £','NOTE'],
-    ['Housing / rent',      '','','','Enter actual'],
-    ['Food & groceries',    '','','','Enter actual'],
-    ['Transport',           '','','','Enter actual'],
-    ['Utilities & bills',   '','','','Enter actual'],
-    ['Subscriptions',       '','','','Enter actual'],
-    ['Dining & takeaways',  '','','','Enter actual'],
-    ['Entertainment',       '','','','Enter actual'],
-    ['Clothing',            '','','','Enter actual'],
-    ['Debt repayments',     debtPay,'','','Automated'],
-    ['Savings transfer',    savPay, '','','Pay yourself first'],
-    ['Other discretionary', '','','','Enter actual'],
-    [''],
-    ['TOTAL BUDGETED',outgoings,'','',''],
-    ['Monthly income', d.income,d.income,'',''],
-    ['Surplus',        surplus, '','','Update after entering actuals'],
+  /* ── SHEET 6: Spending Tracker ── */
+  var ws6 = XLSX.utils.aoa_to_sheet([
+    ['Monthly Spending Tracker', mnth],
+    [],
+    ['CATEGORY',             'BUDGET',         'ACTUAL', 'VARIANCE', 'NOTE'],
+    ['Housing / rent',       '',               '',       '',         'Enter actual'],
+    ['Food & groceries',     '',               '',       '',         'Enter actual'],
+    ['Transport',            '',               '',       '',         'Enter actual'],
+    ['Utilities & bills',    '',               '',       '',         'Enter actual'],
+    ['Subscriptions',        '',               '',       '',         'Enter actual'],
+    ['Dining & takeaways',   '',               '',       '',         'Enter actual'],
+    ['Entertainment',        '',               '',       '',         'Enter actual'],
+    ['Clothing',             '',               '',       '',         'Enter actual'],
+    ['Debt repayments',      '£'+debtPay,   '',       '',         'Automated — do not skip'],
+    ['Savings transfer',     '£'+savPay,    '',       '',         'Pay yourself first'],
+    ['Other discretionary',  '',               '',       '',         'Enter actual'],
+    [],
+    ['TOTAL BUDGETED',       '£'+outgoings, '',       '',         ''],
+    ['Monthly income',       '£'+d.income,  '£'+d.income, '',  ''],
+    ['Surplus',              '£'+surplus,   '',       '',         'Update after entering actuals'],
   ]);
-  ws6['!cols']=[{wch:25},{wch:12},{wch:12},{wch:14},{wch:22}];
-  XLSX.utils.book_append_sheet(wb,ws6,'Spending Tracker');
+  ws6['!cols'] = [{wch:25},{wch:12},{wch:12},{wch:12},{wch:26}];
+  XLSX.utils.book_append_sheet(wb, ws6, 'Spending Tracker');
 
-  /* SHEET 7 — Behavioural Leakage */
-  var ws7=XLSX.utils.aoa_to_sheet([
-    ['Behavioural Leakage Analysis',mnth],[''],
-    ['LEAKAGE SOURCE','DAILY £','MONTHLY £','ANNUAL £','3-YEAR IMPACT £'],
-    ['Daily convenience spend',6,180,2190,6570],
-    ['Coffee & snacks',4,105,1278,3833],
-    ['Impulse purchases (weekly)',2,51,626,1877],
-    ['Unused subscriptions',1,22,268,803],[''],
-    ['Total if all apply',13,358,4361,13083],[''],
-    ['NOTE','Identify which apply — track for 30 days to confirm','','',''],
+  /* ── SHEET 7: Behavioural Leakage ── */
+  var ws7 = XLSX.utils.aoa_to_sheet([
+    ['Behavioural Leakage Analysis', mnth],
+    [],
+    ['LEAKAGE SOURCE',              'DAILY',  'MONTHLY', 'ANNUAL',  '3-YEAR IMPACT'],
+    ['Daily convenience spend',     '£6',  '£180', '£2,190', '£6,570'],
+    ['Coffee & snacks',             '£4',  '£105', '£1,278', '£3,833'],
+    ['Impulse purchases (weekly)',  '£2',  '£51',  '£626',   '£1,877'],
+    ['Unused subscriptions',        '£1',  '£22',  '£268',   '£803'],
+    [],
+    ['Total if all apply',          '£13', '£358', '£4,361', '£13,083'],
+    [],
+    ['NOTE', 'Identify which apply to you and track for 30 days to confirm actual amounts', '', '', ''],
   ]);
-  ws7['!cols']=[{wch:30},{wch:10},{wch:12},{wch:12},{wch:18}];
-  XLSX.utils.book_append_sheet(wb,ws7,'Behavioural Leakage');
+  ws7['!cols'] = [{wch:30},{wch:10},{wch:10},{wch:10},{wch:16}];
+  XLSX.utils.book_append_sheet(wb, ws7, 'Behavioural Leakage');
 
-  /* SHEET 8 — Scenarios */
-  var ws8=XLSX.utils.aoa_to_sheet([
-    ['3-Scenario Future Projection',mnth],[''],
-    ['SCENARIO','MONTHLY DEBT PAY','DEBT-FREE','MONTHLY SAVING','SAVINGS AT 12MO','RUNWAY AT 12MO'],
-    ['Current path',          debtPay,                d.debt&&debtPay>0?Math.ceil(d.debt/debtPay)+' mo':'N/A',              savPay,                (d.savings||0)+savPay*12,               Math.round(((d.savings||0)+savPay*12)/d.income*10)/10+' mo'],
-    ['Optimised',             Math.round(debtPay*1.3),d.debt&&debtPay>0?Math.ceil(d.debt/(debtPay*1.3))+' mo':'N/A',       Math.round(savPay*1.3),(d.savings||0)+Math.round(savPay*1.3)*12,Math.round(((d.savings||0)+Math.round(savPay*1.3)*12)/d.income*10)/10+' mo'],
-    ['Accelerated discipline',Math.round(debtPay*1.6),d.debt&&debtPay>0?Math.ceil(d.debt/(debtPay*1.6))+' mo':'N/A',      Math.round(savPay*1.5),(d.savings||0)+Math.round(savPay*1.5)*12,Math.round(((d.savings||0)+Math.round(savPay*1.5)*12)/d.income*10)/10+' mo'],
+  /* ── SHEET 8: Scenarios ── */
+  var ws8 = XLSX.utils.aoa_to_sheet([
+    ['3-Scenario Future Projection', mnth],
+    [],
+    ['SCENARIO',              'MONTHLY DEBT PAY', 'DEBT-FREE IN',                                                    'MONTHLY SAVING',      'SAVINGS AT 12MO',                          'RUNWAY AT 12MO'],
+    ['Current path',          '£'+debtPay,      d.debt&&debtPay>0?Math.ceil(d.debt/debtPay)+' months':'N/A',      '£'+savPay,         '£'+((d.savings||0)+savPay*12),          Math.round(((d.savings||0)+savPay*12)/d.income*10)/10+' months'],
+    ['Optimised',             '£'+Math.round(debtPay*1.3), d.debt&&debtPay>0?Math.ceil(d.debt/(debtPay*1.3))+' months':'N/A', '£'+Math.round(savPay*1.3), '£'+((d.savings||0)+Math.round(savPay*1.3)*12), Math.round(((d.savings||0)+Math.round(savPay*1.3)*12)/d.income*10)/10+' months'],
+    ['Accelerated discipline','£'+Math.round(debtPay*1.6), d.debt&&debtPay>0?Math.ceil(d.debt/(debtPay*1.6))+' months':'N/A', '£'+Math.round(savPay*1.5), '£'+((d.savings||0)+Math.round(savPay*1.5)*12), Math.round(((d.savings||0)+Math.round(savPay*1.5)*12)/d.income*10)/10+' months'],
   ]);
-  ws8['!cols']=[{wch:22},{wch:18},{wch:14},{wch:18},{wch:18},{wch:16}];
-  XLSX.utils.book_append_sheet(wb,ws8,'Scenarios');
+  ws8['!cols'] = [{wch:22},{wch:16},{wch:14},{wch:16},{wch:16},{wch:14}];
+  XLSX.utils.book_append_sheet(wb, ws8, 'Scenarios');
 
-  /* SHEET 9 — Action Ladder */
-  var ws9=XLSX.utils.aoa_to_sheet([
-    ['Action Priority Ladder',mnth],[''],
-    ['PRIORITY','ACTION','TARGET'],
-    ['1 — Immediate','Open a dedicated emergency savings account','Target: £'+Math.round(d.income)],
-    ['2 — This week','Set up automatic debt payment of £'+debtPay+' on payday','Automate before you can spend it'],
-    ['3 — 30 days','Track every discretionary transaction','No judgement — just data'],
-    ['4 — This month','Set a weekly discretionary limit of £'+Math.round((d.disc||0)/4),'Check mid-week'],
-    ['5 — Ongoing','Review debt balance monthly','Confirm above minimum'],
+  /* ── SHEET 9: Action Ladder ── */
+  var ws9 = XLSX.utils.aoa_to_sheet([
+    ['Action Priority Ladder', mnth],
+    [],
+    ['PRIORITY',       'ACTION',                                                          'TARGET'],
+    ['1 — Immediate',  'Open a dedicated emergency savings account — separate from current account', 'Target: £'+Math.round(d.income)],
+    ['2 — This week',  'Set up automatic debt payment of £'+debtPay+' on payday',     'Automate before you can spend it'],
+    ['3 — 30 days',    'Track every discretionary transaction — no judgement, just data','Identify your top 3 leakage categories'],
+    ['4 — This month', 'Set a weekly discretionary limit of £'+Math.round((d.disc||0)/4), 'Check mid-week, adjust Thursday onwards'],
+    ['5 — Ongoing',    'Review debt balance and savings monthly',                        'Confirm debt repayment is above minimum'],
   ]);
-  ws9['!cols']=[{wch:18},{wch:55},{wch:30}];
-  XLSX.utils.book_append_sheet(wb,ws9,'Action Ladder');
+  ws9['!cols'] = [{wch:18},{wch:60},{wch:35}];
+  XLSX.utils.book_append_sheet(wb, ws9, 'Action Ladder');
 
-  XLSX.writeFile(wb,'RC_Loop_Pro_'+mnth.replace(' ','_')+'.xlsx');
+  XLSX.writeFile(wb, 'RC_Loop_Pro_'+mnth.replace(' ','_')+'.xlsx');
 }
 
 function dlGoogleSheets() {
