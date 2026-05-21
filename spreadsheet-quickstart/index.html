@@ -1,4 +1,4 @@
-<!-- RC Loop Spreadsheet QuickStart v4.4 | Updated: 17 May 2026 13:00 -->
+<!-- RC Loop Spreadsheet QuickStart v4.5 | Updated: 18 May 2026 06:48 -->
 <!-- © 2025 RC Loop. All rights reserved. Unauthorised copying or distribution prohibited. -->
 
 <style>
@@ -189,18 +189,6 @@ textarea{min-height:70px;resize:vertical}
 .scenario-structured td{font-weight:500}
 .scenario-structured td:first-child::after{content:' ★';color:var(--gold)}
 
-/* PRINT STYLES */
-@media print {
-  nav, .page:not(#s2), .dl-btn, .nav-back,
-  button, .output-footer-btns { display: none !important; }
-  body { background: #fff; font-size: 11pt; }
-  .wrap { max-width: 100%; padding: 0; }
-  .card, .score-card, .conflicts-card, .action-plan,
-  .positioning-summary { break-inside: avoid; margin-bottom: 8px; border: 0.5px solid #ddd; }
-  table { font-size: 9pt; }
-  a { text-decoration: none; color: inherit; }
-}
-
 </style>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
@@ -368,7 +356,6 @@ textarea{min-height:70px;resize:vertical}
         <div class="sheet-header">
           <h4>Monthly financial overview</h4>
           <div class="dl-row">
-            <button class="dl-btn" onclick="window.print()" style="background:#1a1a14;color:#fff;border-color:#1a1a14;">&#128438; Save as PDF</button>
             <button class="dl-btn pri" onclick="dlXLSX()">&#8595; XLSX</button>
             <button class="dl-btn" onclick="dlGoogleSheets()">&#8595; Google Sheets</button>
           </div>
@@ -391,7 +378,7 @@ textarea{min-height:70px;resize:vertical}
 
     <!-- UNLOCK CARD -->
     <div class="unlock-card" id="unlock-card" style="display:none;">
-      <div class="dev-pill" id="dev-pill" style="display:none;">DEV MODE &mdash; Mock response. Zero tokens.</div>
+      <div class="dev-pill">DEV MODE &mdash; Mock response. Zero tokens.</div>
       <p class="unlock-heading">Get your personalised financial clarity system.</p>
       <p class="unlock-sub">10 structured sections built from your exact situation &mdash; not a template. A coherence score, debt snowball plan, disposable income analysis, scenario modelling and a monthly action plan.</p>
       <div class="unlock-features">
@@ -429,7 +416,6 @@ textarea{min-height:70px;resize:vertical}
         <div class="sheet-header">
           <h4>Monthly financial snapshot</h4>
           <div class="dl-row">
-            <button class="dl-btn" onclick="window.print()" style="background:#1a1a14;color:#fff;border-color:#1a1a14;">&#128438; Save as PDF</button>
             <button class="dl-btn pri" onclick="dlXLSX()">&#8595; XLSX</button>
             <button class="dl-btn" onclick="dlGoogleSheets()">&#8595; Google Sheets</button>
           </div>
@@ -907,7 +893,14 @@ function buildOutput() {
   }).join('');
 
   showPage('s3');
-  document.getElementById('unlock-card').style.display = 'block';
+  /* If arrived with ?unlocked=true (Etsy buyer) — skip teaser and unlock button */
+  if (window.location.search.indexOf('unlocked=true') !== -1) {
+    document.getElementById('unlock-card').style.display = 'none';
+    document.getElementById('free-output').style.display = 'none';
+    runAI(_aiIn.intent, _aiIn.income, _aiIn.out, _aiIn.debt, _aiIn.savings, _aiIn.concern);
+  } else {
+    document.getElementById('unlock-card').style.display = 'block';
+  }
 }
 
 function buildRecs(income, outgoings, debt, savings, disposable, debtPay, savPay, disc, debtMonths, concern, mRes, specificSpend) {
@@ -957,7 +950,7 @@ function buildRecs(income, outgoings, debt, savings, disposable, debtPay, savPay
 var _aiIn = {};
 
 function unlockAI() {
-  if (PREMIUM_GATED) {
+  if (PREMIUM_GATED && window.location.search.indexOf('unlocked=true') === -1) {
     Object.keys(_aiIn).forEach(function(k){ sessionStorage.setItem('ai_'+k, _aiIn[k]); });
     window.location.href = 'https://opportunity-intelligence.lemonsqueezy.com/checkout/buy/ea665de2-5fa6-4d40-9f93-e92a47f027d4';
     return;
