@@ -983,7 +983,14 @@ function compress(txt, maxWords) {
   if (!txt) return '';
   var words = txt.split(/\s+/);
   if (words.length <= maxWords) return txt;
-  return words.slice(0, maxWords).join(' ') + '\u2026';
+  /* Try to end at a sentence boundary within the word limit */
+  var joined = words.slice(0, maxWords).join(' ');
+  var sentenceEnd = joined.search(/[.!?][^.!?]*$/);
+  if (sentenceEnd > joined.length * 0.5) {
+    return joined.substring(0, sentenceEnd + 1);
+  }
+  /* Otherwise end cleanly at word boundary — no ellipsis */
+  return joined;
 }
 
 var VERB_MAP = {
@@ -1133,8 +1140,9 @@ function runProcessing() {
   setTimeout(function() {
     showPage('s6');
     _proResult = proResult;
-    /* If arrived with ?unlocked=true (Etsy buyer) — skip teaser, fire AI directly */
+    /* If arrived with ?unlocked=true (Etsy buyer) — render preview first then fire AI directly */
     if (window.location.search.indexOf('unlocked=true') !== -1) {
+      renderPreview(proResult);
       document.getElementById('unlock-card').style.display = 'none';
       unlockFull();
     } else {
@@ -1182,9 +1190,12 @@ function buildProResult(d) {
     var cleanBullet = bullet.replace(emailRxPro,'').replace(phoneRxPro,'').trim();
     if (cleanBullet.length < 12) return;
     var upgraded = upgradeVerbs(atsClean(cleanBullet));
-    var hasStrong = /^(led|delivered|managed|drove|built|created|launched|achieved|generated|reduced|increased|improved|developed|directed|executed|pioneered|spearheaded|architected|orchestrated|championed|accelerated|transformed|engineered|owned)/i.test(upgraded);
+    /* Check for strong opener AFTER verb upgrade to avoid doubling */
+    var hasStrong = /^(led|delivered|managed|drove|built|created|launched|achieved|generated|reduced|increased|improved|developed|directed|executed|pioneered|spearheaded|architected|orchestrated|championed|accelerated|transformed|engineered|owned|oversaw|advised|evaluated|established|identified)/i.test(upgraded);
     if (!hasStrong && upgraded.length > 20) {
       var opener = strongOpeners[idx % strongOpeners.length];
+      /* Remove any weak opener at start before adding strong one */
+      upgraded = upgraded.replace(/^(oversaw|advised|evaluated|established|identified|managed the|dealt with)\s+/i, '');
       upgraded = opener + ' ' + upgraded.charAt(0).toLowerCase() + upgraded.slice(1);
     }
     if (upgraded.length > 160) upgraded = upgraded.substring(0,157) + '\u2026';
@@ -1229,7 +1240,7 @@ function buildProResult(d) {
   var sectorCtx = d.sector ? ' within the ' + d.sector + ' sector' : '';
   var posStatement;
   if (d.perception) {
-    posStatement = d.perception + (d.diff ? ' \u2014 ' + compress(d.diff, 15) + '.' : '.');
+    posStatement = d.perception + (d.diff ? ' \u2014 ' + compress(d.diff, 20) + '.' : '.');
   } else {
     posStatement = (d.name && d.name !== 'Candidate' ? d.name : 'A senior professional')
       + ' positioned as a ' + d.target + ' with demonstrable expertise in '
@@ -1253,7 +1264,7 @@ function buildProResult(d) {
     + (d.strengths[2] ? ' and ' + d.strengths[2].toLowerCase() : '')
     + sectorCtx + '. '
     + compress(upgradeVerbs(atsClean(topAch)), 22) + '. '
-    + (d.perception ? compress(d.perception, 18) + '.' : '')
+    + (d.perception ? 'A ' + compress(d.perception, 20) + '.' : '')
     + undersellLine + ' '
     + 'Consistently delivers outcomes that are measurable, sustained and directionally coherent with organisational priorities.';
   _proData.proSummary = proSummary;
@@ -1282,7 +1293,7 @@ function buildProResult(d) {
     + 'These outcomes were not incidental \u2014 they reflect a deliberate approach to identifying what matters most and directing energy accordingly.\n\n'
     + sectorLine
     + 'I am particularly drawn to ' + envStr + ' environments where strategic intent translates into measurable organisational impact. '
-    + 'My decision to ' + whyStr + ' reflects a clear-eyed assessment of where my strengths create the most value.'
+    + (whyStr ? 'My decision to ' + whyStr + ' reflects a clear-eyed assessment of where my strengths create the most value.' : 'This move reflects a clear-eyed assessment of where my strengths create the most value.')
     + energiseLine
     + diffLine + '\n\n'
     + 'What distinguishes my application is not simply experience, but coherence of direction. '
@@ -1359,18 +1370,48 @@ function unlockFull() {
     return;
   }
 
-  /* AI refinement pass */
+  /* AI writing pass — works from raw card inputs, not pre-built text */
   var pd = _proData;
-  var prompt = 'You are a professional CV writer. Refine the following two sections for ' + pd.name + ' who is positioning as ' + pd.target + '.\n\n'
-    + 'PROFESSIONAL SUMMARY (refine to flow naturally, fix grammar, keep all facts):\n' + _proResult.proSummary + '\n\n'
-    + 'COVER LETTER (refine to sound natural and compelling, fix any grammar or truncated sentences):\n' + _proResult.coverLetter + '\n\n'
-    + 'Return ONLY valid JSON with exactly these two keys: {"proSummary": "...", "coverLetter": "..."}. No other text.';
+
+  var achievementsList = (pd.ranked || []).slice(0, 8).join('\n');
+  var strengthsList = (pd.strengths || []).join(', ');
+  var envList = (pd.envTags || []).join(', ');
+
+  var prompt = 'You are a senior CV writer and career positioning expert. '
+    + 'Write a professional CV summary and cover letter for the person below. '
+    + 'Your job is to extract the strongest points from their raw inputs, correct any grammar or weak phrasing, '
+    + 'reframe passive language as ownership and leadership, and produce clean professional output. '
+    + 'Do not invent facts. Work only with what is provided. If an input is vague, make it as strong as possible within what is stated.\n\n'
+    + 'NAME: ' + pd.name + '\n'
+    + 'TARGET ROLE: ' + pd.target + '\n'
+    + 'CURRENT ROLE: ' + (pd.current || '') + '\n'
+    + 'PREVIOUS ROLE: ' + (pd.previous || '') + '\n'
+    + 'EDUCATION: ' + (pd.education || '') + '\n'
+    + 'CERTIFICATIONS: ' + (pd.certs || '') + '\n\n'
+    + 'ACHIEVEMENTS (raw — rewrite these as strong CV bullets, correct grammar, remove passive language):\n' + achievementsList + '\n\n'
+    + 'CORE STRENGTHS: ' + strengthsList + '\n'
+    + 'PREFERRED ENVIRONMENTS: ' + envList + '\n'
+    + 'HOW THEY WANT TO BE PERCEIVED: ' + (pd.perception || '') + '\n'
+    + 'WHAT DIFFERENTIATES THEM: ' + (pd.diff || '') + '\n'
+    + 'WHY MAKING THIS MOVE: ' + (pd.why || '') + '\n'
+    + 'WHAT ENERGISES THEM: ' + (pd.energise || '') + '\n'
+    + 'WHAT THEIR CV UNDERSELLS: ' + (pd.undersell || '') + '\n'
+    + 'TRUSTED COLLEAGUES KNOW: ' + (pd.colleagues || '') + '\n\n'
+    + 'TARGET SECTOR: ' + (pd.sector || '') + '\n'
+    + 'TARGET SENIORITY: ' + (pd.seniority || '') + '\n\n'
+    + 'INSTRUCTIONS:\n'
+    + '1. PROFESSIONAL SUMMARY: 3-4 sentences. Opens with name and target role. Uses the perception statement as the anchor. Includes 1-2 strongest achievements with specific figures where provided. Ends with a forward-looking statement about what they bring. No generic phrases like "results-driven" or "passionate about".\n'
+    + '2. REWRITTEN BULLETS: Rewrite each achievement as a strong CV bullet. Start each with a powerful past-tense verb. Correct grammar. Remove passive language. Keep all specific figures. Maximum 25 words per bullet.\n'
+    + '3. COVER LETTER: 4 complete paragraphs. Para 1: interest in role and what defines their background. Para 2: strongest achievement with specific outcome. Para 3: why this move, what draws them to this type of organisation. Para 4: what differentiates them and invitation to discuss. Sign off "Yours sincerely, [name]". No truncated sentences. No ellipsis.\n\n'
+    + 'Return ONLY valid JSON with exactly these three keys:\n'
+    + '{"proSummary": "...", "rewrittenBullets": ["bullet1", "bullet2", ...], "coverLetter": "..."}\n'
+    + 'No other text. No markdown. No preamble.';
 
   fetch('https://rcloop-proxy.vercel.app/api/ai', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      system: 'You are an expert CV and cover letter writer. Return only valid JSON.',
+      system: 'You are a senior CV writer and career positioning expert. You write clean, specific, compelling professional documents. You correct grammar, remove weak language, and write from raw inputs. Return only valid JSON with no preamble or markdown.',
       prompt: prompt
     })
   })
@@ -1380,9 +1421,16 @@ function unlockFull() {
     document.getElementById('ai-loader').style.display = 'none';
     try {
       var text = data.content[0].text;
-      var parsed = JSON.parse(text);
+      var clean = text.replace(/```json|```/g,'').trim();
+      var start = clean.indexOf('{'); var end = clean.lastIndexOf('}');
+      if (start >= 0 && end > start) clean = clean.substring(start, end+1);
+      var parsed = JSON.parse(clean);
       if (parsed.proSummary) _proResult.proSummary = parsed.proSummary;
       if (parsed.coverLetter) _proResult.coverLetter = parsed.coverLetter;
+      if (parsed.rewrittenBullets && parsed.rewrittenBullets.length) {
+        _proResult.rewrittenBullets = parsed.rewrittenBullets;
+        _proData.rewrittenBullets = parsed.rewrittenBullets;
+      }
     } catch(e) {}
     renderFull(_proResult);
   })
