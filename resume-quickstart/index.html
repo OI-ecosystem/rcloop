@@ -1,4 +1,4 @@
-<!-- RC Loop Resume QuickStart v4.1 | Updated: 17 May 2026 11:45 -->
+<!-- RC Loop Resume QuickStart v4.5 | Updated: 18 May 2026 06:48 -->
 <!-- © 2025 RC Loop. All rights reserved. Unauthorised copying or distribution prohibited. -->
 <!DOCTYPE html>
 <html lang="en">
@@ -1209,7 +1209,14 @@ function buildFreeOutput() {
 
   updateDots(2);
   showPage('s2');
-  document.getElementById('unlock-card').style.display = 'block';
+  /* If arrived with ?unlocked=true (Etsy buyer) — skip teaser and unlock button */
+  if (window.location.search.indexOf('unlocked=true') !== -1) {
+    document.getElementById('unlock-card').style.display = 'none';
+    document.getElementById('free-output').style.display = 'none';
+    runAIEnhancement();
+  } else {
+    document.getElementById('unlock-card').style.display = 'block';
+  }
 }
 
 /* ── SUMMARY BUILDER ── */
@@ -1315,7 +1322,7 @@ function buildFreeRecs(d) {
 
 /* ── AI UNLOCK ── */
 function unlockAI() {
-  if (PREMIUM_GATED) {
+  if (PREMIUM_GATED && window.location.search.indexOf('unlocked=true') === -1) {
     sessionStorage.setItem('resume_data', JSON.stringify(_aiData));
     window.location.href = 'https://opportunity-intelligence.lemonsqueezy.com/checkout/buy/5bc08e9b-b517-4189-ada7-aa904f57d3b6';
     return;
