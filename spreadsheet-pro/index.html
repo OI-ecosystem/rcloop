@@ -1989,299 +1989,1100 @@ function dlXLSX() {
   var d = _proData;
   var r = _proResult;
   if (!d || !d.income) { alert('Please generate your financial overview first.'); return; }
-  var wb = XLSX.utils.book_new();
+  var wb   = XLSX.utils.book_new();
   var mnth = new Date().toLocaleString('en-GB',{month:'long',year:'numeric'});
 
-  /* Calculated values — match _proResult exactly */
-  var outgoings = (d.ess||0) + (d.disc||0);
-  var surplus   = (d.income||0) - outgoings;
-  var debtPay   = r && r.recDebtPay ? r.recDebtPay : Math.max(Math.round(surplus * 0.5), 10);
-  var savPay    = r && r.recSavPay  ? r.recSavPay  : Math.round(surplus * 0.3);
-  var disc      = Math.max(0, surplus - debtPay - savPay);
-  var apr       = d.apr || 19.9;
-  var mRate     = apr / 100 / 12;
+  var outgoings = (d.ess||0)+(d.disc||0);
+  var surplus   = (d.income||0)-outgoings;
+  var debtPay   = r&&r.recDebtPay ? r.recDebtPay : Math.max(Math.round(surplus*0.5),10);
+  var savPay    = r&&r.recSavPay  ? r.recSavPay  : Math.round(surplus*0.3);
+  var apr       = d.apr||19.9;
+  var mRate     = apr/100/12;
+  var essPct    = Math.round((d.ess||0)/d.income*100);
+  var savRate   = Math.round(savPay/d.income*100);
+  var dti       = Math.round((d.debt||0)/d.income*100/12);
+  var runway    = Math.round((d.savings||0)/d.income*10)/10;
+  var score     = r&&r.score?r.score:0;
+  function tl(val,gFn,aFn){ return gFn(val)?'Good':aFn(val)?'Caution':'Critical'; }
 
-  /* SHEET 1 — Financial Position Dashboard with traffic lights */
-  var essPct  = Math.round((d.ess||0)/d.income*100);
-  var savRate = Math.round(savPay/d.income*100);
-  var dti     = Math.round((d.debt||0)/d.income*100/12);
-  var runway  = Math.round((d.savings||0)/(d.income)*10)/10;
-  var score   = r&&r.score?r.score:0;
-
-  function tl(val, greenIf, amberIf) {
-    if (greenIf(val)) return '✅ Good';
-    if (amberIf(val)) return '⚠️ Caution';
-    return '🔴 Critical';
-  }
-
+  /* SHEET 1 — Dashboard */
   var ws1 = XLSX.utils.aoa_to_sheet([
     ['RC Loop Pro — Financial Position Dashboard', mnth, '', ''],
     ['Your situation', d.intent||'', '', ''],
     [''],
-    ['INCOME & OUTGOINGS',     'VALUE £',        'NOTE',                                    'STATUS'],
-    ['Monthly net income',     d.income,         '100% base',                               '✅ Base'],
-    ['Essential spend',        d.ess||0,         essPct+'% of income',                      tl(essPct, function(v){return v<=65;}, function(v){return v<=75;})],
-    ['Discretionary spend',    d.disc||0,        Math.round((d.disc||0)/d.income*100)+'% of income', tl(Math.round((d.disc||0)/d.income*100), function(v){return v<=20;}, function(v){return v<=30;})],
-    ['Monthly surplus',        surplus,          'Available to allocate',                   surplus>0?'✅ Positive':'🔴 Negative'],
-    ['Savings allocation',     savPay,           savRate+'% of income',                     tl(savRate, function(v){return v>=10;}, function(v){return v>=5;})],
-    ['Savings rate (%)',        savRate,          '% of net income',                         ''],
+    ['INCOME & OUTGOINGS',    'VALUE £',  'NOTE',                                        'STATUS'],
+    ['Monthly net income',    d.income,   '100% base',                                   'Base'],
+    ['Essential spend',       d.ess||0,   essPct+'% of income',                          tl(essPct,  function(v){return v<=65;},function(v){return v<=75;})],
+    ['Discretionary spend',   d.disc||0,  Math.round((d.disc||0)/d.income*100)+'% of income', tl(Math.round((d.disc||0)/d.income*100),function(v){return v<=20;},function(v){return v<=30;})],
+    ['Monthly surplus',       surplus,    'Available to allocate',                       surplus>0?'Good':'Critical'],
+    ['Savings allocation',    savPay,     savRate+'% of income',                         tl(savRate, function(v){return v>=10;},function(v){return v>=5;})],
     [''],
-    ['DEBT & SAVINGS',         'VALUE £',        'NOTE',                                    'STATUS'],
-    ['Total debt',             d.debt||0,        'DTI: '+dti+'%',                           tl(dti, function(v){return v<=15;}, function(v){return v<=25;})],
-    ['Estimated APR',          apr,              '%',                                        tl(apr, function(v){return v<=10;}, function(v){return v<=20;})],
-    ['Monthly interest cost',  Math.round((d.debt||0)*mRate), '£'+Math.round((d.debt||0)*mRate*12)+'/yr', (d.debt||0)>0?'🔴 Leaking':'✅ Debt free'],
-    ['Debt repayment',         debtPay,          Math.round(debtPay/d.income*100)+'% of income', '✅ Allocated'],
-    ['Current savings',        d.savings||0,     runway+' months reserve',                  tl(runway, function(v){return v>=3;}, function(v){return v>=1;})],
-    ['Emergency runway (mths)',runway,            'Months if income stopped',                tl(runway, function(v){return v>=3;}, function(v){return v>=1;})],
-    ['Savings goal target',    d.savGoal||0,     'Your target',                             ''],
-    ['Gap to savings goal',    Math.max(0,(d.savGoal||0)-(d.savings||0)), 'Remaining',      Math.max(0,(d.savGoal||0)-(d.savings||0))===0?'✅ Reached':'⚠️ In progress'],
+    ['DEBT & SAVINGS',        'VALUE £',  'NOTE',                                        'STATUS'],
+    ['Total debt',            d.debt||0,  'DTI: '+dti+'%',                               tl(dti,    function(v){return v<=15;},function(v){return v<=25;})],
+    ['Estimated APR',         apr,        '%',                                            tl(apr,    function(v){return v<=10;},function(v){return v<=20;})],
+    ['Monthly interest cost', Math.round((d.debt||0)*mRate), '£'+Math.round((d.debt||0)*mRate*12)+'/yr', (d.debt||0)>0?'Critical':'Good'],
+    ['Debt repayment',        debtPay,    Math.round(debtPay/d.income*100)+'% of income','Allocated'],
+    ['Current savings',       d.savings||0, runway+' months reserve',                   tl(runway, function(v){return v>=3;},function(v){return v>=1;})],
+    ['Emergency runway (mths)',runway,    'Months if income stopped',                    tl(runway, function(v){return v>=3;},function(v){return v>=1;})],
+    ['Savings goal target',   d.savGoal||0,'Your target',                                ''],
+    ['Gap to savings goal',   Math.max(0,(d.savGoal||0)-(d.savings||0)),'Remaining',    Math.max(0,(d.savGoal||0)-(d.savings||0))===0?'Reached':'In progress'],
     [''],
-    ['COHERENCE SCORE',        'VALUE',          'NOTE',                                    'STATUS'],
-    ['Financial coherence',    score,            '/100',                                    tl(score, function(v){return v>=70;}, function(v){return v>=50;})],
+    ['COHERENCE SCORE',       score,      '/100',                                        tl(score,  function(v){return v>=70;},function(v){return v>=50;})],
     [''],
-    ['TRAFFIC LIGHT KEY',      '',               '',                                        ''],
-    ['✅ Good',                 'Within healthy range',    '',                              ''],
-    ['⚠️ Caution',              'Needs attention',         '',                              ''],
-    ['🔴 Critical',             'Action required',         '',                              ''],
+    ['KEY: Good = within healthy range  |  Caution = needs attention  |  Critical = action required','','',''],
   ]);
   ws1['!cols'] = [{wch:30},{wch:12},{wch:28},{wch:14}];
   XLSX.utils.book_append_sheet(wb, ws1, 'Dashboard');
 
-  /* SHEET 2 — Income Allocation Engine */
+  /* SHEET 2 — Income Allocation */
   var ws2 = XLSX.utils.aoa_to_sheet([
-    ['Income Allocation Engine', mnth],
+    ['Income Allocation Engine', mnth],[''],
+    ['Monthly net income', d.income, ''],[''],
+    ['CATEGORY','MONTHLY £','% INCOME','TARGET %','STATUS'],
+    ['Essential outgoings', d.ess||0,   Math.round((d.ess||0)/d.income*100)+'%','50-65%',(d.ess||0)/d.income<=0.65?'Within range':'Over target'],
+    ['Debt repayment',      debtPay,    Math.round(debtPay/d.income*100)+'%',   '15-20%','Allocated'],
+    ['Savings allocation',  savPay,     Math.round(savPay/d.income*100)+'%',    '10-20%',savPay/d.income>=0.10?'On target':'Below target'],
+    ['Discretionary',       d.disc||0,  Math.round((d.disc||0)/d.income*100)+'%','10-20%','Available'],
+    ['Remaining surplus',   Math.max(0,surplus-debtPay-savPay), Math.round(Math.max(0,surplus-debtPay-savPay)/d.income*100)+'%','Variable','Unallocated'],
     [''],
-    ['Monthly net income', d.income, ''],
-    [''],
-    ['CATEGORY',           'MONTHLY £', '% INCOME',                        'TARGET %',  'STATUS'],
-    ['Essential outgoings', d.ess||0,   Math.round((d.ess||0)/d.income*100)+'%', '50-65%', (d.ess||0)/d.income<=0.65?'Within range':'Over target'],
-    ['Debt repayment',      debtPay,    Math.round(debtPay/d.income*100)+'%',    '15-20%', 'Allocated'],
-    ['Savings allocation',  savPay,     Math.round(savPay/d.income*100)+'%',     '10-20%', savPay/d.income>=0.10?'On target':'Below target'],
-    ['Discretionary',       d.disc||0,  Math.round((d.disc||0)/d.income*100)+'%','10-20%', 'Available'],
-    ['Remaining surplus',   Math.max(0,surplus-debtPay-savPay), Math.round(Math.max(0,surplus-debtPay-savPay)/d.income*100)+'%', 'Variable', 'Unallocated'],
-    [''],
-    ['TOTAL OUTGOINGS',     outgoings,  Math.round(outgoings/d.income*100)+'%',  '',        ''],
+    ['TOTAL OUTGOINGS', outgoings, Math.round(outgoings/d.income*100)+'%','',''],
   ]);
   ws2['!cols'] = [{wch:25},{wch:14},{wch:12},{wch:12},{wch:14}];
   XLSX.utils.book_append_sheet(wb, ws2, 'Income Allocation');
 
-  /* SHEET 3 — Debt Repayment Tracker */
-  var debtRows = [
-    ['Debt Repayment Tracker', mnth],
-    [''],
-    ['Opening balance', d.debt||0, ''],
-    ['Monthly payment', debtPay, ''],
-    ['Estimated APR', apr, '%'],
-    [''],
-    ['MONTH', 'OPENING £', 'PAYMENT £', 'INTEREST £', 'CLOSING £', '% CLEARED']
+  /* SHEET 3 — Debt Tracker */
+  var debtRows = [['Debt Repayment Tracker',mnth],[''],
+    ['Opening balance',d.debt||0,''],['Monthly payment',debtPay,''],['Estimated APR',apr,'%'],[''],
+    ['MONTH','OPENING £','PAYMENT £','INTEREST £','CLOSING £','% CLEARED']
   ];
-  var bal = d.debt||0;
-  for (var m = 1; m <= 24 && bal > 0; m++) {
-    var interest = Math.round(bal * mRate);
-    var closing  = Math.max(0, bal + interest - debtPay);
-    var pct      = Math.round((1 - closing/(d.debt||1)) * 100);
-    debtRows.push(['Month '+m, bal, debtPay, -interest, closing, pct+'%']);
-    bal = closing;
+  var bal=d.debt||0;
+  for(var m=1;m<=24&&bal>0;m++){
+    var interest=Math.round(bal*mRate);
+    var closing=Math.max(0,bal+interest-debtPay);
+    var pct=Math.round((1-closing/(d.debt||1))*100);
+    debtRows.push(['Month '+m,bal,debtPay,-interest,closing,pct+'%']);
+    bal=closing;
   }
-  var ws3 = XLSX.utils.aoa_to_sheet(debtRows);
-  ws3['!cols'] = [{wch:12},{wch:14},{wch:14},{wch:14},{wch:14},{wch:12}];
-  XLSX.utils.book_append_sheet(wb, ws3, 'Debt Tracker');
+  var ws3=XLSX.utils.aoa_to_sheet(debtRows);
+  ws3['!cols']=[{wch:12},{wch:14},{wch:14},{wch:14},{wch:14},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ws3,'Debt Tracker');
 
-  /* SHEET 4 — Emergency Runway Planner */
-  var ws4 = XLSX.utils.aoa_to_sheet([
-    ['Emergency Runway Planner', mnth],
-    [''],
-    ['Monthly income',           d.income,        ''],
-    ['Essential monthly spend',  d.ess||0,         ''],
-    ['Current savings',          d.savings||0,     ''],
-    ['Current runway (months)',  Math.round((d.savings||0)/(d.income)*10)/10, 'months of income'],
-    [''],
-    ['SAFETY LEVEL',             'REQUIRED £',     'CURRENT £', 'GAP £',                          'MONTHS TO REACH', 'STATUS'],
-    ['Level 1 — Essential cover (1 month)',  d.ess||0,      d.savings||0, Math.max(0,(d.ess||0)-(d.savings||0)),  savPay>0?Math.ceil(Math.max(0,(d.ess||0)-(d.savings||0))/savPay):0,  (d.savings||0)>=(d.ess||0)?'OK':'Critical'],
-    ['Level 2 — Income replacement (1 month)', d.income,   d.savings||0, Math.max(0,d.income-(d.savings||0)),    savPay>0?Math.ceil(Math.max(0,d.income-(d.savings||0))/savPay):0,    (d.savings||0)>=d.income?'OK':'Critical'],
-    ['Level 3 — Safety buffer (3 months)',   d.income*3,   d.savings||0, Math.max(0,d.income*3-(d.savings||0)),  savPay>0?Math.ceil(Math.max(0,d.income*3-(d.savings||0))/savPay):0,  (d.savings||0)>=d.income*3?'OK':'Critical'],
-    ['Level 4 — Full security (6 months)',   d.income*6,   d.savings||0, Math.max(0,d.income*6-(d.savings||0)),  savPay>0?Math.ceil(Math.max(0,d.income*6-(d.savings||0))/savPay):0,  (d.savings||0)>=d.income*6?'OK':'Critical'],
+  /* SHEET 4 — Emergency Runway */
+  var ws4=XLSX.utils.aoa_to_sheet([
+    ['Emergency Runway Planner',mnth],[''],
+    ['Monthly income',d.income,''],['Essential monthly spend',d.ess||0,''],
+    ['Current savings',d.savings||0,''],['Current runway (months)',runway,'months of income'],[''],
+    ['SAFETY LEVEL','REQUIRED £','CURRENT £','GAP £','MONTHS TO REACH','STATUS'],
+    ['Level 1 — Essential cover (1 month)',  d.ess||0,   d.savings||0,Math.max(0,(d.ess||0)-(d.savings||0)),  savPay>0?Math.ceil(Math.max(0,(d.ess||0)-(d.savings||0))/savPay):0,  (d.savings||0)>=(d.ess||0)?'OK':'Critical'],
+    ['Level 2 — Income replacement (1 month)',d.income,  d.savings||0,Math.max(0,d.income-(d.savings||0)),    savPay>0?Math.ceil(Math.max(0,d.income-(d.savings||0))/savPay):0,    (d.savings||0)>=d.income?'OK':'Critical'],
+    ['Level 3 — Safety buffer (3 months)',   d.income*3, d.savings||0,Math.max(0,d.income*3-(d.savings||0)),  savPay>0?Math.ceil(Math.max(0,d.income*3-(d.savings||0))/savPay):0,  (d.savings||0)>=d.income*3?'OK':'Critical'],
+    ['Level 4 — Full security (6 months)',   d.income*6, d.savings||0,Math.max(0,d.income*6-(d.savings||0)),  savPay>0?Math.ceil(Math.max(0,d.income*6-(d.savings||0))/savPay):0,  (d.savings||0)>=d.income*6?'OK':'Critical'],
   ]);
-  ws4['!cols'] = [{wch:35},{wch:14},{wch:14},{wch:14},{wch:18},{wch:10}];
-  XLSX.utils.book_append_sheet(wb, ws4, 'Emergency Runway');
+  ws4['!cols']=[{wch:35},{wch:14},{wch:14},{wch:14},{wch:18},{wch:10}];
+  XLSX.utils.book_append_sheet(wb,ws4,'Emergency Runway');
 
   /* SHEET 5 — Savings Velocity */
-  var svRows = [
-    ['Savings Velocity Projection', mnth],
-    [''],
-    ['Current savings',      d.savings||0, ''],
-    ['Monthly saving (base)', savPay,       ''],
-    [''],
-    ['SCENARIO', 'MONTHLY SAVING', '3 MONTHS', '6 MONTHS', '12 MONTHS', '24 MONTHS']
+  var svRows=[['Savings Velocity Projection',mnth],[''],
+    ['Current savings',d.savings||0,''],['Monthly saving (base)',savPay,''],[''],
+    ['SCENARIO','MONTHLY SAVING','3 MONTHS','6 MONTHS','12 MONTHS','24 MONTHS']
   ];
-  [[savPay, 'Current pace'], [Math.round(savPay*1.4), 'Optimised'], [Math.round(savPay*2), 'Accelerated']].forEach(function(sv){
-    svRows.push([sv[1], sv[0],
-      (d.savings||0)+sv[0]*3,
-      (d.savings||0)+sv[0]*6,
-      (d.savings||0)+sv[0]*12,
-      (d.savings||0)+sv[0]*24
-    ]);
+  [[savPay,'Current pace'],[Math.round(savPay*1.4),'Optimised'],[Math.round(savPay*2),'Accelerated']].forEach(function(sv){
+    svRows.push([sv[1],sv[0],(d.savings||0)+sv[0]*3,(d.savings||0)+sv[0]*6,(d.savings||0)+sv[0]*12,(d.savings||0)+sv[0]*24]);
   });
-  var ws5 = XLSX.utils.aoa_to_sheet(svRows);
-  ws5['!cols'] = [{wch:18},{wch:16},{wch:12},{wch:12},{wch:12},{wch:12}];
-  XLSX.utils.book_append_sheet(wb, ws5, 'Savings Velocity');
+  var ws5=XLSX.utils.aoa_to_sheet(svRows);
+  ws5['!cols']=[{wch:18},{wch:16},{wch:12},{wch:12},{wch:12},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ws5,'Savings Velocity');
 
-  /* SHEET 6 — Monthly Spending Tracker */
-  var ws6 = XLSX.utils.aoa_to_sheet([
-    ['Monthly Spending Tracker', mnth],
+  /* SHEET 6 — Spending Tracker */
+  var ws6=XLSX.utils.aoa_to_sheet([
+    ['Monthly Spending Tracker',mnth],[''],
+    ['CATEGORY','BUDGET £','ACTUAL £','VARIANCE £','NOTE'],
+    ['Housing / rent',      '','','','Enter actual'],
+    ['Food & groceries',    '','','','Enter actual'],
+    ['Transport',           '','','','Enter actual'],
+    ['Utilities & bills',   '','','','Enter actual'],
+    ['Subscriptions',       '','','','Enter actual'],
+    ['Dining & takeaways',  '','','','Enter actual'],
+    ['Entertainment',       '','','','Enter actual'],
+    ['Clothing',            '','','','Enter actual'],
+    ['Debt repayments',     debtPay,'','','Automated'],
+    ['Savings transfer',    savPay, '','','Pay yourself first'],
+    ['Other discretionary', '','','','Enter actual'],
     [''],
-    ['CATEGORY',               'BUDGET £',  'ACTUAL £', 'VARIANCE £', 'NOTE'],
-    ['Housing / rent',         '',          '',         '',            'Enter actual'],
-    ['Food & groceries',       '',          '',         '',            'Enter actual'],
-    ['Transport',              '',          '',         '',            'Enter actual'],
-    ['Utilities & bills',      '',          '',         '',            'Enter actual'],
-    ['Subscriptions',          '',          '',         '',            'Enter actual'],
-    ['Dining & takeaways',     '',          '',         '',            'Enter actual'],
-    ['Entertainment',          '',          '',         '',            'Enter actual'],
-    ['Clothing',               '',          '',         '',            'Enter actual'],
-    ['Debt repayments',        debtPay,     '',         '',            'Automated'],
-    ['Savings transfer',       savPay,      '',         '',            'Pay yourself first'],
-    ['Other discretionary',    '',          '',         '',            'Enter actual'],
-    [''],
-    ['TOTAL BUDGETED',         outgoings,   '',         '',            ''],
-    ['Monthly income',         d.income,    d.income,   '',            ''],
-    ['Surplus',                surplus,     '',         '',            'Update after entering actuals'],
+    ['TOTAL BUDGETED',outgoings,'','',''],
+    ['Monthly income', d.income,d.income,'',''],
+    ['Surplus',        surplus, '','','Update after entering actuals'],
   ]);
-  ws6['!cols'] = [{wch:25},{wch:12},{wch:12},{wch:14},{wch:22}];
-  XLSX.utils.book_append_sheet(wb, ws6, 'Spending Tracker');
+  ws6['!cols']=[{wch:25},{wch:12},{wch:12},{wch:14},{wch:22}];
+  XLSX.utils.book_append_sheet(wb,ws6,'Spending Tracker');
 
   /* SHEET 7 — Behavioural Leakage */
-  var ws7 = XLSX.utils.aoa_to_sheet([
-    ['Behavioural Leakage Analysis', mnth],
-    [''],
-    ['LEAKAGE SOURCE',              'DAILY £', 'MONTHLY £', 'ANNUAL £',  '3-YEAR IMPACT £'],
-    ['Daily convenience spend',     6,          180,         2190,        6570],
-    ['Coffee & snacks',             4,          105,         1278,        3833],
-    ['Impulse purchases (weekly)',  2,           51,          626,        1877],
-    ['Unused subscriptions',        1,           22,          268,         803],
-    [''],
-    ['Total if all apply',         13,          358,         4361,       13083],
-    [''],
-    ['NOTE', 'Identify which apply to you and track for 30 days to confirm', '', '', ''],
+  var ws7=XLSX.utils.aoa_to_sheet([
+    ['Behavioural Leakage Analysis',mnth],[''],
+    ['LEAKAGE SOURCE','DAILY £','MONTHLY £','ANNUAL £','3-YEAR IMPACT £'],
+    ['Daily convenience spend',6,180,2190,6570],
+    ['Coffee & snacks',4,105,1278,3833],
+    ['Impulse purchases (weekly)',2,51,626,1877],
+    ['Unused subscriptions',1,22,268,803],[''],
+    ['Total if all apply',13,358,4361,13083],[''],
+    ['NOTE','Identify which apply — track for 30 days to confirm','','',''],
   ]);
-  ws7['!cols'] = [{wch:30},{wch:10},{wch:12},{wch:12},{wch:18}];
-  XLSX.utils.book_append_sheet(wb, ws7, 'Behavioural Leakage');
+  ws7['!cols']=[{wch:30},{wch:10},{wch:12},{wch:12},{wch:18}];
+  XLSX.utils.book_append_sheet(wb,ws7,'Behavioural Leakage');
 
-  /* SHEET 8 — 3-Scenario Projection */
-  var ws8 = XLSX.utils.aoa_to_sheet([
-    ['3-Scenario Future Projection', mnth],
-    [''],
-    ['SCENARIO',              'MONTHLY DEBT PAY', 'DEBT-FREE',                                       'MONTHLY SAVING', 'SAVINGS AT 12MO',                   'RUNWAY AT 12MO'],
-    ['Current path',          debtPay,             d.debt&&debtPay>0?Math.ceil(d.debt/debtPay)+' mo':'N/A', savPay,   (d.savings||0)+savPay*12,              Math.round(((d.savings||0)+savPay*12)/d.income*10)/10+' mo'],
-    ['Optimised',             Math.round(debtPay*1.3), d.debt&&debtPay>0?Math.ceil(d.debt/(debtPay*1.3))+' mo':'N/A', Math.round(savPay*1.3), (d.savings||0)+Math.round(savPay*1.3)*12, Math.round(((d.savings||0)+Math.round(savPay*1.3)*12)/d.income*10)/10+' mo'],
-    ['Accelerated discipline',Math.round(debtPay*1.6), d.debt&&debtPay>0?Math.ceil(d.debt/(debtPay*1.6))+' mo':'N/A', Math.round(savPay*1.5), (d.savings||0)+Math.round(savPay*1.5)*12, Math.round(((d.savings||0)+Math.round(savPay*1.5)*12)/d.income*10)/10+' mo'],
+  /* SHEET 8 — Scenarios */
+  var ws8=XLSX.utils.aoa_to_sheet([
+    ['3-Scenario Future Projection',mnth],[''],
+    ['SCENARIO','MONTHLY DEBT PAY','DEBT-FREE','MONTHLY SAVING','SAVINGS AT 12MO','RUNWAY AT 12MO'],
+    ['Current path',          debtPay,                d.debt&&debtPay>0?Math.ceil(d.debt/debtPay)+' mo':'N/A',              savPay,                (d.savings||0)+savPay*12,               Math.round(((d.savings||0)+savPay*12)/d.income*10)/10+' mo'],
+    ['Optimised',             Math.round(debtPay*1.3),d.debt&&debtPay>0?Math.ceil(d.debt/(debtPay*1.3))+' mo':'N/A',       Math.round(savPay*1.3),(d.savings||0)+Math.round(savPay*1.3)*12,Math.round(((d.savings||0)+Math.round(savPay*1.3)*12)/d.income*10)/10+' mo'],
+    ['Accelerated discipline',Math.round(debtPay*1.6),d.debt&&debtPay>0?Math.ceil(d.debt/(debtPay*1.6))+' mo':'N/A',      Math.round(savPay*1.5),(d.savings||0)+Math.round(savPay*1.5)*12,Math.round(((d.savings||0)+Math.round(savPay*1.5)*12)/d.income*10)/10+' mo'],
   ]);
-  ws8['!cols'] = [{wch:22},{wch:18},{wch:14},{wch:18},{wch:18},{wch:16}];
-  XLSX.utils.book_append_sheet(wb, ws8, 'Scenarios');
+  ws8['!cols']=[{wch:22},{wch:18},{wch:14},{wch:18},{wch:18},{wch:16}];
+  XLSX.utils.book_append_sheet(wb,ws8,'Scenarios');
 
-  /* SHEET 9 — Action Priority Ladder */
-  var ws9 = XLSX.utils.aoa_to_sheet([
-    ['Action Priority Ladder', mnth],
-    [''],
-    ['PRIORITY', 'ACTION',                                           'TARGET'],
-    ['1 — Immediate', 'Open a dedicated emergency savings account',  'Target: £'+Math.round(d.income)],
-    ['2 — This week',  'Set up automatic debt payment of £'+debtPay+' on payday', 'Automate before you can spend it'],
-    ['3 — 30 days',    'Track every discretionary transaction',       'No judgement — just data'],
-    ['4 — This month', 'Set a weekly discretionary limit of £'+Math.round((d.disc||0)/4), 'Check mid-week'],
-    ['5 — Ongoing',    'Review debt balance monthly',                 'Confirm above minimum'],
+  /* SHEET 9 — Action Ladder */
+  var ws9=XLSX.utils.aoa_to_sheet([
+    ['Action Priority Ladder',mnth],[''],
+    ['PRIORITY','ACTION','TARGET'],
+    ['1 — Immediate','Open a dedicated emergency savings account','Target: £'+Math.round(d.income)],
+    ['2 — This week','Set up automatic debt payment of £'+debtPay+' on payday','Automate before you can spend it'],
+    ['3 — 30 days','Track every discretionary transaction','No judgement — just data'],
+    ['4 — This month','Set a weekly discretionary limit of £'+Math.round((d.disc||0)/4),'Check mid-week'],
+    ['5 — Ongoing','Review debt balance monthly','Confirm above minimum'],
   ]);
-  ws9['!cols'] = [{wch:18},{wch:55},{wch:30}];
-  XLSX.utils.book_append_sheet(wb, ws9, 'Action Ladder');
+  ws9['!cols']=[{wch:18},{wch:55},{wch:30}];
+  XLSX.utils.book_append_sheet(wb,ws9,'Action Ladder');
 
-  /* Save */
-  XLSX.writeFile(wb, 'RC_Loop_Pro_'+mnth.replace(' ','_')+'.xlsx');
+  XLSX.writeFile(wb,'RC_Loop_Pro_'+mnth.replace(' ','_')+'.xlsx');
 }
 
 function dlGoogleSheets() {
-  var d = _proData;
-  var r = _proResult;
-  if (!d || !d.income) { alert('Please generate your financial overview first.'); return; }
-  var outgoings = (d.ess||0) + (d.disc||0);
-  var surplus   = (d.income||0) - outgoings;
-  var debtPay   = r && r.recDebtPay ? r.recDebtPay : Math.max(Math.round(surplus*0.5),10);
-  var savPay    = r && r.recSavPay  ? r.recSavPay  : Math.round(surplus*0.3);
-  var apr       = d.apr || 19.9;
-  var mRate     = apr/100/12;
-  var mnth      = new Date().toLocaleString('en-GB',{month:'long',year:'numeric'});
-
-  var rows = [
-    'RC Loop Pro Financial Report — ' + mnth,
-    '',
+  var d=_proData; var r=_proResult;
+  if(!d||!d.income){alert('Please generate your financial overview first.');return;}
+  var outgoings=(d.ess||0)+(d.disc||0);
+  var surplus=(d.income||0)-outgoings;
+  var debtPay=r&&r.recDebtPay?r.recDebtPay:Math.max(Math.round(surplus*0.5),10);
+  var savPay=r&&r.recSavPay?r.recSavPay:Math.round(surplus*0.3);
+  var apr=d.apr||19.9; var mRate=apr/100/12;
+  var mnth=new Date().toLocaleString('en-GB',{month:'long',year:'numeric'});
+  var rows=['RC Loop Pro Financial Report — '+mnth,'',
     'FINANCIAL POSITION DASHBOARD',
-    'Monthly net income,£' + d.income,
-    'Essential spend,£' + (d.ess||0),
-    'Discretionary spend,£' + (d.disc||0),
-    'Monthly surplus,£' + surplus,
-    'Total debt,£' + (d.debt||0),
-    'Current savings,£' + (d.savings||0),
-    'Emergency runway,' + Math.round((d.savings||0)/d.income*10)/10 + ' months',
-    'Coherence score,' + (r&&r.score?r.score:0) + '/100',
-    '',
-    'INCOME ALLOCATION ENGINE',
+    'Monthly net income,'+d.income,'Essential spend,'+(d.ess||0),
+    'Discretionary spend,'+(d.disc||0),'Monthly surplus,'+surplus,
+    'Total debt,'+(d.debt||0),'Current savings,'+(d.savings||0),
+    'Emergency runway,'+Math.round((d.savings||0)/d.income*10)/10+' months',
+    'Coherence score,'+(r&&r.score?r.score:0)+'/100',
+    '','INCOME ALLOCATION',
     'Category,Monthly £,% Income,Target %,Status',
-    'Essential outgoings,'+  (d.ess||0)+','+ Math.round((d.ess||0)/d.income*100)+'%,50-65%,'+ ((d.ess||0)/d.income<=0.65?'Within range':'Over target'),
-    'Debt repayment,'+ debtPay+','+ Math.round(debtPay/d.income*100)+'%,15-20%,Allocated',
-    'Savings allocation,'+ savPay+','+ Math.round(savPay/d.income*100)+'%,10-20%,'+ (savPay/d.income>=0.10?'On target':'Below target'),
-    'Discretionary,'+ (d.disc||0)+','+ Math.round((d.disc||0)/d.income*100)+'%,10-20%,Available',
-    'Remaining surplus,'+ Math.max(0,surplus-debtPay-savPay)+','+Math.round(Math.max(0,surplus-debtPay-savPay)/d.income*100)+'%,Variable,Unallocated',
-    '',
-    'DEBT REPAYMENT TRACKER',
-    'Month,Opening £,Payment £,Interest £,Closing £,% Cleared'
+    'Essential outgoings,'+(d.ess||0)+','+Math.round((d.ess||0)/d.income*100)+'%,50-65%,'+((d.ess||0)/d.income<=0.65?'Within range':'Over target'),
+    'Debt repayment,'+debtPay+','+Math.round(debtPay/d.income*100)+'%,15-20%,Allocated',
+    'Savings allocation,'+savPay+','+Math.round(savPay/d.income*100)+'%,10-20%,'+(savPay/d.income>=0.10?'On target':'Below target'),
+    'Discretionary,'+(d.disc||0)+','+Math.round((d.disc||0)/d.income*100)+'%,10-20%,Available',
+    '','DEBT REPAYMENT TRACKER','Month,Opening £,Payment £,Interest £,Closing £,% Cleared'
   ];
-
-  var bal = d.debt||0;
-  for (var m=1; m<=24&&bal>0; m++) {
-    var interest = Math.round(bal*mRate);
-    var closing  = Math.max(0, bal+interest-debtPay);
-    var pct      = Math.round((1-closing/(d.debt||1))*100);
-    rows.push('Month '+m+','+bal+','+debtPay+','+(- interest)+','+closing+','+pct+'%');
-    bal = closing;
+  var bal=d.debt||0;
+  for(var m=1;m<=24&&bal>0;m++){
+    var i=Math.round(bal*mRate),c=Math.max(0,bal+i-debtPay);
+    rows.push('Month '+m+','+bal+','+debtPay+','+(-i)+','+c+','+Math.round((1-c/(d.debt||1))*100)+'%');
+    bal=c;
   }
-
-  rows = rows.concat([
-    '',
-    'EMERGENCY RUNWAY PLANNER',
-    'Safety Level,Required £,Current £,Gap £,Months to Reach,Status',
-    'Level 1 — Essential cover (1 month),'+(d.ess||0)+','+(d.savings||0)+','+Math.max(0,(d.ess||0)-(d.savings||0))+','+(savPay>0?Math.ceil(Math.max(0,(d.ess||0)-(d.savings||0))/savPay):0)+','+ ((d.savings||0)>=(d.ess||0)?'OK':'Critical'),
-    'Level 2 — Income replacement (1 month),'+d.income+','+(d.savings||0)+','+Math.max(0,d.income-(d.savings||0))+','+(savPay>0?Math.ceil(Math.max(0,d.income-(d.savings||0))/savPay):0)+','+ ((d.savings||0)>=d.income?'OK':'Critical'),
-    'Level 3 — Safety buffer (3 months),'+(d.income*3)+','+(d.savings||0)+','+Math.max(0,d.income*3-(d.savings||0))+','+(savPay>0?Math.ceil(Math.max(0,d.income*3-(d.savings||0))/savPay):0)+','+ ((d.savings||0)>=d.income*3?'OK':'Critical'),
-    '',
-    'SAVINGS VELOCITY PROJECTION',
-    'Scenario,Monthly Saving,3 Months,6 Months,12 Months,24 Months'
+  rows=rows.concat(['','EMERGENCY RUNWAY','Level,Required £,Current £,Gap £,Months,Status',
+    'Essential cover (1mo),'+(d.ess||0)+','+(d.savings||0)+','+Math.max(0,(d.ess||0)-(d.savings||0))+','+(savPay>0?Math.ceil(Math.max(0,(d.ess||0)-(d.savings||0))/savPay):0)+','+ ((d.savings||0)>=(d.ess||0)?'OK':'Critical'),
+    'Income replacement (1mo),'+d.income+','+(d.savings||0)+','+Math.max(0,d.income-(d.savings||0))+','+(savPay>0?Math.ceil(Math.max(0,d.income-(d.savings||0))/savPay):0)+','+ ((d.savings||0)>=d.income?'OK':'Critical'),
+    'Safety buffer (3mo),'+(d.income*3)+','+(d.savings||0)+','+Math.max(0,d.income*3-(d.savings||0))+','+(savPay>0?Math.ceil(Math.max(0,d.income*3-(d.savings||0))/savPay):0)+','+ ((d.savings||0)>=d.income*3?'OK':'Critical'),
+    '','SAVINGS VELOCITY','Scenario,Monthly,3mo,6mo,12mo,24mo'
   ]);
-
-  [[savPay,'Current pace'],[Math.round(savPay*1.4),'Optimised'],[Math.round(savPay*2),'Accelerated']].forEach(function(sv){
+  [[savPay,'Current'],[Math.round(savPay*1.4),'Optimised'],[Math.round(savPay*2),'Accelerated']].forEach(function(sv){
     rows.push(sv[1]+','+sv[0]+','+ ((d.savings||0)+sv[0]*3)+','+ ((d.savings||0)+sv[0]*6)+','+ ((d.savings||0)+sv[0]*12)+','+ ((d.savings||0)+sv[0]*24));
   });
-
-  rows = rows.concat([
-    '',
-    'BEHAVIOURAL LEAKAGE DETECTION',
-    'Source,Daily £,Monthly £,Annual £,3-Year Impact £',
-    'Daily convenience spend,6,180,2190,6570',
-    'Coffee & snacks,4,105,1278,3833',
-    'Impulse purchases (weekly),2,51,626,1877',
-    'Unused subscriptions,1,22,268,803',
-    'Total if all apply,13,358,4361,13083',
-    '',
-    '3-SCENARIO FUTURE PROJECTION',
-    'Scenario,Monthly Debt Pay,Debt-Free,Monthly Saving,Savings at 12mo,Runway at 12mo',
-    'Current path,'+debtPay+','+(d.debt&&debtPay>0?Math.ceil(d.debt/debtPay)+' mo':'N/A')+','+savPay+','+ ((d.savings||0)+savPay*12)+','+ Math.round(((d.savings||0)+savPay*12)/d.income*10)/10+' mo',
-    'Optimised,'+Math.round(debtPay*1.3)+','+(d.debt&&debtPay>0?Math.ceil(d.debt/(debtPay*1.3))+' mo':'N/A')+','+Math.round(savPay*1.3)+','+ ((d.savings||0)+Math.round(savPay*1.3)*12)+','+ Math.round(((d.savings||0)+Math.round(savPay*1.3)*12)/d.income*10)/10+' mo',
-    'Accelerated,'+Math.round(debtPay*1.6)+','+(d.debt&&debtPay>0?Math.ceil(d.debt/(debtPay*1.6))+' mo':'N/A')+','+Math.round(savPay*1.5)+','+ ((d.savings||0)+Math.round(savPay*1.5)*12)+','+ Math.round(((d.savings||0)+Math.round(savPay*1.5)*12)/d.income*10)/10+' mo',
+  rows=rows.concat(['','3-SCENARIO PROJECTION','Scenario,Debt Pay,Debt-Free,Saving,Savings 12mo',
+    'Current,'+debtPay+','+(d.debt&&debtPay>0?Math.ceil(d.debt/debtPay)+' mo':'N/A')+','+savPay+','+ ((d.savings||0)+savPay*12),
+    'Optimised,'+Math.round(debtPay*1.3)+','+(d.debt&&debtPay>0?Math.ceil(d.debt/(debtPay*1.3))+' mo':'N/A')+','+Math.round(savPay*1.3)+','+ ((d.savings||0)+Math.round(savPay*1.3)*12),
+    'Accelerated,'+Math.round(debtPay*1.6)+','+(d.debt&&debtPay>0?Math.ceil(d.debt/(debtPay*1.6))+' mo':'N/A')+','+Math.round(savPay*1.5)+','+ ((d.savings||0)+Math.round(savPay*1.5)*12)
   ]);
-
-  var blob = new Blob([rows.join('\n')], {type:'text/csv'});
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'RC_Loop_Pro_'+mnth.replace(' ','_')+'.csv';
-  a.click();
+  var blob=new Blob([rows.join('\n')],{type:'text/csv'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='RC_Loop_Pro_'+mnth.replace(' ','_')+'.csv';a.click();
 }
+
+
+function generate() {
+  var intent = document.getElementById('intent').value.trim();
+  if (intent.length < 50) {
+    alert('Please describe your situation in at least 50 characters for an accurate analysis.');
+    return;
+  }
+  if (sc_run(intent)) return;
+
+  /* Collect inputs */
+  var income    = v('income')       || 2800;
+  var debt      = v('debt')         || 0;
+  var savings   = v('savings')      || 0;
+  var ess       = v('essentials')   || Math.round(income * 0.55);
+  var disc      = v('discretionary')|| Math.round(income * 0.15);
+  var savGoal   = v('savingsgoal')  || income * 3;
+  var apr       = v('apr')          || 19.9;
+  var rent      = v('rent')         || 0;
+  var deps      = v('dependents')   || 0;
+  var emTarget  = v('emtarget')     || 3;
+  var invest    = v('investments')  || 0;
+  var concern   = selectedConcern();
+
+  /* Store for unlock */
+  _proData = { intent:intent, income:income, debt:debt, savings:savings,
+               ess:ess, disc:disc, savGoal:savGoal, apr:apr, rent:rent,
+               deps:deps, emTarget:emTarget, invest:invest, concern:concern };
+
+  document.getElementById('out-intent').textContent = '\u201c' + intent + '\u201d';
+  showPage('s1');
+  runProcessing();
+}
+
+/* ── 5-PASS ANIMATION ── */
+function runProcessing() {
+  var passes = [
+    { id:'pass-1', name:'Extracting financial signals', time: 700 },
+    { id:'pass-2', name:'Prioritising by urgency and leverage', time: 900 },
+    { id:'pass-3', name:'Scoring financial coherence', time: 800 },
+    { id:'pass-4', name:'Compressing and sharpening', time: 600 },
+    { id:'pass-5', name:'Synchronising all sections', time: 700 }
+  ];
+
+  var d = _proData;
+  var proResult = buildProData(d.intent, d.income, d.debt, d.savings, d.ess, d.disc, d.savGoal, d.apr, d.rent, d.deps, d.emTarget, d.invest, d.concern);
+
+  var delay = 200;
+  passes.forEach(function(pass, idx) {
+    setTimeout(function() {
+      var el = document.getElementById(pass.id);
+      var st = document.getElementById(pass.id + '-status');
+      if (el) el.className = 'pass-item active';
+      if (st) st.textContent = 'Analysing...';
+    }, delay);
+
+    setTimeout(function() {
+      var el = document.getElementById(pass.id);
+      var st = document.getElementById(pass.id + '-status');
+      if (el) el.className = 'pass-item done';
+      if (st) st.textContent = 'Complete';
+    }, delay + pass.time);
+
+    delay += pass.time + 100;
+  });
+
+  setTimeout(function() {
+    showPage('s2');
+    _proResult = proResult;
+    /* If arrived with ?unlocked=true (Etsy buyer) — show score, hide blurred+unlock, fire AI */
+    if (window.location.search.indexOf('unlocked=true') !== -1) {
+      renderPreview(proResult);
+      document.getElementById('free-preview').style.display = 'block';
+      var blurred = document.querySelector('.blurred-section');
+      if (blurred) blurred.style.display = 'none';
+      document.getElementById('unlock-card').style.display = 'none';
+      unlockFull();
+    } else {
+      renderPreview(proResult);
+      document.getElementById('free-preview').style.display = 'block';
+    }
+  }, delay + 300);
+}
+
+/* ── PREVIEW (free) ── */
+function renderPreview(d) {
+  /* Score */
+  document.getElementById('prev-score').innerHTML = d.score + '<span>/100</span>';
+  var scoreCat = document.getElementById('prev-score-cat');
+  scoreCat.textContent = d.scoreCategory;
+  scoreCat.className = 'score-cat tag ' + d.scoreCatClass;
+  setTimeout(function() {
+    document.getElementById('prev-score-bar').style.width = d.score + '%';
+  }, 300);
+
+  /* One contradiction */
+  var contEl = document.getElementById('prev-contradiction');
+  if (d.conflicts && d.conflicts.length > 0) {
+    contEl.innerHTML = '<div class="contradiction-item">' + d.conflicts[0] + '</div>';
+  }
+
+  /* One rec */
+  var recEl = document.getElementById('prev-rec');
+  if (d.recs && d.recs.length > 0) {
+    var r = d.recs[0];
+    recEl.innerHTML = '<div class="rec-preview-item">'
+      + '<div class="rec-preview-num">Priority 01</div>'
+      + '<div class="rec-preview-title">' + r.title + '</div>'
+      + '<div class="rec-preview-body">' + r.body + '</div>'
+      + '</div>';
+  }
+}
+
+/* ── UNLOCK ── */
+var _proData   = {};
+var _proResult = {};
+
+function unlockFull() {
+  if (PREMIUM_GATED && window.location.search.indexOf('unlocked=true') === -1) {
+    Object.keys(_proData).forEach(function(k) {
+      sessionStorage.setItem('pro_' + k, _proData[k]);
+    });
+    window.location.href = 'https://opportunity-intelligence.lemonsqueezy.com/checkout/buy/ba1d0c7f-97ed-4347-b887-e285df8c1a8c';
+    return;
+  }
+
+  document.getElementById('unlock-card').style.display = 'none';
+  document.getElementById('ai-loader').style.display = 'block';
+
+  var msgs = [
+    'Rendering your financial position dashboard...',
+    'Building debt snowball and avalanche tables...',
+    'Calculating opportunity cost engine...',
+    'Projecting 3-scenario trajectories...',
+    'Completing your stability timeline...'
+  ];
+  var idx = 0;
+  var el  = document.getElementById('ai-loader-msg');
+  var iv  = setInterval(function() {
+    idx = (idx + 1) % msgs.length;
+    if (el) el.textContent = msgs[idx];
+  }, 700);
+
+  if (DEV_MODE) {
+    setTimeout(function() {
+      clearInterval(iv);
+      document.getElementById('ai-loader').style.display = 'none';
+      renderFull(_proResult);
+    }, 3000);
+    return;
+  }
+
+  /* AI refinement pass — Pro level */
+  var pd = _proData;
+  var proPrompt = 'You are a senior personal finance advisor writing for a premium £29 financial clarity product. Refine these sections for someone whose situation is: "' + pd.intent + '"\n'
+    + 'Income: £' + pd.income + '/mo | Debt: £' + pd.debt + ' | Savings: £' + pd.savings + ' | Essential spend: £' + pd.ess + '/mo\n\n'
+    + 'SUMMARY (3-4 sentences, honest, specific, reference actual numbers, speak directly to them):\n' + _proResult.summary + '\n\n'
+    + 'Write also:\n'
+    + '- executiveInsight: One powerful sentence that cuts to the heart of their financial position. Honest, direct, no sugarcoating.\n'
+    + '- topPriority: The single most important thing they must do first and why, in 2 sentences referencing their actual figures.\n'
+    + '- riskWarning: The biggest financial risk they face if they do nothing, in 1-2 sentences.\n\n'
+    + 'Return ONLY valid JSON: {"summary":"...","executiveInsight":"...","topPriority":"...","riskWarning":"..."}';
+
+  fetch('https://rcloop-proxy.vercel.app/api/ai', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      system: 'You are a senior personal finance advisor writing premium financial analysis. Return only valid JSON. No markdown.',
+      prompt: proPrompt
+    })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    clearInterval(iv);
+    document.getElementById('ai-loader').style.display = 'none';
+    try {
+      var text = data.content[0].text;
+      var clean = text.replace(/```json|```/g,'').trim();
+      var start = clean.indexOf('{'); var end = clean.lastIndexOf('}');
+      if (start >= 0 && end > start) { clean = clean.substring(start, end+1); }
+      var parsed = JSON.parse(clean);
+      if (parsed.summary) _proResult.summary = parsed.summary;
+      if (parsed.executiveInsight) _proResult.executiveInsight = parsed.executiveInsight;
+      if (parsed.topPriority) _proResult.topPriority = parsed.topPriority;
+      if (parsed.riskWarning) _proResult.riskWarning = parsed.riskWarning;
+    } catch(e) {}
+    renderFull(_proResult);
+  })
+  .catch(function() {
+    clearInterval(iv);
+    document.getElementById('ai-loader').style.display = 'none';
+    renderFull(_proResult);
+  });
+}
+
+/* ── BUILD ALL 15 SECTIONS (deterministic) ── */
+function buildProData(intent, income, debt, savings, ess, disc, savGoal, apr, rent, deps, emTarget, invest, concern) {
+  var lower    = intent.toLowerCase();
+  var surplus  = income - ess - disc;
+  var annInc   = income * 12;
+  var dtiPct   = income > 0 ? Math.round((debt / annInc) * 100) : 0;
+  var runwayMo = income > 0 ? Math.round((savings / income) * 10) / 10 : 0;
+  var mRes     = runwayMo;
+  var emReq    = income * (emTarget || 3);
+  var emGap    = Math.max(emReq - savings, 0);
+
+  /* Debt mechanics */
+  var estAPR      = (apr && apr > 0) ? apr / 100 : 0.199;
+  var monthlyInt  = debt > 0 ? Math.round(debt * (estAPR / 12)) : 0;
+  var annualInt   = monthlyInt * 12;
+  var recDebtPay  = debt > 0 ? Math.max(Math.round(Math.max(surplus, 0) * 0.5), monthlyInt + 10) : 0;
+  var recSavPay   = Math.max(Math.round(Math.max(surplus, 0) * 0.3), 0);
+
+  /* Debt payoff calculation */
+  var debtMo = 0;
+  if (debt > 0 && recDebtPay > monthlyInt) {
+    var bal2 = debt;
+    while (bal2 > 0 && debtMo < 120) {
+      var mi2 = Math.round(bal2 * (estAPR / 12));
+      bal2 = Math.max(bal2 - (recDebtPay - mi2), 0);
+      debtMo++;
+    }
+  }
+
+  /* Snowball acceleration */
+  var accelPay = recDebtPay + Math.round(disc * 0.15);
+  var accelBal = debt, accelInt = 0, accelMo = 0;
+  while (accelBal > 0 && accelMo < 120) {
+    var ami = Math.round(accelBal * (estAPR / 12));
+    accelInt += ami;
+    accelBal = Math.max(accelBal - Math.max(accelPay - ami, 0), 0);
+    accelMo++;
+  }
+  var baseBal2 = debt, baseInt2 = 0;
+  while (baseBal2 > 0 && baseInt2 < 120 * monthlyInt + debt) {
+    var bmi2 = Math.round(baseBal2 * (estAPR / 12));
+    baseInt2 += bmi2;
+    baseBal2 = Math.max(baseBal2 - Math.max(recDebtPay - bmi2, 0), 0);
+    if (baseBal2 === 0) break;
+    if (baseInt2 > 120 * monthlyInt + debt) break;
+  }
+  var intSaved = Math.max(baseInt2 - accelInt, 0);
+  var moSaved  = Math.max(debtMo - accelMo, 0);
+
+  /* Signal detection */
+  var hasFood     = /food|grocer|supermarket|cook|eating/.test(lower);
+  var hasTakeaway = /takeaway|eating out|deliveroo|restaurant/.test(lower);
+  var hasCoffee   = /coffee|cafe|starbucks|costa/.test(lower);
+  var hasSubs     = /subscription|netflix|spotify|streaming/.test(lower);
+  var hasNights   = /night|nights out|going out|drinks|pub|bar/.test(lower);
+  var hasDebt     = /debt|loan|credit|overdraft/.test(lower) || concern === 'Reduce debt';
+  var hasSnowball = /snowball/.test(lower);
+  var hasSavings  = /sav|emergency|buffer|cushion/.test(lower) || concern === 'Build savings' || concern === 'Build emergency fund';
+  var hasLeakage  = /leak|disappear|no idea|nothing to show|where.*goes/.test(lower);
+
+  /* PASS 1: Extract pressure levels */
+  var debtPressure     = debt > income * 6 ? 'High' : debt > income * 3 ? 'Moderate' : debt > 0 ? 'Low' : 'None';
+  var runwayPressure   = mRes < 0.5 ? 'Critical' : mRes < 1 ? 'High' : mRes < 3 ? 'Moderate' : 'Safe';
+  var discRatio        = income > 0 ? disc / income : 0;
+  var leakageRisk      = discRatio > 0.30 ? 'High' : discRatio > 0.20 ? 'Moderate' : 'Low';
+  var stressScore      = 0;
+  if (dtiPct > 50) stressScore += 3;
+  else if (dtiPct > 25) stressScore += 2;
+  else if (dtiPct > 10) stressScore += 1;
+  if (mRes < 0.5) stressScore += 3;
+  else if (mRes < 1) stressScore += 2;
+  else if (mRes < 2) stressScore += 1;
+  if (ess / income > 0.80) stressScore += 2;
+  else if (ess / income > 0.70) stressScore += 1;
+  if (surplus < 0) stressScore += 2;
+  var stressLabel = stressScore >= 6 ? 'High' : stressScore >= 4 ? 'Moderate' : 'Manageable';
+  var stressClass = stressScore >= 6 ? 'tag-red' : stressScore >= 4 ? 'tag-amb' : 'tag-grn';
+
+  /* PASS 2: Prioritise */
+  var priorities = [];
+  if (mRes < 1 && debt > 0) priorities.push('emergency-buffer');
+  else if (debt > 0) priorities.push('debt-reduction');
+  if (mRes < 1) priorities.push('runway-building');
+  if (leakageRisk === 'High') priorities.push('leakage-control');
+  if (!hasSavings && savings < income) priorities.push('savings-automation');
+  if (priorities.length === 0) priorities.push('optimisation');
+
+  /* PASS 3: Coherence score */
+  var cScores = [
+    { label: 'Debt management',       score: debt === 0 ? 25 : Math.max(0, 25 - Math.round(dtiPct * 0.5)), max: 25 },
+    { label: 'Savings rate',          score: Math.min(20, Math.round((recSavPay / income) * 100)), max: 20 },
+    { label: 'Emergency preparedness',score: Math.min(20, Math.round(mRes * 6.67)), max: 20 },
+    { label: 'Discretionary control', score: Math.max(0, Math.min(20, 20 - Math.round(discRatio * 50))), max: 20 },
+    { label: 'Goal alignment',        score: priorities[0] === 'optimisation' ? 15 : Math.max(5, 15 - stressScore), max: 15 }
+  ];
+  var totalScore = cScores.reduce(function(s, c) { return s + c.score; }, 0);
+  var scoreCategory = totalScore >= 75 ? 'Stable' : totalScore >= 60 ? 'Improving' : totalScore >= 45 ? 'Fractured' : totalScore >= 30 ? 'High Pressure' : 'Unsustainable';
+  var scoreCatClass = totalScore >= 75 ? 'tag-grn' : totalScore >= 60 ? 'tag-gld' : totalScore >= 45 ? 'tag-amb' : 'tag-red';
+
+  /* PASS 3: Conflicts */
+  var conflicts = [];
+  if (hasDebt && mRes < 1) {
+    conflicts.push('You state debt reduction as the priority, but emergency savings cover less than one month of income. Without a buffer, unexpected costs will return you to debt \u2014 negating every repayment made.');
+  }
+  if (recDebtPay < income * 0.10 && debt > 0) {
+    conflicts.push('Your stated goal is debt reduction, but current repayment allocation represents only ' + pct(recDebtPay, income) + '% of income \u2014 below the recommended 15\u201320%. Discretionary spend currently exceeds debt velocity.');
+  }
+  if (discRatio > 0.25 && (hasSavings || concern === 'Grow savings')) {
+    conflicts.push('Savings growth is a stated priority, but discretionary spending consumes ' + Math.round(discRatio * 100) + '% of income \u2014 leaving insufficient surplus for meaningful accumulation.');
+  }
+  if (mRes < 2 && recSavPay < 50) {
+    conflicts.push('Emergency reserves are critically low, yet savings allocation is insufficient to reach even a 1-month buffer within the next 6 months at current pace.');
+  }
+  if (ess / income > 0.75) {
+    conflicts.push('Essential outgoings consume ' + pct(ess, income) + '% of net income \u2014 above the 65\u201370% structural threshold. This limits all debt and savings strategies without income growth or cost reduction.');
+  }
+  if (leakageRisk === 'High' && hasLeakage) {
+    conflicts.push('You identify that money disappears without explanation, yet no structured tracking currently captures discretionary flow. The absence of tracking is the primary leakage mechanism.');
+  }
+  if (conflicts.length === 0) {
+    conflicts.push('No major structural conflicts detected. The primary opportunity is optimisation \u2014 accelerating the existing structure for faster goal achievement.');
+  }
+
+  /* PASS 4/5: Build all recommendations (synchronised to one direction) */
+  var recs = [];
+
+  if (debt > 0 && mRes < 1) {
+    recs.push({
+      title: 'Build a one-month emergency buffer before aggressive debt repayment',
+      body: 'Your current savings of ' + fmt(savings) + ' cover ' + mRes.toFixed(1) + ' months of income. A single unexpected event will return you to debt, resetting every repayment made. Target ' + fmt(income) + ' in a separate accessible account first. At ' + fmt(recSavPay) + '/month you reach this in ' + Math.ceil((income - savings) / Math.max(recSavPay, 1)) + ' months.'
+    });
+  }
+  if (debt > 0) {
+    var debtTitle = hasSnowball ? 'Implement the debt snowball: smallest balance first' : 'Accelerate debt repayment to ' + fmt(recDebtPay) + '/month';
+    recs.push({
+      title: debtTitle,
+      body: 'At ' + fmt(recDebtPay) + '/month \u2014 50% of available surplus \u2014 you clear ' + fmt(debt) + ' in approximately ' + debtMo + ' months. Redirecting an additional ' + fmt(Math.round(disc * 0.15)) + '/month from discretionary saves approximately ' + fmt(intSaved) + ' in interest and reduces payoff by ' + moSaved + ' months.'
+    });
+  }
+  if (leakageRisk === 'High' || hasLeakage) {
+    var weeklyDisc = Math.round(disc / 4.3);
+    recs.push({
+      title: 'Set a weekly discretionary cap of ' + fmt(weeklyDisc),
+      body: 'A weekly cap of ' + fmt(weeklyDisc) + ' on discretionary spending would make current outflows visible and deliberate. Most people find awareness alone reduces this category by 15\u201320% within the first month \u2014 recovering ' + fmt(Math.round(disc * 0.175)) + '/month without any change in lifestyle quality.'
+    });
+  }
+  if (mRes < 3 && (hasSavings || concern === 'Build emergency fund')) {
+    recs.push({
+      title: 'Automate ' + fmt(recSavPay) + ' savings transfer on payday',
+      body: 'Treating savings as a fixed outgoing rather than a discretionary decision is the single most reliable behaviour change. Transfer ' + fmt(recSavPay) + ' to a separate account the day income arrives. At this rate you reach a 3-month buffer (' + fmt(income * 3) + ') in ' + Math.ceil((income * 3 - savings) / Math.max(recSavPay, 1)) + ' months.'
+    });
+  }
+  if (hasTakeaway || hasNights) {
+    var socAmt = hasNights ? Math.round(disc * 0.35) : Math.round(disc * 0.25);
+    recs.push({
+      title: 'Reduce social and eating-out spend by 25%',
+      body: 'Social spending is the highest-leverage discretionary reduction for most people. A 25% reduction saves approximately ' + fmt(Math.round(socAmt * 0.25)) + '/month \u2014 ' + fmt(Math.round(socAmt * 0.25 * 12)) + '/year. The goal is not elimination but structure: a weekly limit makes the spend deliberate rather than automatic.'
+    });
+  }
+  if (hasSubs) {
+    recs.push({
+      title: 'Subscription audit: 30 minutes, permanent saving',
+      body: 'List every recurring charge in your bank statement. Cancel anything unused in 30+ days. The average UK household saves \u00a315\u2013\u00a340/month from this single audit \u2014 compounding to \u00a3180\u2013\u00a3480 annually with zero lifestyle impact.'
+    });
+  }
+  if (recs.length < 3) {
+    recs.push({
+      title: 'Automate your financial structure on payday',
+      body: 'The moment income arrives: emergency buffer first (' + fmt(recSavPay) + '), debt payment second (' + fmt(recDebtPay) + '), live on what remains. Automation removes daily financial decision-making. Set it once, review quarterly.'
+    });
+  }
+
+  /* ACTION LADDER */
+  var actions = [];
+  if (mRes < 1 && debt > 0) {
+    actions.push({ title: 'Open a dedicated emergency savings account', body: 'Separate from your current account. Not for debt. Not for anything else. Target: ' + fmt(income) + '.' });
+  }
+  if (debt > 0) {
+    actions.push({ title: 'Set up automatic debt payment of ' + fmt(recDebtPay) + ' on payday', body: 'Automate before you can spend it. Highest-interest balance first.' });
+  }
+  actions.push({ title: 'Track every discretionary transaction for 30 days', body: 'No judgement. Just data. One line per transaction. You will find the leakage.' });
+  if (hasSubs) {
+    actions.push({ title: 'Audit all subscriptions this week', body: 'List every recurring charge. Cancel anything unused in the last 30 days.' });
+  }
+  actions.push({ title: 'Set a weekly discretionary limit of ' + fmt(Math.round(disc / 4.3)), body: 'Check it mid-week. Adjust Thursday onwards. Awareness creates structure.' });
+  if (mRes >= 1 || debt === 0) {
+    actions.push({ title: 'Automate ' + fmt(recSavPay) + ' savings transfer on payday', body: 'Fixed outgoing, not a decision. Target: ' + fmt(emReq) + ' emergency buffer.' });
+  }
+
+  /* STABILITY TIMELINE */
+  var timeline = [];
+  var timeDebt    = debt;
+  var timeSavings = savings;
+  var timePeriods = [1, 3, 6, 12, 24];
+  timePeriods.forEach(function(mo) {
+    /* Apply monthly actions */
+    for (var tm = 0; tm < mo - (timeline.length > 0 ? timePeriods[timeline.length - 1] : 0); tm++) {
+      if (timeDebt > 0) {
+        var tInt = Math.round(timeDebt * (estAPR / 12));
+        timeDebt = Math.max(timeDebt - Math.max(recDebtPay - tInt, 0), 0);
+      }
+      timeSavings += recSavPay;
+    }
+    var tRun = income > 0 ? Math.round((timeSavings / income) * 10) / 10 : 0;
+    var tStress = timeDebt === 0 && tRun >= 3 ? 'Low' : timeDebt > 0 && tRun < 1 ? 'High' : 'Moderate';
+    var tClass  = tStress === 'Low' ? 'tag-grn' : tStress === 'High' ? 'tag-red' : 'tag-amb';
+    timeline.push({
+      period: 'Month ' + mo,
+      debt: timeDebt,
+      savings: timeSavings,
+      runway: tRun,
+      stress: tStress,
+      stressClass: tClass
+    });
+  });
+
+  /* POSITIONING SUMMARY */
+  var summary;
+  if (stressScore >= 6) {
+    summary = 'Your financial position is under genuine structural pressure \u2014 but this is a solvable problem, not a permanent state. The primary constraint is the absence of an emergency buffer alongside active debt, which creates a cycle where any disruption returns you to borrowing. The fastest path forward is not aggressive debt repayment but simultaneous buffer-building and controlled repayment \u2014 removing the vulnerability first, then accelerating the clearance. With ' + fmt(Math.max(surplus, 50)) + ' of monthly surplus to redirect, this system has a clear path.';
+  } else if (stressScore >= 4) {
+    summary = 'Your financial position is manageable but lacks the structural resilience that creates genuine calm. The gap between where you are and where you want to be is primarily a tracking and automation problem \u2014 not an income problem. ' + fmt(disc) + '/month in discretionary spending contains recoverable cash that, directed deliberately, changes both the debt trajectory and the savings runway. The structured plan above shows exactly where each pound should go and why.';
+  } else {
+    summary = 'Your financial fundamentals are solid. The opportunity here is optimisation rather than rescue \u2014 tightening the structure to work harder for you. Your disposable surplus of ' + fmt(Math.max(surplus, 0)) + '/month, automated and directed, can ' + (debt > 0 ? 'clear your debt in ' + debtMo + ' months and ' : '') + 'build a meaningful financial runway within the year. The single highest-leverage action is automation: structuring payments to happen before any discretionary decisions are made.';
+  }
+
+  return {
+    intent: intent, income: income, debt: debt, savings: savings,
+    ess: ess, disc: disc, surplus: surplus, concern: concern,
+    dtiPct: dtiPct, mRes: mRes, runwayMo: runwayMo,
+    annualInt: annualInt, monthlyInt: monthlyInt, estAPR: estAPR,
+    debtMo: debtMo, recDebtPay: recDebtPay, recSavPay: recSavPay,
+    accelPay: accelPay, intSaved: intSaved, moSaved: moSaved,
+    emReq: emReq, emGap: emGap, emTarget: emTarget,
+    invest: invest, deps: deps, savGoal: savGoal,
+    stressLabel: stressLabel, stressClass: stressClass,
+    debtPressure: debtPressure, runwayPressure: runwayPressure, leakageRisk: leakageRisk,
+    score: totalScore, scoreCategory: scoreCategory, scoreCatClass: scoreCatClass,
+    scoreComponents: cScores, conflicts: conflicts,
+    recs: recs.slice(0, 5), actions: actions.slice(0, 6),
+    timeline: timeline, summary: summary,
+    hasFood: hasFood, hasTakeaway: hasTakeaway, hasCoffee: hasCoffee,
+    hasSubs: hasSubs, hasNights: hasNights, hasDebt: hasDebt, hasSnowball: hasSnowball
+  };
+}
+
+/* ── RENDER ALL 15 SECTIONS ── */
+function renderFull(d) {
+  /* Helper row builders */
+  function tr(cells, cls) {
+    var row = '<tr' + (cls ? ' class="' + cls + '"' : '') + '>';
+    cells.forEach(function(cell) { row += cell; });
+    row += '</tr>';
+    return row;
+  }
+  function td(val, cls) { return '<td' + (cls ? ' class="' + cls + '"' : '') + '>' + val + '</td>'; }
+  function th(val) { return '<th>' + val + '</th>'; }
+  function tag(text, cls) { return '<span class="tag ' + cls + '">' + text + '</span>'; }
+
+  /* 1. DASHBOARD */
+  var dashData = [
+    { label: 'Net income',      val: fmt(d.income),                 sub: '100% base',             cls: '' },
+    { label: 'Essential spend', val: fmt(d.ess),                    sub: pct(d.ess,d.income) + '% of income', cls: d.ess/d.income > 0.75 ? 'red' : '' },
+    { label: 'Discretionary',  val: fmt(d.disc),                   sub: pct(d.disc,d.income) + '% of income', cls: '' },
+    { label: 'Total debt',      val: d.debt > 0 ? fmt(d.debt) : 'None', sub: 'DTI: ' + d.dtiPct + '%', cls: d.debt > 0 ? 'red' : 'grn' },
+    { label: 'Savings',         val: fmt(d.savings),                sub: d.mRes.toFixed(1) + ' months reserve', cls: d.mRes < 1 ? 'red' : d.mRes < 3 ? 'amb' : 'grn' },
+    { label: 'Monthly surplus', val: fmt(Math.max(d.surplus, 0)),   sub: d.surplus < 0 ? 'DEFICIT' : 'Available', cls: d.surplus < 0 ? 'red' : 'grn' },
+    { label: 'Stress level',    val: d.stressLabel,                 sub: 'Composite indicator', cls: d.stressLabel === 'High' ? 'red' : d.stressLabel === 'Moderate' ? 'amb' : 'grn' },
+    { label: 'Interest bleed',  val: d.debt > 0 ? fmt(d.monthlyInt) + '/mo' : 'None', sub: d.debt > 0 ? fmt(d.annualInt) + '/yr est.' : 'No debt', cls: d.debt > 0 ? 'red' : 'grn' },
+    { label: 'Financial runway',val: d.runwayMo.toFixed(1) + ' mo', sub: d.runwayPressure,        cls: d.mRes < 1 ? 'red' : d.mRes < 3 ? 'amb' : 'grn' }
+  ];
+  var dashHTML = '';
+  dashData.forEach(function(cell) {
+    dashHTML += '<div class="dash-cell">';
+    dashHTML += '<div class="dash-cell-label">' + cell.label + '</div>';
+    dashHTML += '<div class="dash-cell-val' + (cell.cls ? ' ' + cell.cls : '') + '">' + cell.val + '</div>';
+    dashHTML += '<div class="dash-cell-sub">' + cell.sub + '</div>';
+    dashHTML += '</div>';
+  });
+  document.getElementById('s-dashboard').innerHTML = dashHTML;
+
+  /* 2. INCOME ALLOCATION */
+  var allocRows = th('Category') + th('Monthly') + th('% Income') + th('Target %') + th('Variance') + th('Status');
+  var allocData = [
+    { cat: 'Essential outgoings', amt: d.ess,          tgt: '50-65%', status: d.ess/d.income>0.75?'High':'Within range', cls: d.ess/d.income>0.75?'red':'grn' },
+    { cat: 'Debt repayment',      amt: d.recDebtPay,   tgt: '15-20%', status: d.debt>0?'Allocated':'No debt', cls: 'gld' },
+    { cat: 'Savings allocation',  amt: d.recSavPay,    tgt: '10-20%', status: d.recSavPay/d.income<0.10?'Below target':'On target', cls: d.recSavPay/d.income<0.10?'amb':'grn' },
+    { cat: 'Discretionary',       amt: d.disc,         tgt: '10-20%', status: d.disc/d.income>0.25?'High':'Available', cls: d.disc/d.income>0.25?'amb':'grn' },
+    { cat: 'Remaining surplus',   amt: Math.max(d.surplus-d.recDebtPay-d.recSavPay,0), tgt: 'Variable', status: 'Unallocated', cls: 'ink-faint' }
+  ];
+  allocData.forEach(function(row) {
+    var pctInc   = pct(row.amt, d.income);
+    var tgtLow   = parseInt(row.tgt) || 0;
+    var variance = pctInc - tgtLow;
+    var varStr   = variance > 0 ? '+' + variance + 'pp' : variance + 'pp';
+    allocRows += '<tr>';
+    allocRows += td(row.cat);
+    allocRows += td(fmt(row.amt), 'num');
+    allocRows += td(pctInc + '%', 'num');
+    allocRows += td(row.tgt, 'num');
+    allocRows += td(varStr, 'num ' + (variance > 5 ? 'red' : variance < -5 ? 'grn' : 'amb'));
+    allocRows += td(row.status, row.cls);
+    allocRows += '</tr>';
+  });
+  document.getElementById('s-allocation').innerHTML = '<tr>' + allocRows + '</tr>';
+
+  /* 3. DEBT PRESSURE ANALYSIS */
+  if (d.debt > 0) {
+    document.getElementById('s-debt-block').style.display = 'block';
+    var debtRows = '<tr>' + th('Metric') + th('Value') + th('Assessment') + '</tr>';
+    var debtData = [
+      { metric: 'Total debt balance', val: fmt(d.debt), assess: 'DTI: ' + d.dtiPct + '%', cls: d.dtiPct>40?'red':d.dtiPct>20?'amb':'grn' },
+      { metric: 'Estimated APR', val: (d.estAPR*100).toFixed(1) + '%', assess: d.estAPR>0.25?'High interest':'Moderate', cls: d.estAPR>0.25?'red':'amb' },
+      { metric: 'Monthly interest charge', val: fmt(d.monthlyInt), assess: fmt(d.annualInt) + '/year', cls: 'red' },
+      { metric: 'Recommended payment', val: fmt(d.recDebtPay) + '/mo', assess: 'Clears in ~' + d.debtMo + ' months', cls: 'grn' },
+      { metric: 'Debt pressure level', val: d.debtPressure, assess: d.debtPressure === 'High' ? 'Requires immediate priority' : 'Manageable with structure', cls: d.debtPressure==='High'?'red':d.debtPressure==='Moderate'?'amb':'grn' },
+      { metric: 'Acceleration potential', val: fmt(d.intSaved) + ' saved', assess: fmt(d.moSaved) + ' months faster', cls: 'grn' }
+    ];
+    debtData.forEach(function(row) {
+      debtRows += '<tr>' + td(row.metric) + td(row.val, 'num') + td(row.assess, row.cls) + '</tr>';
+    });
+    document.getElementById('s-debt-pressure').innerHTML = debtRows;
+  } else {
+    document.getElementById('s-debt-block').style.display = 'none';
+    document.getElementById('s-snowball-block').style.display = 'none';
+  }
+
+  /* 4. DEBT SNOWBALL */
+  if (d.debt > 0) {
+    document.getElementById('s-snowball-block').style.display = 'block';
+    document.getElementById('s-snowball-title').textContent = d.hasSnowball ? 'Debt Snowball Tracker' : 'Debt Repayment Tracker';
+    var snowRows = '<tr>' + th('Month') + th('Opening') + th('Payment') + th('Interest') + th('Closing') + th('% Cleared') + '</tr>';
+    var snowBal = d.debt;
+    var snowMoCount = 0;
+    var maxMo = Math.min(d.debtMo + 1, 12);
+    while (snowBal > 0 && snowMoCount < maxMo) {
+      snowMoCount++;
+      var sOpen = snowBal;
+      var sInt  = Math.round(snowBal * (d.estAPR / 12));
+      var sPrin = Math.max(d.recDebtPay - sInt, 0);
+      var sPay  = Math.min(d.recDebtPay, snowBal + sInt);
+      snowBal = Math.max(snowBal - sPrin, 0);
+      var sProg = Math.round(((d.debt - snowBal) / d.debt) * 100);
+      var rowCls = snowMoCount === 1 ? 'hl' : '';
+      var balCls = snowBal === 0 ? 'grn' : '';
+      snowRows += '<tr class="' + rowCls + '">';
+      snowRows += td('Month ' + snowMoCount);
+      snowRows += td(fmt(sOpen), 'num');
+      snowRows += td(fmt(sPay), 'num grn');
+      snowRows += td('-' + fmt(sInt), 'num red');
+      snowRows += td(fmt(snowBal), 'num ' + balCls);
+      snowRows += td(sProg + '%', 'num gld');
+      snowRows += '</tr>';
+    }
+    if (d.debtMo > 12) {
+      snowRows += '<tr><td colspan="5" style="font-size:0.74rem;font-style:italic;color:var(--ink-faint);">...continuing for ' + (d.debtMo - 12) + ' more months at this pace</td>';
+      snowRows += td(fmt(d.recDebtPay) + '/mo', 'num gld');
+      snowRows += '</tr>';
+    }
+    /* Interest summary row */
+    var totalBaseInt = d.monthlyInt * d.debtMo;
+    snowRows += '<tr class="hl">';
+    snowRows += td('Total interest at this pace', 'gld');
+    snowRows += td(fmt(totalBaseInt), 'num red');
+    snowRows += td('By accelerating ' + fmt(d.accelPay - d.recDebtPay) + '/mo:', 'num');
+    snowRows += td('Save ' + fmt(d.intSaved), 'num grn');
+    snowRows += td(d.moSaved + ' months faster', 'num grn');
+    snowRows += td('', '');
+    snowRows += '</tr>';
+    document.getElementById('s-snowball').innerHTML = snowRows;
+  }
+
+  /* 5. EMERGENCY RUNWAY */
+  var runwayRows = '<tr>' + th('Safety level') + th('Required') + th('Current') + th('Gap') + th('Monthly contribution') + th('Months to reach') + th('Status') + '</tr>';
+  var runwayLevels = [
+    { label: 'Level 1 \u2014 Essential cover (1 month)', req: d.ess },
+    { label: 'Level 2 \u2014 Income replacement (1 month)', req: d.income },
+    { label: 'Level 3 \u2014 Safety buffer (' + d.emTarget + ' months income)', req: d.emReq },
+    { label: 'Level 4 \u2014 Full security (6 months)', req: d.income * 6 }
+  ];
+  runwayLevels.forEach(function(level) {
+    var gap = Math.max(level.req - d.savings, 0);
+    var mtr = d.recSavPay > 0 ? Math.ceil(gap / d.recSavPay) : 999;
+    var met = d.savings >= level.req;
+    var pctCov = Math.min(Math.round((d.savings / level.req) * 100), 100);
+    var cls = met ? 'grn' : pctCov >= 50 ? 'amb' : 'red';
+    runwayRows += '<tr>';
+    runwayRows += td(level.label);
+    runwayRows += td(fmt(level.req), 'num');
+    runwayRows += td(fmt(d.savings), 'num');
+    runwayRows += td(gap > 0 ? '-' + fmt(gap) : '\u2014', 'num ' + (gap > 0 ? 'red' : 'grn'));
+    runwayRows += td(fmt(d.recSavPay) + '/mo', 'num');
+    runwayRows += td(met ? '\u2014' : (mtr < 999 ? mtr + ' mo' : '>99 mo'), 'num');
+    runwayRows += td(met ? 'Met' : (pctCov >= 50 ? 'Partial' : 'Critical'), cls);
+    runwayRows += '</tr>';
+  });
+  document.getElementById('s-runway').innerHTML = runwayRows;
+
+  /* METRICS: Interest bleed + Runway */
+  var intValEl = document.getElementById('m-interest-val');
+  if (intValEl) {
+    intValEl.textContent = d.debt > 0 ? '-' + fmt(d.annualInt) : 'None';
+    intValEl.style.color = d.debt > 0 ? 'var(--red)' : 'var(--green)';
+  }
+  var intSubEl = document.getElementById('m-interest-sub');
+  if (intSubEl) intSubEl.textContent = d.debt > 0 ? 'Estimated annual interest at ' + (d.estAPR * 100).toFixed(1) + '% APR' : 'No active debt detected';
+  var intSavedEl = document.getElementById('m-interest-saved');
+  if (intSavedEl && d.debt > 0 && d.intSaved > 0) {
+    intSavedEl.innerHTML = '<div style="margin-top:10px;padding:8px 10px;background:var(--green-bg);border-radius:6px;border-left:2px solid rgba(45,122,90,0.4);">'
+      + '<div style="font-size:0.68rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--green);margin-bottom:3px;">By snowballing</div>'
+      + '<div style="font-size:0.9rem;font-weight:500;color:var(--green);">Save ' + fmt(d.intSaved) + ' &middot; ' + d.moSaved + ' months faster</div>'
+      + '<div style="font-size:0.7rem;color:var(--ink-faint);margin-top:2px;">Adding ' + fmt(d.accelPay - d.recDebtPay) + '/mo extra</div>'
+      + '</div>';
+  }
+  var runValEl = document.getElementById('m-runway-val');
+  if (runValEl) {
+    runValEl.textContent = d.runwayMo.toFixed(1) + ' mo';
+    runValEl.style.color = d.runwayMo < 1 ? 'var(--red)' : d.runwayMo < 3 ? 'var(--amber)' : 'var(--green)';
+  }
+  var runSubEl = document.getElementById('m-runway-sub');
+  if (runSubEl) {
+    var runMsg = d.runwayMo < 1 ? 'Critical. Less than 1 month if income stopped.' : d.runwayMo < 3 ? 'Low. Target 3 months minimum.' : d.runwayMo < 6 ? 'Moderate. Building toward 6 months creates security.' : 'Solid. Real financial resilience established.';
+    runSubEl.textContent = runMsg;
+  }
+
+  /* 6. SAVINGS VELOCITY */
+  var savVelRows = '<tr>' + th('Scenario') + th('Monthly saving') + th('3 months') + th('6 months') + th('12 months') + th('24 months') + '</tr>';
+  var savScenarios = [
+    { label: 'Current pace',    save: d.recSavPay },
+    { label: 'Optimised',       save: Math.round(d.recSavPay * 1.4) },
+    { label: 'Accelerated',     save: Math.round(d.recSavPay * 2.0) }
+  ];
+  savScenarios.forEach(function(sc, idx) {
+    var rowCls = idx === 1 ? 'hl' : '';
+    savVelRows += '<tr class="' + rowCls + '">';
+    savVelRows += td(sc.label + (idx === 1 ? ' \u2605' : ''));
+    savVelRows += td(fmt(sc.save), 'num');
+    savVelRows += td(fmt(d.savings + sc.save * 3), 'num grn');
+    savVelRows += td(fmt(d.savings + sc.save * 6), 'num grn');
+    savVelRows += td(fmt(d.savings + sc.save * 12), 'num grn');
+    savVelRows += td(fmt(d.savings + sc.save * 24), 'num grn');
+    savVelRows += '</tr>';
+  });
+  document.getElementById('s-savings-velocity').innerHTML = savVelRows;
+
+  /* 7. DISPOSABLE INCOME TRACKING */
+  var dispItems = [];
+  if (d.hasFood) dispItems.push({ cat: 'Food & groceries', est: Math.round(d.ess * 0.15), risk: 'Meal planning reduces by 10-20%' });
+  if (d.hasTakeaway) dispItems.push({ cat: 'Takeaways & eating out', est: Math.round(d.disc * 0.30), risk: 'Habit-driven. Weekly cap effective.' });
+  if (d.hasCoffee) dispItems.push({ cat: 'Coffee & cafes', est: Math.round(d.disc * 0.08), risk: 'Small but signals automatic spending' });
+  if (d.hasSubs) dispItems.push({ cat: 'Subscriptions', est: Math.round(d.disc * 0.10), risk: 'Audit removes 30-50% in one session' });
+  if (d.hasNights) dispItems.push({ cat: 'Social & nights out', est: Math.round(d.disc * 0.35), risk: 'Highest-leverage reduction category' });
+  if (dispItems.length === 0) {
+    dispItems.push({ cat: 'Untracked discretionary', est: d.disc, risk: '30-day tracking required to diagnose' });
+    dispItems.push({ cat: 'Convenience spending', est: Math.round(d.disc * 0.20), risk: 'Typically reducible 20-30%' });
+  }
+  var dispRows = '<tr>' + th('Category') + th('Monthly estimate') + th('Suggested cap') + th('Recoverable') + th('Annual leakage') + th('Behavioural risk') + '</tr>';
+  var totalLeakage = 0;
+  dispItems.forEach(function(item) {
+    var cap = Math.round(item.est * 0.75);
+    var rec = item.est - cap;
+    totalLeakage += rec;
+    dispRows += '<tr>';
+    dispRows += td(item.cat);
+    dispRows += td(fmt(item.est), 'num');
+    dispRows += td(fmt(cap), 'num gld');
+    dispRows += td('+' + fmt(rec), 'num grn');
+    dispRows += td(fmt(rec * 12), 'num red');
+    dispRows += td(item.risk, '');
+    dispRows += '</tr>';
+  });
+  dispRows += '<tr class="hl">';
+  dispRows += td('Total estimated monthly leakage');
+  dispRows += td('', '');
+  dispRows += td('', '');
+  dispRows += td('+' + fmt(totalLeakage), 'num grn');
+  dispRows += td(fmt(totalLeakage * 12) + '/yr', 'num red');
+  dispRows += td('Recoverable with structured tracking', '');
+  dispRows += '</tr>';
+  document.getElementById('s-disposable').innerHTML = dispRows;
+
+  /* 8. BEHAVIOURAL LEAKAGE */
+  var leakItems = [
+    { label: 'Daily convenience spend (\u00a36/day)', daily: 6 },
+    { label: 'Untracked coffee & snacks (\u00a33.50/day)', daily: 3.50 },
+    { label: 'Impulse purchases (\u00a312/week)', daily: 12/7 },
+    { label: 'Unused subscriptions (\u00a322/mo)', daily: 22/30 }
+  ];
+  var leakRows = '<tr>' + th('Leakage source') + th('Daily') + th('Monthly') + th('Annual') + th('3-year impact') + '</tr>';
+  leakItems.forEach(function(item) {
+    var monthly = Math.round(item.daily * 30);
+    var annual  = Math.round(item.daily * 365);
+    var threeYr = Math.round(item.daily * 365 * 3);
+    leakRows += '<tr>';
+    leakRows += td(item.label);
+    leakRows += td(fmt(item.daily), 'num amb');
+    leakRows += td(fmt(monthly), 'num amb');
+    leakRows += td(fmt(annual), 'num red');
+    leakRows += td(fmt(threeYr), 'num red');
+    leakRows += '</tr>';
+  });
+  /* Total row */
+  var totalDaily = leakItems.reduce(function(s, i) { return s + i.daily; }, 0);
+  leakRows += '<tr class="hl">';
+  leakRows += td('Combined leakage if all apply');
+  leakRows += td(fmt(totalDaily) + '/day', 'num red');
+  leakRows += td(fmt(totalDaily * 30), 'num red');
+  leakRows += td(fmt(totalDaily * 365), 'num red');
+  leakRows += td(fmt(totalDaily * 365 * 3) + ' capital drain', 'num red');
+  leakRows += '</tr>';
+  document.getElementById('s-leakage').innerHTML = leakRows;
+
+  /* 9. COHERENCE SCORE */
+  document.getElementById('s-score-num').innerHTML = d.score + '<span>/100</span>';
+  document.getElementById('s-score-interp').textContent = d.scoreCategory + ' \u2014 ' + (d.score >= 75 ? 'Financial behaviour broadly aligns with stated goals.' : d.score >= 60 ? 'Positive trajectory with identifiable friction points.' : d.score >= 45 ? 'Significant contradictions between behaviour and goals.' : 'Structural misalignment requiring immediate attention.');
+  setTimeout(function() {
+    document.getElementById('s-score-bar').style.width = d.score + '%';
+  }, 200);
+  var compsHTML = '';
+  d.scoreComponents.forEach(function(comp) {
+    compsHTML += '<span class="coherence-comp">' + comp.label + ': ' + comp.score + '/' + comp.max + '</span>';
+  });
+  document.getElementById('s-score-comps').innerHTML = compsHTML;
+
+  /* 10. CONFLICTS */
+  var conflictHTML = '';
+  d.conflicts.forEach(function(cf) {
+    conflictHTML += '<div class="conflict-item">' + cf + '</div>';
+  });
+  document.getElementById('s-conflicts').innerHTML = conflictHTML;
+
+  /* 11. OPPORTUNITY COST */
+  var oppItems = [
+    { label: 'Annual interest on current debt', val: fmt(d.annualInt), note: 'Paid to lender. Zero return.', cls: d.debt > 0 ? 'red' : 'grn' },
+    { label: 'Interest savings by accelerating', val: d.intSaved > 0 ? fmt(d.intSaved) : 'No debt', note: 'Adding ' + fmt(d.accelPay - d.recDebtPay) + '/mo extra', cls: 'grn' },
+    { label: 'Annual cost of untracked leakage', val: fmt(totalLeakage * 12), note: 'Recoverable without lifestyle impact', cls: 'red' },
+    { label: 'Lost compounding over 5 years', val: fmt(Math.round(totalLeakage * 12 * 5 * 1.05)), note: 'At 5% if redirected to savings', cls: 'amb' }
+  ];
+  var oppHTML = '';
+  oppItems.forEach(function(item) {
+    oppHTML += '<div class="opp-card">';
+    oppHTML += '<div class="opp-label">' + item.label + '</div>';
+    oppHTML += '<div class="opp-val" style="color:var(--' + (item.cls === 'grn' ? 'green' : item.cls === 'red' ? 'red' : 'amber') + ')">' + item.val + '</div>';
+    oppHTML += '<div class="opp-note">' + item.note + '</div>';
+    oppHTML += '</div>';
+  });
+  document.getElementById('s-oppcost').innerHTML = oppHTML;
+
+  /* 12. 3-SCENARIO PROJECTION */
+  var scenRows = '<tr>' + th('Scenario') + th('Monthly debt') + th('Debt-free') + th('Monthly savings') + th('Savings at 12mo') + th('Runway at 12mo') + '</tr>';
+  var scenData = [
+    { label: 'Current path',         dPay: d.recDebtPay,              sPay: d.recSavPay,              cls: '' },
+    { label: 'Optimised',            dPay: Math.round(d.recDebtPay*1.3), sPay: Math.round(d.recSavPay*1.3), cls: 'hl' },
+    { label: 'Accelerated discipline',dPay: Math.round(d.recDebtPay*1.6), sPay: Math.round(d.recSavPay*1.5), cls: '' }
+  ];
+  scenData.forEach(function(sc, si) {
+    var sDf = 0, sBal = d.debt;
+    while (sBal > 0 && sDf < 120) {
+      var smi = Math.round(sBal * (d.estAPR / 12));
+      sBal = Math.max(sBal - Math.max(sc.dPay - smi, 0), 0);
+      sDf++;
+    }
+    var sSav  = d.savings + sc.sPay * 12;
+    var sRun  = d.income > 0 ? (sSav / d.income).toFixed(1) : '0.0';
+    var dfTxt = d.debt === 0 ? 'No debt' : sDf + ' months';
+    scenRows += '<tr class="' + sc.cls + '">';
+    scenRows += td(sc.label + (si === 1 ? ' \u2605' : ''));
+    scenRows += td(fmt(sc.dPay), 'num');
+    scenRows += td(dfTxt, 'num ' + (si > 0 ? 'grn' : ''));
+    scenRows += td(fmt(sc.sPay), 'num');
+    scenRows += td(fmt(sSav), 'num ' + (si > 0 ? 'grn' : ''));
+    scenRows += td(sRun + ' mo', 'num gld');
+    scenRows += '</tr>';
+  });
+  document.getElementById('s-scenarios').innerHTML = scenRows;
+
+  /* 13. RECOMMENDATIONS */
+  var recsHTML = '';
+  d.recs.forEach(function(rec, i) {
+    recsHTML += '<div class="rec-item">';
+    recsHTML += '<div class="rec-num">' + String(i + 1).padStart(2, '0') + '</div>';
+    recsHTML += '<div class="rec-text"><h5>' + rec.title + '</h5><p>' + rec.body + '</p></div>';
+    recsHTML += '</div>';
+  });
+  document.getElementById('s-recs').innerHTML = recsHTML;
+
+  /* 14. ACTION LADDER */
+  var actHTML = '';
+  d.actions.forEach(function(act, i) {
+    actHTML += '<div class="action-step">';
+    actHTML += '<div class="action-num">' + (i + 1) + '</div>';
+    actHTML += '<div class="action-body"><h5>' + act.title + '</h5><p>' + act.body + '</p></div>';
+    actHTML += '</div>';
+  });
+  document.getElementById('s-actions').innerHTML = actHTML;
+
+  /* 15. STABILITY TIMELINE */
+  var tlHTML = '<div class="timeline-row" style="font-size:0.68rem;font-weight:500;color:var(--ink-faint);border-bottom:1px solid var(--border);">'
+    + '<span>Period</span><span>Debt</span><span>Savings</span><span>Runway</span><span class="timeline-tag">Pressure</span></div>';
+  d.timeline.forEach(function(row) {
+    tlHTML += '<div class="timeline-row">';
+    tlHTML += '<span class="timeline-period">' + row.period + '</span>';
+    tlHTML += '<span class="timeline-val ' + (row.debt === 0 ? 'grn' : '') + '">' + (row.debt === 0 ? 'Cleared' : fmt(row.debt)) + '</span>';
+    tlHTML += '<span class="timeline-val grn">' + fmt(row.savings) + '</span>';
+    tlHTML += '<span class="timeline-val">' + row.runway.toFixed(1) + ' mo</span>';
+    tlHTML += '<span class="timeline-tag"><span class="tag ' + row.stressClass + '">' + row.stress + '</span></span>';
+    tlHTML += '</div>';
+  });
+  document.getElementById('s-timeline').innerHTML = tlHTML;
+
+  /* POSITIONING SUMMARY */
+  document.getElementById('s-summary').textContent = d.summary;
+  if (d.executiveInsight) {
+    var execEl = document.getElementById('s-executive');
+    execEl.textContent = '\u201c' + d.executiveInsight + '\u201d';
+    execEl.style.display = 'block';
+  }
+  if (d.topPriority) {
+    var prioEl = document.getElementById('s-priority');
+    prioEl.innerHTML = '<strong>Top priority:</strong> ' + d.topPriority;
+    prioEl.style.display = 'block';
+  }
+  if (d.riskWarning) {
+    var riskEl = document.getElementById('s-risk');
+    riskEl.innerHTML = '<strong>Risk if you do nothing:</strong> ' + d.riskWarning;
+    riskEl.style.display = 'block';
+  }
+
+  /* SHOW */
+  var fullOut = document.getElementById('full-output');
+  fullOut.style.display = 'block';
+  fullOut.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* Return from payment */
+document.addEventListener('DOMContentLoaded', function() {
+  if (window.location.search.indexOf('unlocked=true') !== -1) {
+    var keys = ['intent','income','debt','savings','ess','disc','savGoal','apr','rent','deps','emTarget','invest','concern'];
+    var vals = {};
+    keys.forEach(function(k) { vals[k] = sessionStorage.getItem('pro_' + k); });
+    if (vals.intent) {
+      _proData = { intent:vals.intent, income:parseFloat(vals.income)||0, debt:parseFloat(vals.debt)||0,
+                   savings:parseFloat(vals.savings)||0, ess:parseFloat(vals.ess)||0, disc:parseFloat(vals.disc)||0,
+                   savGoal:parseFloat(vals.savGoal)||0, apr:parseFloat(vals.apr)||19.9, rent:parseFloat(vals.rent)||0,
+                   deps:parseFloat(vals.deps)||0, emTarget:parseFloat(vals.emTarget)||3, invest:parseFloat(vals.invest)||0,
+                   concern:vals.concern||'Reduce debt' };
+      var d = _proData;
+      _proResult = buildProData(d.intent,d.income,d.debt,d.savings,d.ess,d.disc,d.savGoal,d.apr,d.rent,d.deps,d.emTarget,d.invest,d.concern);
+      document.getElementById('out-intent').textContent = '\u201c' + d.intent + '\u201d';
+      showPage('s2');
+      renderPreview(_proResult);
+      document.getElementById('free-preview').style.display = 'block';
+      var blurred2 = document.querySelector('.blurred-section');
+      if (blurred2) blurred2.style.display = 'none';
+      // Payment confirmed - call AI directly, bypass PREMIUM_GATED check
+      document.getElementById('unlock-card').style.display = 'none';
+      document.getElementById('ai-loader').style.display = 'block';
+      var msgs2 = ['Rendering your financial position dashboard...','Building debt snowball and avalanche tables...','Calculating opportunity cost engine...','Projecting 3-scenario trajectories...','Completing your stability timeline...'];
+      var idx2 = 0; var el2 = document.getElementById('ai-loader-msg');
+      var iv2 = setInterval(function(){ idx2=(idx2+1)%msgs2.length; if(el2) el2.textContent=msgs2[idx2]; }, 700);
+      var prompt2 = 'You are a senior personal finance advisor writing for a premium £29 financial clarity product. Refine these sections for someone whose situation is: "' + _proData.intent + '"\nIncome: £' + _proData.income + '/mo | Debt: £' + _proData.debt + ' | Savings: £' + _proData.savings + '/mo\n\nSUMMARY (3-4 sentences, honest, specific, reference actual numbers):\n' + _proResult.summary + '\n\nAlso write:\n- executiveInsight: One powerful sentence cutting to the heart of their position.\n- topPriority: Most important action in 2 sentences referencing actual figures.\n- riskWarning: Biggest risk if they do nothing, 1-2 sentences.\n\nReturn ONLY valid JSON: {"summary":"...","executiveInsight":"...","topPriority":"...","riskWarning":"..."}';
+      fetch('https://rcloop-proxy.vercel.app/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ system: 'You are a personal finance advisor. Return only valid JSON.', prompt: prompt2 })
+      }).then(function(r){ return r.json(); }).then(function(data){
+        clearInterval(iv2); document.getElementById('ai-loader').style.display='none';
+        try {
+          var text2 = data.content[0].text;
+          var clean2 = text2.replace(/```json|```/g,'').trim();
+          var s2 = clean2.indexOf('{'); var e2 = clean2.lastIndexOf('}');
+          if (s2 >= 0 && e2 > s2) clean2 = clean2.substring(s2, e2+1);
+          var parsed2 = JSON.parse(clean2);
+          if (parsed2.summary) _proResult.summary = parsed2.summary;
+          if (parsed2.executiveInsight) _proResult.executiveInsight = parsed2.executiveInsight;
+          if (parsed2.topPriority) _proResult.topPriority = parsed2.topPriority;
+          if (parsed2.riskWarning) _proResult.riskWarning = parsed2.riskWarning;
+        } catch(e){}
+        renderFull(_proResult);
+      }).catch(function(){ clearInterval(iv2); document.getElementById('ai-loader').style.display='none'; renderFull(_proResult); });
+    }
+  }
+});
 </script>
 </body>
 </html>
