@@ -1,4 +1,4 @@
-<!-- RC Loop Spreadsheet QuickStart v4.13 | Updated: 21 May 2026 -->
+<!-- RC Loop Spreadsheet QuickStart v4.11 | Updated: 21 May 2026 -->
 <!-- © 2025 RC Loop. All rights reserved. Unauthorised copying or distribution prohibited. -->
 
 <style>
@@ -189,22 +189,6 @@ textarea{min-height:70px;resize:vertical}
 .scenario-structured td{font-weight:500}
 .scenario-structured td:first-child::after{content:' ★';color:var(--gold)}
 
-
-<style media="print">
-  nav, .step-dots, .eyebrow, .actions, .unlock-card, .ai-loader,
-  .btn-p, .btn-s, .btn-ghost, .dl-row, #s0, #s1, #s1b, #s2 { display: none !important; }
-  .page { display: block !important; }
-  #s0, #s1, #s1b, #s2 { display: none !important; }
-  body { background: #fff; font-size: 12px; }
-  .wrap { max-width: 100%; padding: 0.5rem 1rem; }
-  .sheet-table { width: 100%; font-size: 11px; }
-  .sheet-table th, .sheet-table td { padding: 4px 8px; border-bottom: 0.5px solid #ddd; }
-  .sheet-preview, .rec-card, .action-plan, .positioning-summary,
-  .score-card, .conflicts-card, .situation-header, .ai-output { display: block !important; }
-  .sheet-preview, .rec-card, .action-plan, .positioning-summary,
-  .score-card, .conflicts-card { break-inside: avoid; margin-bottom: 0.75rem; }
-  .ai-output { display: block !important; }
-  .output-banner, .intent-display, .position-pill { display: block !important; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
@@ -374,7 +358,6 @@ textarea{min-height:70px;resize:vertical}
           <div class="dl-row">
             <button class="dl-btn pri" onclick="dlXLSX()">&#8595; XLSX</button>
             <button class="dl-btn" onclick="dlGoogleSheets()">&#8595; Google Sheets</button>
-            <button class="dl-btn" onclick="dlPDF()">&#8595; Save as PDF</button>
           </div>
         </div>
         <table class="sheet-table" id="main-sheet"></table>
@@ -435,7 +418,6 @@ textarea{min-height:70px;resize:vertical}
           <div class="dl-row">
             <button class="dl-btn pri" onclick="dlXLSX()">&#8595; XLSX</button>
             <button class="dl-btn" onclick="dlGoogleSheets()">&#8595; Google Sheets</button>
-            <button class="dl-btn" onclick="dlPDF()">&#8595; Save as PDF</button>
           </div>
         </div>
         <table class="sheet-table" id="ai-overview-table"></table>
@@ -1473,10 +1455,6 @@ function callAPI(intent, income, out, debt, savings, concern, onSuccess) {
 
 
 
-
-function dlPDF() {
-  window.print();
-}
 function dlXLSX() {
   var d = _proData;
   if (!d || !d.income) { alert('Please generate your financial overview first.'); return; }
