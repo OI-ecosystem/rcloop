@@ -1,4 +1,4 @@
-<!-- RC Loop Spreadsheet Pro v1.3 | Updated: 18 May 2026 06:49 -->
+<!-- RC Loop Spreadsheet Pro v2 | Updated: 21 May 2026 -->
 <!-- © 2025 RC Loop. All rights reserved. Unauthorised copying or distribution prohibited. -->
 <!DOCTYPE html>
 <html lang="en">
@@ -1250,7 +1250,7 @@ footer {
   <div class="output-intent" id="out-intent"></div>
 
   <!-- FREE PREVIEW -->
-  <div id="free-preview">
+  <div id="free-preview" style="display:none;">
 
     <!-- Score preview + one contradiction -->
     <div class="preview-grid">
@@ -1304,7 +1304,6 @@ footer {
 
   <!-- UNLOCK -->
   <div class="unlock-card" id="unlock-card">
-    <div class="dev-pill">DEV MODE &mdash; Mock response. Zero tokens.</div>
     <p class="unlock-heading">Unlock your full financial positioning.</p>
     <p class="unlock-sub">15 structured sections built deterministically from your situation. A 5-pass coherence engine, debt strategy, opportunity cost analysis and a 24-month stability timeline.</p>
     <div class="unlock-features">
@@ -1335,6 +1334,7 @@ footer {
       <div class="dl-row">
         <button class="dl-btn" onclick="dlXLSX()">&#8595; XLSX</button>
         <button class="dl-btn sec" onclick="dlGoogleSheets()">&#8595; Google Sheets</button>
+        <button class="dl-btn sec" onclick="dlPDF()">&#8595; Save as PDF</button>
       </div>
     </div>
 
@@ -1861,6 +1861,27 @@ function pct(a, b) {
   return b > 0 ? Math.round((a / b) * 100) : 0;
 }
 
+function dlPDF() {
+  alert('Tip: In the print dialog that opens, change the Destination to \'Save as PDF\' to download your report.');
+  var w = window.open('', '_blank');
+  if (!w) { alert('Please allow popups to save as PDF.'); return; }
+  var el = document.getElementById('full-output');
+  var intent = document.getElementById('out-intent');
+  var month = new Date().toLocaleDateString('en-GB', {month:'long', year:'numeric'});
+  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8">');
+  w.document.write('<title>RC Loop Financial Pro — ' + month + '</title>');
+  w.document.write('<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Georgia,serif;font-size:11px;color:#1a1a14;background:#fff;padding:20px 28px}table{width:100%;border-collapse:collapse;font-size:10px;margin-bottom:12px}th{background:#f7f6f2;font-size:8px;text-transform:uppercase;letter-spacing:0.06em;color:#8a8a80;padding:4px 8px;text-align:left;border-bottom:0.5px solid #ddd}td{padding:4px 8px;border-bottom:0.5px solid #eee;color:#4a4a42}.num{text-align:right;font-weight:500;color:#1a1a14}.red{color:#c0392b}.grn{color:#1d6b3c}.gold{color:#a07c2e}h1{font-size:15px;font-weight:normal;margin-bottom:4px}.meta{font-size:10px;color:#666;margin-bottom:14px}.intent{font-style:italic;color:#4a4a42;border-left:2px solid #a07c2e;padding:6px 10px;margin-bottom:14px;font-size:11px}.section{margin-bottom:14px;page-break-inside:avoid}.section-title{font-size:8px;font-weight:bold;text-transform:uppercase;letter-spacing:0.12em;color:#8a8a80;margin-bottom:6px;padding-bottom:3px;border-bottom:0.5px solid #ddd}.footer{margin-top:16px;padding-top:6px;border-top:0.5px solid #ddd;font-size:9px;color:#aaa;text-align:center}@media print{body{padding:10px 16px}}</style>');
+  w.document.write('</head><body>');
+  w.document.write('<h1>RC Loop — Your Full Financial Positioning Report</h1>');
+  w.document.write('<div class="meta">Generated ' + month + '</div>');
+  if (intent) w.document.write('<div class="intent">' + intent.textContent + '</div>');
+  if (el) w.document.write(el.innerHTML);
+  w.document.write('<div class="footer">RC Loop Financial Pro — ' + month + '</div>');
+  w.document.write('</body></html>');
+  w.document.close();
+  setTimeout(function(){ w.print(); }, 500);
+}
+
 function dlXLSX() {
   var d = _proData;
   if (!d || !d.income) { alert('Please generate your financial overview first.'); return; }
@@ -2089,12 +2110,17 @@ function runProcessing() {
   setTimeout(function() {
     showPage('s2');
     _proResult = proResult;
-    /* If arrived with ?unlocked=true (Etsy buyer) — skip teaser, fire AI directly */
+    /* If arrived with ?unlocked=true (Etsy buyer) — show score, hide blurred+unlock, fire AI */
     if (window.location.search.indexOf('unlocked=true') !== -1) {
+      renderPreview(proResult);
+      document.getElementById('free-preview').style.display = 'block';
+      var blurred = document.querySelector('.blurred-section');
+      if (blurred) blurred.style.display = 'none';
       document.getElementById('unlock-card').style.display = 'none';
       unlockFull();
     } else {
       renderPreview(proResult);
+      document.getElementById('free-preview').style.display = 'block';
     }
   }, delay + 300);
 }
@@ -2861,6 +2887,9 @@ document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('out-intent').textContent = '\u201c' + d.intent + '\u201d';
       showPage('s2');
       renderPreview(_proResult);
+      document.getElementById('free-preview').style.display = 'block';
+      var blurred2 = document.querySelector('.blurred-section');
+      if (blurred2) blurred2.style.display = 'none';
       // Payment confirmed - call AI directly, bypass PREMIUM_GATED check
       document.getElementById('unlock-card').style.display = 'none';
       document.getElementById('ai-loader').style.display = 'block';
@@ -2874,7 +2903,17 @@ document.addEventListener('DOMContentLoaded', function() {
         body: JSON.stringify({ system: 'You are a personal finance advisor. Return only valid JSON.', prompt: prompt2 })
       }).then(function(r){ return r.json(); }).then(function(data){
         clearInterval(iv2); document.getElementById('ai-loader').style.display='none';
-        try { var parsed2=JSON.parse(data.content[0].text); if(parsed2.summary) _proResult.summary=parsed2.summary; } catch(e){}
+        try {
+          var text2 = data.content[0].text;
+          var clean2 = text2.replace(/```json|```/g,'').trim();
+          var s2 = clean2.indexOf('{'); var e2 = clean2.lastIndexOf('}');
+          if (s2 >= 0 && e2 > s2) clean2 = clean2.substring(s2, e2+1);
+          var parsed2 = JSON.parse(clean2);
+          if (parsed2.summary) _proResult.summary = parsed2.summary;
+          if (parsed2.executiveInsight) _proResult.executiveInsight = parsed2.executiveInsight;
+          if (parsed2.topPriority) _proResult.topPriority = parsed2.topPriority;
+          if (parsed2.riskWarning) _proResult.riskWarning = parsed2.riskWarning;
+        } catch(e){}
         renderFull(_proResult);
       }).catch(function(){ clearInterval(iv2); document.getElementById('ai-loader').style.display='none'; renderFull(_proResult); });
     }
