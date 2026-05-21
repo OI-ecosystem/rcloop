@@ -1,4 +1,4 @@
-<!-- RC Loop Spreadsheet Pro v4 | Updated: 21 May 2026 -->
+<!-- RC Loop Spreadsheet Pro v5 | Updated: 21 May 2026 -->
 <!-- © 2025 RC Loop. All rights reserved. Unauthorised copying or distribution prohibited. -->
 <!DOCTYPE html>
 <html lang="en">
@@ -1927,6 +1927,9 @@ function dlPDF() {
     {id:'s-disposable', title:'Disposable income tracking', num:7},
     {id:'s-leakage', title:'Behavioural leakage detection', num:8},
     {id:'s-scenarios', title:'3-scenario future projection', num:11},
+    {id:'s-recs', title:'Structural recommendations engine', num:12},
+    {id:'s-actions', title:'Action priority ladder', num:13},
+    {id:'s-timeline', title:'Financial stability timeline', num:14},
   ];
 
   sections.forEach(function(s){
@@ -1940,7 +1943,16 @@ function dlPDF() {
   var scoreEl = document.getElementById('s-score-num');
   if (scoreEl) {
     html += '<div class="sec"><div class="sec-title"><span class="sec-num">9</span>Financial coherence score</div>';
-    html += '<div style="font-size:28px;font-weight:300;margin-bottom:6px">'+scoreEl.textContent+'<span style="font-size:14px;color:#888">/100</span></div></div>';
+    var scoreText = scoreEl.textContent.replace('/100','');
+    html += '<div style="font-size:28px;font-weight:300;margin-bottom:6px">'+scoreText+'<span style="font-size:14px;color:#888">/100</span></div></div>';
+  }
+  var conflictsEl = document.getElementById('s-conflicts');
+  if (conflictsEl && conflictsEl.innerHTML) {
+    html += '<div class="sec"><div class="sec-title"><span class="sec-num">10</span>Coherence conflict detection</div><div style="font-size:10px;line-height:1.6">'+conflictsEl.innerHTML+'</div></div>';
+  }
+  var oppEl = document.getElementById('s-oppcost');
+  if (oppEl && oppEl.innerHTML) {
+    html += '<div class="sec"><div class="sec-title"><span class="sec-num">10b</span>Opportunity cost engine</div><div style="font-size:10px;line-height:1.6">'+oppEl.innerHTML+'</div></div>';
   }
 
   /* AI narrative sections */
@@ -1949,7 +1961,7 @@ function dlPDF() {
     html += '<div class="sec"><div class="sec-title">Executive summary</div><div style="line-height:1.7;font-size:11px">'+summaryEl.textContent+'</div></div>';
   }
 
-  var insightEl = document.getElementById('s-insight');
+  var insightEl = document.getElementById('s-executive');
   if (insightEl && insightEl.textContent) {
     html += '<div class="insight-box">'+insightEl.textContent+'</div>';
   }
@@ -1961,7 +1973,8 @@ function dlPDF() {
 
   var riskEl = document.getElementById('s-risk');
   if (riskEl && riskEl.textContent) {
-    html += '<div class="risk-box"><strong>Risk if you do nothing:</strong> '+riskEl.textContent+'</div>';
+    var riskText = riskEl.textContent.replace(/^Risk if you do nothing:\s*/i, '');
+    html += '<div class="risk-box"><strong>Risk if you do nothing:</strong> '+riskText+'</div>';
   }
 
   html += '<div class="footer">RC Loop Spreadsheet Pro \u2014 5-pass financial coherence engine \u2014 ' + month + '</div>';
