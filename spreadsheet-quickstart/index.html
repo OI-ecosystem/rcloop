@@ -1,4 +1,4 @@
-<!-- RC Loop Spreadsheet QuickStart v4.11 | Updated: 21 May 2026 -->
+<!-- RC Loop Spreadsheet QuickStart v4.12 | Updated: 21 May 2026 -->
 <!-- © 2025 RC Loop. All rights reserved. Unauthorised copying or distribution prohibited. -->
 
 <style>
@@ -358,6 +358,7 @@ textarea{min-height:70px;resize:vertical}
           <div class="dl-row">
             <button class="dl-btn pri" onclick="dlXLSX()">&#8595; XLSX</button>
             <button class="dl-btn" onclick="dlGoogleSheets()">&#8595; Google Sheets</button>
+            <button class="dl-btn" onclick="dlPDF()">&#8595; Save as PDF</button>
           </div>
         </div>
         <table class="sheet-table" id="main-sheet"></table>
@@ -418,6 +419,7 @@ textarea{min-height:70px;resize:vertical}
           <div class="dl-row">
             <button class="dl-btn pri" onclick="dlXLSX()">&#8595; XLSX</button>
             <button class="dl-btn" onclick="dlGoogleSheets()">&#8595; Google Sheets</button>
+            <button class="dl-btn" onclick="dlPDF()">&#8595; Save as PDF</button>
           </div>
         </div>
         <table class="sheet-table" id="ai-overview-table"></table>
@@ -1454,6 +1456,108 @@ function callAPI(intent, income, out, debt, savings, concern, onSuccess) {
 }
 
 
+
+function dlPDF() {
+  var w = window.open('', '_blank');
+  if (!w) { alert('Please allow popups to save as PDF.'); return; }
+
+  /* Collect rendered content from the page */
+  var intent    = document.getElementById('ai-intent')    || document.getElementById('out-intent');
+  var pill      = document.getElementById('out-pill')     || document.getElementById('ai-pressure');
+  var overview  = document.getElementById('ai-overview-table') || document.getElementById('main-sheet');
+  var dispEl    = document.getElementById('ai-disposable-table');
+  var planHdr   = document.getElementById('ai-plan-header');
+  var planEl    = document.getElementById('ai-plan-table');
+  var bufferEl  = document.getElementById('ai-buffer-table');
+  var metricsEl = document.getElementById('ai-metrics');
+  var scoreEl   = document.getElementById('ai-score-num');
+  var conflEl   = document.getElementById('ai-conflicts');
+  var scenEl    = document.getElementById('ai-scenario-table');
+  var recsEl    = document.getElementById('ai-recs');
+  var planAEl   = document.getElementById('ai-action-plan');
+  var summaryEl = document.getElementById('ai-summary');
+
+  function html(el) { return el ? el.outerHTML : ''; }
+  function txt(el)  { return el ? el.textContent : ''; }
+
+  var month = new Date().toLocaleDateString('en-GB', {month:'long', year:'numeric'});
+
+  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8">');
+  w.document.write('<title>RC Loop Financial Overview — ' + month + '</title>');
+  w.document.write('<style>');
+  w.document.write('*{box-sizing:border-box;margin:0;padding:0}');
+  w.document.write('body{font-family:Georgia,serif;font-size:11px;color:#1a1a14;background:#fff;padding:20px 28px}');
+  w.document.write('h1{font-size:16px;font-weight:normal;margin-bottom:4px}');
+  w.document.write('.meta{font-size:10px;color:#666;margin-bottom:16px}');
+  w.document.write('.intent{font-style:italic;color:#4a4a42;border-left:2px solid #a07c2e;padding:6px 10px;margin-bottom:14px;font-size:11px;line-height:1.5}');
+  w.document.write('.section{margin-bottom:14px;page-break-inside:avoid}');
+  w.document.write('.section-title{font-size:8px;font-weight:bold;text-transform:uppercase;letter-spacing:0.12em;color:#8a8a80;margin-bottom:6px;padding-bottom:4px;border-bottom:0.5px solid #ddd}');
+  w.document.write('table{width:100%;border-collapse:collapse;font-size:10px}');
+  w.document.write('th{background:#f7f6f2;font-size:8px;text-transform:uppercase;letter-spacing:0.06em;color:#8a8a80;padding:4px 8px;text-align:left;border-bottom:0.5px solid #ddd}');
+  w.document.write('td{padding:4px 8px;border-bottom:0.5px solid #eee;color:#4a4a42;vertical-align:top}');
+  w.document.write('.num{text-align:right;font-weight:500;color:#1a1a14}');
+  w.document.write('.red{color:#c0392b}.grn{color:#1d6b3c}.gold{color:#a07c2e}');
+  w.document.write('tr.highlight td{background:#f9f4e8}');
+  w.document.write('.rec-item{display:flex;gap:8px;margin-bottom:8px;page-break-inside:avoid}');
+  w.document.write('.rec-num{font-size:14px;color:#a07c2e;opacity:0.6;min-width:18px}');
+  w.document.write('.rec-text h5{font-size:10px;font-weight:bold;margin-bottom:2px}');
+  w.document.write('.rec-text p{font-size:10px;color:#4a4a42;line-height:1.5}');
+  w.document.write('.action-week{margin-bottom:8px}');
+  w.document.write('.action-week-label{font-size:8px;font-weight:bold;text-transform:uppercase;letter-spacing:0.08em;color:#a07c2e;margin-bottom:4px}');
+  w.document.write('.action-item{font-size:10px;color:#4a4a42;padding:2px 0 2px 12px;position:relative;line-height:1.4}');
+  w.document.write('.action-item::before{content:"•";position:absolute;left:0;color:#a07c2e}');
+  w.document.write('.summary{font-style:italic;font-size:11px;color:#1a1a14;line-height:1.7;border-left:3px solid #1a1a14;padding:8px 12px;background:#f7f6f2}');
+  w.document.write('.conflict-item{padding:6px 10px;border-left:2px solid rgba(160,124,46,0.4);background:#f9f4e8;margin-bottom:5px;font-size:10px;color:#4a4a42;line-height:1.5}');
+  w.document.write('.score-box{display:inline-block;font-size:28px;font-weight:300;color:#1a1a14;margin-right:10px}');
+  w.document.write('.footer{margin-top:20px;padding-top:8px;border-top:0.5px solid #ddd;font-size:9px;color:#aaa;text-align:center}');
+  w.document.write('@media print{body{padding:10px 16px}}');
+  w.document.write('</style></head><body>');
+
+  w.document.write('<h1>RC Loop — Your Personalised Financial Overview</h1>');
+  w.document.write('<div class="meta">Generated ' + month + ' &nbsp;|&nbsp; Based on your stated financial situation</div>');
+
+  if (intent) w.document.write('<div class="intent">' + txt(intent) + '</div>');
+
+  if (overview) {
+    w.document.write('<div class="section"><div class="section-title">Monthly financial snapshot</div><table>' + overview.innerHTML + '</table></div>');
+  }
+  if (dispEl && dispEl.innerHTML) {
+    w.document.write('<div class="section"><div class="section-title">Disposable income breakdown</div><table>' + dispEl.innerHTML + '</table></div>');
+  }
+  if (planEl && planEl.innerHTML) {
+    var ph = planHdr ? txt(planHdr) : 'Plan tracker';
+    w.document.write('<div class="section"><div class="section-title">' + ph + '</div><table>' + planEl.innerHTML + '</table></div>');
+  }
+  if (bufferEl && bufferEl.innerHTML) {
+    w.document.write('<div class="section"><div class="section-title">Emergency buffer tracker</div><table>' + bufferEl.innerHTML + '</table></div>');
+  }
+  if (metricsEl && metricsEl.innerHTML) {
+    w.document.write('<div class="section"><div class="section-title">Key metrics</div>' + metricsEl.innerHTML + '</div>');
+  }
+  if (scoreEl) {
+    w.document.write('<div class="section"><div class="section-title">Financial coherence score</div><div class="score-box">' + txt(scoreEl) + '</div><span style="font-size:10px;color:#8a8a80">out of 100</span></div>');
+  }
+  if (conflEl && conflEl.innerHTML) {
+    w.document.write('<div class="section"><div class="section-title">Coherence conflicts</div>' + conflEl.innerHTML + '</div>');
+  }
+  if (scenEl && scenEl.innerHTML) {
+    w.document.write('<div class="section"><div class="section-title">3-path scenario model</div><table>' + scenEl.innerHTML + '</table></div>');
+  }
+  if (recsEl && recsEl.innerHTML) {
+    w.document.write('<div class="section"><div class="section-title">Personalised action priorities</div>' + recsEl.innerHTML + '</div>');
+  }
+  if (planAEl && planAEl.innerHTML) {
+    w.document.write('<div class="section"><div class="section-title">Monthly action plan</div>' + planAEl.innerHTML + '</div>');
+  }
+  if (summaryEl && summaryEl.textContent) {
+    w.document.write('<div class="section"><div class="section-title">Financial positioning summary</div><div class="summary">' + txt(summaryEl) + '</div></div>');
+  }
+
+  w.document.write('<div class="footer">RC Loop &mdash; rcloop.com &mdash; ' + month + '</div>');
+  w.document.write('</body></html>');
+  w.document.close();
+  setTimeout(function(){ w.print(); }, 500);
+}
 
 function dlXLSX() {
   var d = _proData;
