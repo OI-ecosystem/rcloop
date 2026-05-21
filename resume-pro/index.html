@@ -1,4 +1,4 @@
-<!-- RC Loop Resume Pro v1.1 | Updated: 17 May 2026 11:45 -->
+<!-- RC Loop Resume Pro v1.3 | Updated: 18 May 2026 06:49 -->
 <!-- © 2025 RC Loop. All rights reserved. Unauthorised copying or distribution prohibited. -->
 <!DOCTYPE html>
 <html lang="en">
@@ -622,7 +622,7 @@ footer{border-top:0.5px solid var(--border);padding:24px 32px;display:flex;align
 
   <!-- UNLOCK -->
   <div class="unlock-card" id="unlock-card">
-    <div class="dev-pill" id="dev-pill" style="display:none;">DEV MODE &mdash; Mock response. Zero tokens.</div>
+    <div class="dev-pill">DEV MODE &mdash; Mock response. Zero tokens.</div>
     <p class="unlock-heading">Unlock your full professional positioning.</p>
     <p class="unlock-sub">5-pass identity coherence. Strategic ATS optimisation. Keyword synchronisation. Perception engineering. Positioning statement. Identity-coherent cover letter.</p>
     <div class="unlock-features">
@@ -1132,8 +1132,14 @@ function runProcessing() {
 
   setTimeout(function() {
     showPage('s6');
-    renderPreview(proResult);
     _proResult = proResult;
+    /* If arrived with ?unlocked=true (Etsy buyer) — skip teaser, fire AI directly */
+    if (window.location.search.indexOf('unlocked=true') !== -1) {
+      document.getElementById('unlock-card').style.display = 'none';
+      unlockFull();
+    } else {
+      renderPreview(proResult);
+    }
   }, delay + 300);
 }
 
@@ -1310,9 +1316,6 @@ function buildProResult(d) {
 
 /* ── RENDER PREVIEW ── */
 function renderPreview(d) {
-  var devPill = document.getElementById('dev-pill');
-  if (devPill) devPill.style.display = DEV_MODE ? 'inline-block' : 'none';
-
   document.getElementById('prev-score').innerHTML = d.totalScore + '<span>/100</span>';
   var catEl = document.getElementById('prev-score-cat');
   catEl.textContent = d.scoreCategory;
@@ -1334,7 +1337,7 @@ function renderPreview(d) {
 
 /* ── UNLOCK FULL ── */
 function unlockFull() {
-  if (PREMIUM_GATED) {
+  if (PREMIUM_GATED && window.location.search.indexOf('unlocked=true') === -1) {
     sessionStorage.setItem('pro_data', JSON.stringify(_proData));
     window.location.href = 'https://opportunity-intelligence.lemonsqueezy.com/checkout/buy/b3d2ecf8-1700-45eb-81cc-2f1a40d4302f';
     return;
@@ -1342,10 +1345,10 @@ function unlockFull() {
   document.getElementById('unlock-card').style.display = 'none';
   document.getElementById('ai-loader').style.display = 'block';
 
-  var msgs = ['Building your positioned CV...','Writing your cover letter...','Running ATS optimisation...','Completing your positioning report...'];
+  var msgs = ['Rendering positioning statement...','Building identity coherence scores...','Running ATS strategic optimisation...','Writing identity-coherent cover letter...','Completing your positioning report...'];
   var idx = 0;
   var el  = document.getElementById('ai-loader-msg');
-  var iv  = setInterval(function() { idx = (idx+1)%msgs.length; if (el) el.textContent = msgs[idx]; }, 1800);
+  var iv  = setInterval(function() { idx = (idx+1)%msgs.length; if (el) el.textContent = msgs[idx]; }, 700);
 
   if (DEV_MODE) {
     setTimeout(function() {
@@ -1356,107 +1359,42 @@ function unlockFull() {
     return;
   }
 
-  runProAI(_proData, _proResult, iv);
-}
+  /* AI refinement pass */
+  var pd = _proData;
+  var prompt = 'You are a professional CV writer. Refine the following two sections for ' + pd.name + ' who is positioning as ' + pd.target + '.\n\n'
+    + 'PROFESSIONAL SUMMARY (refine to flow naturally, fix grammar, keep all facts):\n' + _proResult.proSummary + '\n\n'
+    + 'COVER LETTER (refine to sound natural and compelling, fix any grammar or truncated sentences):\n' + _proResult.coverLetter + '\n\n'
+    + 'Return ONLY valid JSON with exactly these two keys: {"proSummary": "...", "coverLetter": "..."}. No other text.';
 
-/* ── TWO-CALL PRO AI ENGINE ── */
-function buildCtx(pd) {
-  var achs = splitBullets(pd.achievements).slice(0, 8);
-  var ctx = 'NAME: ' + pd.name + '\n'
-    + 'TARGET ROLE: ' + pd.target + '\n'
-    + 'CURRENT ROLE: ' + pd.current + '\n'
-    + (pd.prev ? 'PREVIOUS ROLE: ' + pd.prev + '\n' : '')
-    + 'STRENGTHS: ' + (pd.strengths || []).join(', ') + '\n'
-    + (pd.sector ? 'SECTOR: ' + pd.sector + '\n' : '')
-    + (pd.environments ? 'ENVIRONMENTS: ' + pd.environments.join(', ') + '\n' : '')
-    + 'ACHIEVEMENTS:\n' + achs.map(function(b,i){ return (i+1)+'. '+b; }).join('\n') + '\n'
-    + (pd.perception ? 'PERCEIVED AS: ' + pd.perception + '\n' : '')
-    + (pd.diff ? 'DIFFERENTIATOR: ' + pd.diff + '\n' : '')
-    + (pd.why ? 'WHY MOVING: ' + pd.why + '\n' : '')
-    + (pd.trust ? 'KNOWN FOR: ' + pd.trust + '\n' : '')
-    + (pd.energise ? 'ENERGISED BY: ' + pd.energise + '\n' : '')
-    + (pd.undersells ? 'CV UNDERSELLS: ' + pd.undersells + '\n' : '')
-    + (pd.skills ? 'SKILLS: ' + pd.skills + '\n' : '')
-    + (pd.edu ? 'EDUCATION: ' + pd.edu + '\n' : '');
-  return ctx;
-}
-
-function proApiCall(prompt, onSuccess, onFail) {
-  var system = 'You are a senior UK CV writer. 20 years experience. Every sentence complete and grammatically correct. No ellipsis. No generic phrases like results-driven or dynamic. Return ONLY valid JSON, no markdown, no preamble.';
   fetch('https://rcloop-proxy.vercel.app/api/ai', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ system: system, prompt: prompt })
+    body: JSON.stringify({
+      system: 'You are an expert CV and cover letter writer. Return only valid JSON.',
+      prompt: prompt
+    })
   })
   .then(function(r) { return r.json(); })
   .then(function(data) {
-    try {
-      var text = data.content[0].text;
-      var clean = text.replace(/```json|```/g, '').trim();
-      var s = clean.indexOf('{'); var e = clean.lastIndexOf('}');
-      if (s >= 0 && e > s) { clean = clean.substring(s, e + 1); }
-      onSuccess(JSON.parse(clean));
-    } catch(err) { onFail(); }
-  })
-  .catch(function() { onFail(); });
-}
-
-function runProAI(pd, result, iv) {
-  var ctx = buildCtx(pd);
-  var loaderMsg = document.getElementById('ai-loader-msg');
-
-  /* CALL 1 — CV: summary + bullets + positioning statement */
-  if (loaderMsg) loaderMsg.textContent = 'Building your positioned CV...';
-  var prompt1 = ctx
-    + '\nWrite the CV sections. Return ONLY this JSON:\n'
-    + '{"proSummary":"3-4 complete sentences. Open with name and target role. Reference strongest metric. Weave in differentiator and perception. Close with their impact. No ellipsis.",'
-    + '"rewrittenBullets":["Each bullet starts with strong past-tense verb eg Spearheaded/Delivered/Orchestrated/Championed. Keeps all metrics exactly. Complete sentence under 160 chars. No ellipsis. Write ALL bullets."],'
-    + '"positioningStatement":"One powerful sentence capturing how they should be perceived using their perception and differentiator.",'
-    + '"posSum":"2 sentences on positioning strength and single highest-leverage action."}';
-
-  proApiCall(prompt1, function(p1) {
-    if (p1.proSummary)           result.proSummary       = p1.proSummary;
-    if (p1.rewrittenBullets)     result.rewrittenBullets = p1.rewrittenBullets;
-    if (p1.positioningStatement) result.posStatement     = p1.positioningStatement;
-    if (p1.posSum)               result.posSum           = p1.posSum;
-
-    /* CALL 2 — Cover letter only */
-    if (loaderMsg) loaderMsg.textContent = 'Writing your cover letter...';
-    var prompt2 = ctx
-      + '\nWrite a cover letter. 4 paragraphs:\n'
-      + 'Para 1: Interest in ' + pd.target + ' role. 2 sentences summarising career using actual background.\n'
-      + 'Para 2: 2-3 specific achievements with metrics woven into natural prose — not a list.\n'
-      + 'Para 3: Why this role and sector excite them. Reference what energises them.\n'
-      + 'Para 4: Confident close. Sign off "Yours sincerely," then ' + pd.name + '.\n'
-      + 'Natural human voice. Every sentence complete. No generic phrases.\n'
-      + 'Return ONLY: {"coverLetter":"full letter text with paragraph breaks using \\n\\n"}';
-
-    proApiCall(prompt2, function(p2) {
-      if (p2.coverLetter) result.coverLetter = p2.coverLetter;
-      clearInterval(iv);
-      document.getElementById('ai-loader').style.display = 'none';
-      renderFull(result);
-    }, function() {
-      /* Cover letter failed — show output with deterministic fallback */
-      clearInterval(iv);
-      document.getElementById('ai-loader').style.display = 'none';
-      renderFull(result);
-    });
-
-  }, function() {
-    /* Call 1 failed — show deterministic output */
     clearInterval(iv);
     document.getElementById('ai-loader').style.display = 'none';
-    renderFull(result);
+    try {
+      var text = data.content[0].text;
+      var parsed = JSON.parse(text);
+      if (parsed.proSummary) _proResult.proSummary = parsed.proSummary;
+      if (parsed.coverLetter) _proResult.coverLetter = parsed.coverLetter;
+    } catch(e) {}
+    renderFull(_proResult);
+  })
+  .catch(function() {
+    clearInterval(iv);
+    document.getElementById('ai-loader').style.display = 'none';
+    renderFull(_proResult);
   });
 }
 
 /* ── RENDER FULL ── */
 function renderFull(d) {
-  /* Hide preview gating — user has paid */
-  document.getElementById('free-preview').style.display = 'none';
-  document.getElementById('unlock-card').style.display = 'none';
-
   var pd = _proData;
 
   document.getElementById('out-pos-stmt').textContent = '\u201c' + d.posStatement + '\u201d';
@@ -1803,15 +1741,25 @@ document.addEventListener('DOMContentLoaded', function() {
           showPage('s6');
           renderPreview(result);
           _proResult = result;
-          // Payment confirmed — call AI directly
+          // Payment confirmed - call AI directly, bypass PREMIUM_GATED check
           document.getElementById('unlock-card').style.display = 'none';
-          document.getElementById('free-preview').style.display = 'none';
           document.getElementById('ai-loader').style.display = 'block';
-          var msgs = ['Building your positioned CV...','Writing your cover letter...','Running ATS optimisation...','Completing your positioning report...'];
+          var msgs = ['Rendering positioning statement...','Building identity coherence scores...','Running ATS strategic optimisation...','Writing identity-coherent cover letter...','Completing your positioning report...'];
           var idx = 0;
           var el = document.getElementById('ai-loader-msg');
-          var iv = setInterval(function() { idx=(idx+1)%msgs.length; if(el) el.textContent=msgs[idx]; }, 1800);
-          runProAI(_proData, _proResult, iv);
+          var iv = setInterval(function() { idx=(idx+1)%msgs.length; if(el) el.textContent=msgs[idx]; }, 700);
+          var pd = _proData;
+          var prompt = 'You are a senior CV writer. Refine the following two sections for ' + pd.name + ' positioning as ' + pd.target + '.\n\nPROFESSIONAL SUMMARY (refine to flow naturally, fix grammar, keep all facts, no ellipsis, no generic phrases):\n' + _proResult.proSummary + '\n\nCOVER LETTER (refine to sound natural and compelling, fix any grammar or truncated sentences, 4 complete paragraphs):\n' + _proResult.coverLetter + '\n\nReturn ONLY valid JSON: {"proSummary": "...", "coverLetter": "..."}';
+          fetch('https://rcloop-proxy.vercel.app/api/ai', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ system: 'You are an expert CV writer. Return only valid JSON.', prompt: prompt })
+          }).then(function(r){ return r.json(); }).then(function(data){
+            clearInterval(iv);
+            document.getElementById('ai-loader').style.display = 'none';
+            try { var parsed = JSON.parse(data.content[0].text); if(parsed.proSummary) _proResult.proSummary=parsed.proSummary; if(parsed.coverLetter) _proResult.coverLetter=parsed.coverLetter; } catch(e){}
+            renderFull(_proResult);
+          }).catch(function(){ clearInterval(iv); document.getElementById('ai-loader').style.display='none'; renderFull(_proResult); });
         }
       } catch(e) {}
     }
