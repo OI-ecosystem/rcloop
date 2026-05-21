@@ -1,4 +1,4 @@
-<!-- RC Loop Spreadsheet Pro v2 | Updated: 21 May 2026 -->
+<!-- RC Loop Spreadsheet Pro v3 | Updated: 21 May 2026 -->
 <!-- © 2025 RC Loop. All rights reserved. Unauthorised copying or distribution prohibited. -->
 <!DOCTYPE html>
 <html lang="en">
@@ -1865,21 +1865,112 @@ function dlPDF() {
   alert('Tip: In the print dialog that opens, change the Destination to \'Save as PDF\' to download your report.');
   var w = window.open('', '_blank');
   if (!w) { alert('Please allow popups to save as PDF.'); return; }
-  var el = document.getElementById('full-output');
-  var intent = document.getElementById('out-intent');
+  var d = _proResult;
+  var pd = _proData;
+  if (!d || !pd) { alert('Please generate your report first.'); return; }
   var month = new Date().toLocaleDateString('en-GB', {month:'long', year:'numeric'});
-  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8">');
-  w.document.write('<title>RC Loop Financial Pro — ' + month + '</title>');
-  w.document.write('<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Georgia,serif;font-size:11px;color:#1a1a14;background:#fff;padding:20px 28px}table{width:100%;border-collapse:collapse;font-size:10px;margin-bottom:12px}th{background:#f7f6f2;font-size:8px;text-transform:uppercase;letter-spacing:0.06em;color:#8a8a80;padding:4px 8px;text-align:left;border-bottom:0.5px solid #ddd}td{padding:4px 8px;border-bottom:0.5px solid #eee;color:#4a4a42}.num{text-align:right;font-weight:500;color:#1a1a14}.red{color:#c0392b}.grn{color:#1d6b3c}.gold{color:#a07c2e}h1{font-size:15px;font-weight:normal;margin-bottom:4px}.meta{font-size:10px;color:#666;margin-bottom:14px}.intent{font-style:italic;color:#4a4a42;border-left:2px solid #a07c2e;padding:6px 10px;margin-bottom:14px;font-size:11px}.section{margin-bottom:14px;page-break-inside:avoid}.section-title{font-size:8px;font-weight:bold;text-transform:uppercase;letter-spacing:0.12em;color:#8a8a80;margin-bottom:6px;padding-bottom:3px;border-bottom:0.5px solid #ddd}.footer{margin-top:16px;padding-top:6px;border-top:0.5px solid #ddd;font-size:9px;color:#aaa;text-align:center}@media print{body{padding:10px 16px}}</style>');
-  w.document.write('</head><body>');
-  w.document.write('<h1>RC Loop — Your Full Financial Positioning Report</h1>');
-  w.document.write('<div class="meta">Generated ' + month + '</div>');
-  if (intent) w.document.write('<div class="intent">' + intent.textContent + '</div>');
-  if (el) w.document.write(el.innerHTML);
-  w.document.write('<div class="footer">RC Loop Financial Pro — ' + month + '</div>');
-  w.document.write('</body></html>');
+  var fmt = function(n){ return n !== undefined && n !== null ? '\u00a3' + Math.round(n).toLocaleString() : '\u2014'; };
+  var pct = function(n){ return Math.round(n) + '%'; };
+  var red = function(v,t){ return '<span style="color:'+(v<0?'#c0392b':v>0?'#1d6b3c':'#4a4a42')+'">'+t+'</span>'; };
+
+  var css = '*{box-sizing:border-box;margin:0;padding:0}'
+    + 'body{font-family:Georgia,serif;font-size:11px;color:#1a1a14;background:#fff;padding:20px 28px}'
+    + 'h1{font-size:16px;font-weight:normal;margin-bottom:3px}'
+    + '.meta{font-size:10px;color:#888;margin-bottom:12px}'
+    + '.intent{font-style:italic;color:#4a4a42;border-left:3px solid #a07c2e;padding:6px 12px;margin-bottom:16px;font-size:11px;line-height:1.6}'
+    + '.sec{margin-bottom:16px;page-break-inside:avoid}'
+    + '.sec-title{font-size:8px;font-weight:bold;text-transform:uppercase;letter-spacing:0.14em;color:#8a8a80;padding-bottom:4px;border-bottom:0.5px solid #ddd;margin-bottom:8px}'
+    + '.sec-num{font-size:8px;color:#bbb;margin-right:4px}'
+    + 'table{width:100%;border-collapse:collapse;font-size:10px}'
+    + 'th{background:#f7f6f2;font-size:8px;text-transform:uppercase;letter-spacing:0.06em;color:#8a8a80;padding:4px 8px;text-align:left;border-bottom:0.5px solid #ddd}'
+    + 'td{padding:4px 8px;border-bottom:0.5px solid #f0f0ec;color:#4a4a42;vertical-align:top}'
+    + '.r{text-align:right} .b{font-weight:bold;color:#1a1a14}'
+    + '.red{color:#c0392b} .grn{color:#1d6b3c} .gold{color:#a07c2e}'
+    + '.dash-table td{padding:6px 10px;border-bottom:0.5px solid #eee}'
+    + '.dash-label{font-size:9px;color:#8a8a80;text-transform:uppercase;letter-spacing:0.06em}'
+    + '.dash-val{font-size:13px;font-weight:bold;color:#1a1a14}'
+    + '.highlight{background:#faf9f5} .insight-box{border-left:3px solid #1a1a14;padding:8px 12px;background:#f7f6f2;margin-top:8px;font-style:italic;font-size:11px;line-height:1.6}'
+    + '.risk-box{border-left:3px solid #c0392b;padding:8px 12px;background:#fdf5f5;margin-top:8px;font-size:11px;line-height:1.6}'
+    + '.footer{margin-top:20px;padding-top:6px;border-top:0.5px solid #ddd;font-size:9px;color:#aaa;text-align:center}'
+    + '@media print{body{padding:12px 18px}}';
+
+  var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>RC Loop Financial Pro</title><style>' + css + '</style></head><body>';
+  html += '<h1>RC Loop \u2014 Your Full Financial Positioning Report</h1>';
+  html += '<div class="meta">Generated ' + month + '</div>';
+  html += '<div class="intent">' + (pd.intent || '') + '</div>';
+
+  /* SECTION 1 — Financial Position Dashboard */
+  html += '<div class="sec"><div class="sec-title"><span class="sec-num">1</span>Financial position dashboard</div>';
+  html += '<table class="dash-table"><tbody>';
+  var dashRows = [
+    ['Net income', fmt(pd.income), '100% base', ''],
+    ['Essential spend', fmt(pd.ess), pct(pd.ess/pd.income*100) + ' of income', ''],
+    ['Discretionary', fmt(pd.disc), pct(pd.disc/pd.income*100) + ' of income', ''],
+    ['Total debt', fmt(pd.debt), 'DTI: ' + pct(pd.debt/pd.income*100/12), 'red'],
+    ['Savings', fmt(pd.savings), (pd.savings/pd.income).toFixed(1) + ' months reserve', 'red'],
+    ['Monthly surplus', fmt(d.surplus||pd.income-pd.ess-pd.disc), 'Available', 'grn'],
+    ['Interest bleed', fmt(d.interestBleed||Math.round(pd.debt*pd.apr/100/12)) + '/mo', fmt((d.interestBleed||Math.round(pd.debt*pd.apr/100/12))*12) + '/yr est.', 'red'],
+    ['Financial runway', (d.runway||Math.round(pd.savings/pd.income*10)/10) + ' mo', 'Critical', 'red']
+  ];
+  dashRows.forEach(function(r){
+    html += '<tr class="highlight"><td><div class="dash-label">'+r[0]+'</div><div class="dash-val'+(r[3]?' '+r[3]:'')+'">'+r[1]+'</div></td><td style="vertical-align:middle;font-size:10px;color:#8a8a80">'+r[2]+'</td></tr>';
+  });
+  html += '</tbody></table></div>';
+
+  /* Pull remaining sections from rendered DOM */
+  var sections = [
+    {id:'income-table', title:'Income allocation engine', num:2},
+    {id:'debt-pressure-table', title:'Debt pressure analysis', num:3},
+    {id:'debt-tracker-table', title:'Debt repayment tracker', num:4},
+    {id:'emergency-table', title:'Emergency runway planner', num:5},
+    {id:'savings-table', title:'Savings velocity projection', num:6},
+    {id:'disposable-table', title:'Disposable income tracking', num:7},
+    {id:'leakage-table', title:'Behavioural leakage detection', num:8},
+    {id:'scenario-table', title:'3-scenario future projection', num:11},
+    {id:'stability-table', title:'Financial stability timeline', num:14},
+  ];
+
+  sections.forEach(function(s){
+    var el = document.getElementById(s.id);
+    if (el && el.innerHTML) {
+      html += '<div class="sec"><div class="sec-title"><span class="sec-num">'+s.num+'</span>'+s.title+'</div><table>'+el.innerHTML+'</table></div>';
+    }
+  });
+
+  /* Score */
+  var scoreEl = document.getElementById('coherence-score-num');
+  if (scoreEl) {
+    html += '<div class="sec"><div class="sec-title"><span class="sec-num">9</span>Financial coherence score</div>';
+    html += '<div style="font-size:28px;font-weight:300;margin-bottom:6px">'+scoreEl.textContent+'<span style="font-size:14px;color:#888">/100</span></div></div>';
+  }
+
+  /* AI narrative sections */
+  var summaryEl = document.getElementById('ai-summary');
+  if (summaryEl && summaryEl.textContent) {
+    html += '<div class="sec"><div class="sec-title">Executive summary</div><div style="line-height:1.7;font-size:11px">'+summaryEl.textContent+'</div></div>';
+  }
+
+  var insightEl = document.getElementById('ai-insight');
+  if (insightEl && insightEl.textContent) {
+    html += '<div class="insight-box">'+insightEl.textContent+'</div>';
+  }
+
+  var priorityEl = document.getElementById('ai-priority');
+  if (priorityEl && priorityEl.textContent) {
+    html += '<div class="sec" style="margin-top:12px"><div class="sec-title">Top priority</div><div style="line-height:1.6;font-size:11px">'+priorityEl.textContent+'</div></div>';
+  }
+
+  var riskEl = document.getElementById('ai-risk');
+  if (riskEl && riskEl.textContent) {
+    html += '<div class="risk-box"><strong>Risk if you do nothing:</strong> '+riskEl.textContent+'</div>';
+  }
+
+  html += '<div class="footer">RC Loop Spreadsheet Pro \u2014 5-pass financial coherence engine \u2014 ' + month + '</div>';
+  html += '</body></html>';
+
+  w.document.write(html);
   w.document.close();
-  setTimeout(function(){ w.print(); }, 500);
+  setTimeout(function(){ w.print(); }, 600);
 }
 
 function dlXLSX() {
