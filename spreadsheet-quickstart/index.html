@@ -1,4 +1,4 @@
-<!-- RC Loop Spreadsheet QuickStart v4.10 | Updated: 21 May 2026 -->
+<!-- RC Loop Spreadsheet QuickStart v4.11 | Updated: 21 May 2026 -->
 <!-- © 2025 RC Loop. All rights reserved. Unauthorised copying or distribution prohibited. -->
 
 <style>
@@ -895,7 +895,7 @@ function buildOutput() {
 
   showPage('s3');
   if (window.location.search.indexOf('unlocked=true') !== -1) {
-    document.getElementById('free-output').style.display = 'none';
+    document.getElementById('free-taster').style.display = 'none';
     document.getElementById('unlock-card').style.display = 'none';
     runAI(_aiIn.intent, _aiIn.income, _aiIn.out, _aiIn.debt, _aiIn.savings, _aiIn.concern);
   } else {
