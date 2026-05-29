@@ -1,4 +1,4 @@
-<!-- RC Loop Resume Pro v6.3 | Updated: 29 May 2026 12:15 | removed price from unlock button -->
+<!-- RC Loop Resume Pro v6.4 | Updated: 29 May 2026 12:30 | hide dev pill when DEV_MODE=false -->
 <!-- © 2025 RC Loop. All rights reserved. Unauthorised copying or distribution prohibited. -->
 <!DOCTYPE html>
 <html lang="en">
@@ -622,7 +622,7 @@ footer{border-top:0.5px solid var(--border);padding:24px 32px;display:flex;align
 
   <!-- UNLOCK -->
   <div class="unlock-card" id="unlock-card">
-    <div class="dev-pill">DEV MODE &mdash; Mock response. Zero tokens.</div>
+    <div class="dev-pill" id="dev-pill">DEV MODE &mdash; Mock response. Zero tokens.</div>
     <p class="unlock-heading">Unlock your full professional positioning.</p>
     <p class="unlock-sub">5-pass identity coherence. Strategic ATS optimisation. Keyword synchronisation. Perception engineering. Positioning statement. Identity-coherent cover letter.</p>
     <div class="unlock-features">
@@ -754,6 +754,12 @@ footer{border-top:0.5px solid var(--border);padding:24px 32px;display:flex;align
 
 var DEV_MODE      = false;
 var PREMIUM_GATED = true;
+
+/* Hide dev pill in production */
+document.addEventListener('DOMContentLoaded', function() {
+  var pill = document.getElementById('dev-pill');
+  if (pill) pill.style.display = DEV_MODE ? 'inline-block' : 'none';
+});
 
 var _proData   = {};
 var _proResult = {};
