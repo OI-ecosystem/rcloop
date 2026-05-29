@@ -1,4 +1,4 @@
-<!-- RC Loop Resume Pro v5 | Updated: 21 May 2026 -->
+<!-- RC Loop Resume Pro v6.1 | Updated: 29 May 2026 11:45 | fix localStorage bypass - payment gate now checks rcloop_resume_pro_unlocked flag -->
 <!-- © 2025 RC Loop. All rights reserved. Unauthorised copying or distribution prohibited. -->
 <!DOCTYPE html>
 <html lang="en">
@@ -1352,7 +1352,7 @@ function renderPreview(d) {
 
 /* ── UNLOCK FULL ── */
 function unlockFull() {
-  if (PREMIUM_GATED && window.location.search.indexOf('unlocked=true') === -1) {
+  if (PREMIUM_GATED && window.location.search.indexOf('unlocked=true') === -1 && localStorage.getItem('rcloop_resume_pro_unlocked') !== 'true') {
     sessionStorage.setItem('pro_data', JSON.stringify(_proData));
     window.location.href = 'https://opportunity-intelligence.lemonsqueezy.com/checkout/buy/b3d2ecf8-1700-45eb-81cc-2f1a40d4302f';
     return;
@@ -1790,6 +1790,11 @@ document.addEventListener('DOMContentLoaded', function() {
   var isUnlocked = window.location.search.indexOf('unlocked=true') !== -1 ||
                    localStorage.getItem('rcloop_resume_pro_unlocked') === 'true';
   if (isUnlocked) {
+    /* Cards notice — show once only */
+    if (!localStorage.getItem('rcloop_resume_pro_cards_noticed')) {
+      var notice = document.getElementById('cards-notice');
+      if (notice) notice.style.display = 'flex';
+    }
     var stored = sessionStorage.getItem('pro_data');
     if (stored) {
       try {
@@ -1858,6 +1863,25 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 });
+
+/* Cards notice dismiss */
+function dismissCardsNotice() {
+  localStorage.setItem('rcloop_resume_pro_cards_noticed', 'true');
+  var notice = document.getElementById('cards-notice');
+  if (notice) notice.style.display = 'none';
+}
 </script>
+
+<!-- Cards notice overlay — shown once after payment -->
+<div id="cards-notice" style="display:none;position:fixed;inset:0;background:rgba(14,14,12,0.92);z-index:9999;align-items:center;justify-content:center;padding:2rem">
+  <div style="background:#f7f6f2;border-radius:12px;padding:2.5rem 2rem;max-width:420px;width:100%;text-align:center">
+    <div style="font-size:0.7rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#a07c2e;margin-bottom:1rem">Before you begin</div>
+    <h2 style="font-family:'DM Serif Display',serif;font-size:1.4rem;color:#1a1a14;margin-bottom:0.6rem;line-height:1.2">Download your five<br>reflection cards</h2>
+    <p style="font-size:0.84rem;color:#4a4a42;font-weight:300;line-height:1.6;margin-bottom:1.5rem">Complete the cards before launching your engine. The more honestly you write, the more precise your positioning will be.</p>
+    <a href="https://oi-ecosystem.github.io/rcloop/resume-pro/rcloop_resume_pro_cards.pdf" target="_blank" style="display:block;background:#1a1a14;color:#fff;font-size:0.85rem;font-weight:500;padding:0.75rem 1.5rem;border-radius:6px;text-decoration:none;margin-bottom:0.75rem">↓ Download reflection cards</a>
+    <button onclick="dismissCardsNotice()" style="background:none;border:1px solid rgba(0,0,0,0.2);color:#4a4a42;font-size:0.82rem;padding:0.65rem 1.5rem;border-radius:6px;cursor:pointer;width:100%;font-family:inherit">I have my cards — continue →</button>
+  </div>
+</div>
+
 </body>
 </html>
