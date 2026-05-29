@@ -1,4 +1,4 @@
-<!-- RC Loop Resume Pro v6.1 | Updated: 29 May 2026 11:45 | fix localStorage bypass - payment gate now checks rcloop_resume_pro_unlocked flag -->
+<!-- RC Loop Resume Pro v6.2 | Updated: 29 May 2026 11:55 | fix cards overlay - replaced inset with explicit positioning -->
 <!-- © 2025 RC Loop. All rights reserved. Unauthorised copying or distribution prohibited. -->
 <!DOCTYPE html>
 <html lang="en">
@@ -1873,7 +1873,7 @@ function dismissCardsNotice() {
 </script>
 
 <!-- Cards notice overlay — shown once after payment -->
-<div id="cards-notice" style="display:none;position:fixed;inset:0;background:rgba(14,14,12,0.92);z-index:9999;align-items:center;justify-content:center;padding:2rem">
+<div id="cards-notice" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(14,14,12,0.92);z-index:9999;align-items:center;justify-content:center;padding:2rem">
   <div style="background:#f7f6f2;border-radius:12px;padding:2.5rem 2rem;max-width:420px;width:100%;text-align:center">
     <div style="font-size:0.7rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#a07c2e;margin-bottom:1rem">Before you begin</div>
     <h2 style="font-family:'DM Serif Display',serif;font-size:1.4rem;color:#1a1a14;margin-bottom:0.6rem;line-height:1.2">Download your five<br>reflection cards</h2>
