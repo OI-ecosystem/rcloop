@@ -1,4 +1,4 @@
-<!-- RC Loop Resume Pro v6.4 | Updated: 29 May 2026 12:30 | hide dev pill when DEV_MODE=false -->
+<!-- RC Loop Resume Pro v5 | Updated: 21 May 2026 -->
 <!-- © 2025 RC Loop. All rights reserved. Unauthorised copying or distribution prohibited. -->
 <!DOCTYPE html>
 <html lang="en">
@@ -289,6 +289,32 @@ footer{border-top:0.5px solid var(--border);padding:24px 32px;display:flex;align
       <p>The goal is not data collection &mdash; it is coherent professional positioning without unnecessary complexity.</p>
     </div>
   </div>
+
+  <!-- CARDS DOWNLOAD BANNER — dismissable, shows until downloaded or dismissed -->
+  <div id="cards-banner-rp" style="background:#f9f4e8;border:1px solid #c4a84a;border-radius:8px;padding:14px 18px;margin-bottom:20px;display:none;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+    <div>
+      <strong style="font-size:0.85rem;color:#1a1a14">Career reflection comes first.</strong>
+      <div style="font-size:0.78rem;color:#4a4a42;margin-top:3px">Download and complete your five reflection cards before you begin.</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <a href="https://oi-ecosystem.github.io/rcloop/resume-pro/rcloop_resume_pro_cards.pdf" target="_blank" onclick="dismissCardsBanner('rp')" style="background:#1a1a14;color:#fff;font-size:0.78rem;font-weight:600;padding:8px 16px;border-radius:6px;text-decoration:none;white-space:nowrap">↓ Download cards</a>
+      <button onclick="dismissCardsBanner('rp')" style="background:none;border:1px solid rgba(0,0,0,0.2);color:#4a4a42;font-size:0.75rem;padding:8px 14px;border-radius:6px;cursor:pointer;font-family:inherit;white-space:nowrap">I already have my cards →</button>
+    </div>
+  </div>
+  <script>
+  (function() {
+    if (!localStorage.getItem('rcloop_resume_pro_cards_downloaded')) {
+      var b = document.getElementById('cards-banner-rp');
+      if (b) b.style.display = 'flex';
+    }
+  })();
+  function dismissCardsBanner(product) {
+    var key = product === 'rp' ? 'rcloop_resume_pro_cards_downloaded' : 'rcloop_coach_cards_downloaded';
+    localStorage.setItem(key, 'true');
+    var b = document.getElementById('cards-banner-' + product);
+    if (b) b.style.display = 'none';
+  }
+  </script>
 
   <!-- PROFESSIONAL FOUNDATION FIELDS -->
   <div class="card-eyebrow">Your professional foundation</div>
@@ -622,7 +648,7 @@ footer{border-top:0.5px solid var(--border);padding:24px 32px;display:flex;align
 
   <!-- UNLOCK -->
   <div class="unlock-card" id="unlock-card">
-    <div class="dev-pill" id="dev-pill">DEV MODE &mdash; Mock response. Zero tokens.</div>
+    <div class="dev-pill">DEV MODE &mdash; Mock response. Zero tokens.</div>
     <p class="unlock-heading">Unlock your full professional positioning.</p>
     <p class="unlock-sub">5-pass identity coherence. Strategic ATS optimisation. Keyword synchronisation. Perception engineering. Positioning statement. Identity-coherent cover letter.</p>
     <div class="unlock-features">
@@ -635,7 +661,7 @@ footer{border-top:0.5px solid var(--border);padding:24px 32px;display:flex;align
       <span class="unlock-feature">Identity-coherent cover letter</span>
       <span class="unlock-feature">ATS .txt download</span>
     </div>
-    <button class="unlock-btn" onclick="unlockFull()">Unlock my positioning</button>
+    <button class="unlock-btn" onclick="unlockFull()">Unlock my positioning &mdash; &pound;29</button>
     <span class="unlock-price">One-time &middot; Instant &middot; No account needed</span>
   </div>
 
@@ -754,12 +780,6 @@ footer{border-top:0.5px solid var(--border);padding:24px 32px;display:flex;align
 
 var DEV_MODE      = false;
 var PREMIUM_GATED = true;
-
-/* Hide dev pill in production */
-document.addEventListener('DOMContentLoaded', function() {
-  var pill = document.getElementById('dev-pill');
-  if (pill) pill.style.display = DEV_MODE ? 'inline-block' : 'none';
-});
 
 var _proData   = {};
 var _proResult = {};
@@ -1358,7 +1378,7 @@ function renderPreview(d) {
 
 /* ── UNLOCK FULL ── */
 function unlockFull() {
-  if (PREMIUM_GATED && window.location.search.indexOf('unlocked=true') === -1 && localStorage.getItem('rcloop_resume_pro_unlocked') !== 'true') {
+  if (PREMIUM_GATED && window.location.search.indexOf('unlocked=true') === -1) {
     sessionStorage.setItem('pro_data', JSON.stringify(_proData));
     window.location.href = 'https://opportunity-intelligence.lemonsqueezy.com/checkout/buy/b3d2ecf8-1700-45eb-81cc-2f1a40d4302f';
     return;
@@ -1879,7 +1899,7 @@ function dismissCardsNotice() {
 </script>
 
 <!-- Cards notice overlay — shown once after payment -->
-<div id="cards-notice" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(14,14,12,0.92);z-index:9999;align-items:center;justify-content:center;padding:2rem">
+<div id="cards-notice" style="display:none;position:fixed;inset:0;background:rgba(14,14,12,0.92);z-index:9999;align-items:center;justify-content:center;padding:2rem">
   <div style="background:#f7f6f2;border-radius:12px;padding:2.5rem 2rem;max-width:420px;width:100%;text-align:center">
     <div style="font-size:0.7rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#a07c2e;margin-bottom:1rem">Before you begin</div>
     <h2 style="font-family:'DM Serif Display',serif;font-size:1.4rem;color:#1a1a14;margin-bottom:0.6rem;line-height:1.2">Download your five<br>reflection cards</h2>
