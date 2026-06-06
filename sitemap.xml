@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <!-- RC Loop Landing Page -->
+  <url>
+    <loc>https://oi-ecosystem.github.io/rcloop/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- RC Loop Products -->
+  <url>
+    <loc>https://oi-ecosystem.github.io/rcloop/resume-quickstart/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://oi-ecosystem.github.io/rcloop/resume-pro/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://oi-ecosystem.github.io/rcloop/spreadsheet-quickstart/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://oi-ecosystem.github.io/rcloop/spreadsheet-pro/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://oi-ecosystem.github.io/rcloop/quickstart/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://oi-ecosystem.github.io/rcloop/pro/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+</urlset>
