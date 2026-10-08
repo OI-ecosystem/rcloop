@@ -1,4 +1,4 @@
-<!-- RC Loop Spreadsheet QuickStart v4.18 | Updated: 8 Oct 2026 | Accuracy: debt payoff months and total interest now include interest (were debt / payment); tracker opening balances now follow the previous month; emergency buffer, runway and targets measured against essential outgoings (were income); interest box shows total interest at your pace; the written advice is given the page's own figures so it matches the tables, plus today's date. Previous: RC Loop Spreadsheet QuickStart v4.17 | Updated: 8 Oct 2026 | Paid reports now checked by the proxy (/api/ai-paid): a real Lemon Squeezy order or the owner key is needed; ?unlocked=true alone no longer gives a report. Previous: RC Loop Spreadsheet QuickStart v4.16 | Updated: 21 May 2026 -->
+<!-- RC Loop Spreadsheet QuickStart v4.19 | Updated: 8 Oct 2026 | Spending items matched as whole words ("credit card" no longer triggered Transport via "car"); written advice now gets each payment option as a full split that adds up to the surplus, told not to mix savings with everyday spending, and only the interest saving is called avoidable. Previous: RC Loop Spreadsheet QuickStart v4.18 | Updated: 8 Oct 2026 | Accuracy: debt payoff months and total interest now include interest (were debt / payment); tracker opening balances now follow the previous month; emergency buffer, runway and targets measured against essential outgoings (were income); interest box shows total interest at your pace; the written advice is given the page's own figures so it matches the tables, plus today's date. Previous: RC Loop Spreadsheet QuickStart v4.17 | Updated: 8 Oct 2026 | Paid reports now checked by the proxy (/api/ai-paid): a real Lemon Squeezy order or the owner key is needed; ?unlocked=true alone no longer gives a report. Previous: RC Loop Spreadsheet QuickStart v4.16 | Updated: 21 May 2026 -->
 <!-- © 2025 RC Loop. All rights reserved. Unauthorised copying or distribution prohibited. -->
 
 <script>
@@ -745,11 +745,18 @@ var DETECTABLE_ITEMS = [
   { key:'renovation',    label:'Renovation / project',   signals:['renovation','project','building','home improvement','decorat','repair'] }
 ];
 
+/* Match a signal only at the start of a word; short signals (4 letters or fewer) must be the whole word */
+function _hasWord(text, sig) {
+  var esc = sig.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  var tail = sig.length <= 4 ? '([^a-z]|$)' : '';
+  return new RegExp('(^|[^a-z])' + esc + tail).test(text);
+}
+
 function detectSpecificItems(intentText) {
   var lower = intentText.toLowerCase();
   var detected = [];
   DETECTABLE_ITEMS.forEach(function(item) {
-    if (item.signals.some(function(sig){ return lower.indexOf(sig) !== -1; })) detected.push(item);
+    if (item.signals.some(function(sig){ return _hasWord(lower, sig); })) detected.push(item);
   });
   return detected;
 }
@@ -1535,22 +1542,24 @@ function _planFacts(income, out, debt, savings) {
   var savPay  = Math.max(Math.round(disp * 0.2), 0);
   var disc    = Math.max(disp - debtPay - savPay, 0);
   var today   = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  var floor = Math.round(disp * 0.2);
   var t = '\n\nTHE PLAN SHOWN ON THE PAGE (use these figures; do not calculate your own):\n'
-    + '- Monthly surplus after essential outgoings: ' + fmt(disp) + '\n'
-    + '- Plan split: debt repayment ' + fmt(debtPay) + ', savings ' + fmt(savPay) + ', everyday discretionary spending ' + fmt(disc) + ' (food out, leisure, shopping and other non-essentials come from this)\n';
+    + '- Monthly surplus after essential outgoings: ' + fmt(disp) + '. Every split below adds up to exactly ' + fmt(disp) + '.\n'
+    + '- Current plan: debt ' + fmt(debtPay) + ' + savings ' + fmt(savPay) + ' + everyday spending ' + fmt(disc) + ' (everyday spending covers eating out, leisure, shopping and other non-essentials)\n';
   if (debt > 0) {
     var cur = _payoff(debt, debtPay);
-    t += '- At ' + fmt(debtPay) + '/month the debt clears in ' + (cur.months >= 999 ? 'never (payment below interest)' : cur.months + ' months') + ', total interest about ' + fmt(cur.interest) + ' (19.9% APR estimate)\n';
-    [100, 200, 300].forEach(function(extra) {
-      var p = debtPay + extra; if (p > disp) return;
+    t += '  At ' + fmt(debtPay) + '/month the debt clears in ' + (cur.months >= 999 ? 'never (payment below interest)' : cur.months + ' months') + ', total interest about ' + fmt(cur.interest) + ' (19.9% APR estimate)\n';
+    [100, 150, 200, 300].forEach(function(extra) {
+      var p = debtPay + extra; var d2 = disp - p - savPay;
+      if (d2 < floor) return;
       var o = _payoff(debt, p);
-      t += '- At ' + fmt(p) + '/month: clears in ' + o.months + ' months, total interest about ' + fmt(o.interest) + '\n';
+      t += '- Option: debt ' + fmt(p) + ' + savings ' + fmt(savPay) + ' + everyday spending ' + fmt(d2) + ': clears in ' + o.months + ' months, total interest about ' + fmt(o.interest) + ' (saves about ' + fmt(Math.max(cur.interest - o.interest, 0)) + ')\n';
     });
   }
-  t += '- Emergency buffer: ' + fmt(savings) + ' covers ' + (out > 0 ? (Math.round(savings / out * 10) / 10) : 0) + ' months of essential outgoings\n'
+  t += '- Emergency buffer: ' + fmt(savings) + ' covers ' + (out > 0 ? (Math.round(savings / out * 10) / 10) : 0) + ' months of essential outgoings. Targets: 1 month ' + fmt(out) + ', 3 months ' + fmt(out * 3) + '. Do not give a time to reach a target.\n'
     + 'RULES: Today is ' + today + '. Only quote payoff times, interest amounts and savings figures from the list above. '
-    + 'If you suggest a higher debt payment, pick one of the listed options and say what it would come out of (savings or everyday spending). '
-    + 'Never leave less than about ' + fmt(Math.round(disp * 0.2)) + '/month for everyday discretionary spending. Do not exaggerate (no "thousands" unless the figures above show thousands). '
+    + 'If you suggest a higher debt payment, use one of the listed options exactly as written, with its full split. Never describe a split that does not add up to ' + fmt(disp) + '. '
+    + 'Savings and everyday spending are different amounts; do not mix them up. Only the interest saving shown is avoidable, not the whole interest. Do not exaggerate. '
     + 'Never mention AI.';
   return t;
 }
