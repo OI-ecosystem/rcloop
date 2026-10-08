@@ -1,4 +1,4 @@
-<!-- RC Loop Spreadsheet QuickStart v4.17 | Updated: 8 Oct 2026 | Paid reports now checked by the proxy (/api/ai-paid): a real Lemon Squeezy order or the owner key is needed; ?unlocked=true alone no longer gives a report. Previous: RC Loop Spreadsheet QuickStart v4.16 | Updated: 21 May 2026 -->
+<!-- RC Loop Spreadsheet QuickStart v4.18 | Updated: 8 Oct 2026 | Accuracy: debt payoff months and total interest now include interest (were debt / payment); tracker opening balances now follow the previous month; emergency buffer, runway and targets measured against essential outgoings (were income); interest box shows total interest at your pace; the written advice is given the page's own figures so it matches the tables, plus today's date. Previous: RC Loop Spreadsheet QuickStart v4.17 | Updated: 8 Oct 2026 | Paid reports now checked by the proxy (/api/ai-paid): a real Lemon Squeezy order or the owner key is needed; ?unlocked=true alone no longer gives a report. Previous: RC Loop Spreadsheet QuickStart v4.16 | Updated: 21 May 2026 -->
 <!-- © 2025 RC Loop. All rights reserved. Unauthorised copying or distribution prohibited. -->
 
 <script>
@@ -854,6 +854,18 @@ function runProcessing() {
 
 
 /* FREE OUTPUT - full v3 quality */
+/* Debt payoff simulated month by month at an estimated 19.9% APR (same rounding as the tracker table) */
+function _payoff(debt, pay) {
+  var b = debt, m = 0, tot = 0, r = 0.199 / 12;
+  if (!(debt > 0) || !(pay > 0)) return { months: 0, interest: 0 };
+  while (b > 0 && m < 600) {
+    var i = Math.round(b * r);
+    if (pay <= i) return { months: 999, interest: 0 };
+    tot += i; b = Math.max(b + i - pay, 0); m++;
+  }
+  return { months: m, interest: tot };
+}
+
 function buildOutput() {
   var intent     = document.getElementById('intent').value.trim();
   var income     = v('income') || 2400;
@@ -867,8 +879,8 @@ function buildOutput() {
   var dPay = debt > 0 ? Math.max(Math.round(disposable * 0.4), 50) : 0;
   var sPay = Math.max(Math.round(disposable * 0.2), 0);
   var disc = Math.max(disposable - dPay - sPay, 0);
-  var dMo  = dPay > 0 ? Math.ceil(debt / dPay) : 0;
-  var mRes = income > 0 ? Math.round((savings / income) * 10) / 10 : 0;
+  var dMo  = dPay > 0 ? _payoff(debt, dPay).months : 0;
+  var mRes = outgoings > 0 ? Math.round((savings / outgoings) * 10) / 10 : 0;
 
   _aiIn = { intent:intent, income:income, out:outgoings, debt:debt, savings:savings, concern:concern }; Object.keys(_aiIn).forEach(function(k){ sessionStorage.setItem('ai_'+k, _aiIn[k]); });
 
@@ -1089,8 +1101,8 @@ function buildAIData(intent, income, out, debt, savings, concern) {
   var debtPay = debt > 0 ? Math.max(Math.round(disp * 0.4), 50) : 0;
   var savPay  = Math.max(Math.round(disp * 0.2), 0);
   var disc    = Math.max(disp - debtPay - savPay, 0);
-  var mRes    = income > 0 ? savings / income : 0;
-  var dMo     = debtPay > 0 ? Math.ceil(debt / debtPay) : 0;
+  var mRes    = out > 0 ? savings / out : 0;
+  var dMo     = debtPay > 0 ? _payoff(debt, debtPay).months : 0;
 
   /* Signal detection */
   var hasFood     = /food|grocer|supermarket/.test(lower);
@@ -1140,7 +1152,7 @@ function buildAIData(intent, income, out, debt, savings, concern) {
     + aiRow('Debt repayment',        debtPay,   debtPay*12, pct(debtPay,income), '15-20%', debtPay < income*0.15 && debt > 0 ? '+' + fmt(Math.round(income*0.175-debtPay)) + ' possible' : 'On target', 'gold', 'Allocated')
     + aiRow('Savings allocation',    savPay,    savPay*12,  pct(savPay,income),  '10-20%', savPay < income*0.10 ? '+' + fmt(Math.round(income*0.15-savPay)) + ' recommended' : 'On target', savPay < income*0.10 ? 'gold' : 'grn', 'Target')
     + aiRow('Discretionary',         disc,      disc*12,    pct(disc,income),    '10-20%', '&mdash;', disc<100?'red':'grn', disc<100?'Tight':'Available')
-    + aiRow('Emergency fund total',  savings,   0,          0, mRes.toFixed(1) + ' months', mRes<3?'+' + fmt(Math.round((income*3-savings)/12)) + '/mo to 3-month target':'At target', mRes<1?'red':mRes<2?'gold':'grn', mRes<1?'Critical':mRes<2?'Low':'Healthy');
+    + aiRow('Emergency fund total',  savings,   0,          0, mRes.toFixed(1) + ' months', mRes<3?'+' + fmt(Math.round((out*3-savings)/12)) + '/mo to 3-month target':'At target', mRes<1?'red':mRes<2?'gold':'grn', mRes<1?'Critical':mRes<2?'Low':'Healthy');
 
   /* Add named rows from specific items */
   Object.keys(_specificSpend).forEach(function(k) {
@@ -1193,35 +1205,37 @@ function buildAIData(intent, income, out, debt, savings, concern) {
     planHTML = '<tr><th>Month</th><th>Opening balance</th><th>Payment</th><th>Est. interest</th><th>Closing balance</th><th>% cleared</th></tr>';
     var bal = debt;
     var totalInt = 0;
-    var months = Math.min(Math.ceil(debt/debtPay), 36);
+    var _po = _payoff(debt, debtPay);
+    var months = _po.months;
     for (var m = 1; m <= Math.min(months, 12); m++) {
+      var openBal = bal;
       var intCharge = Math.round(bal * (estAPR/12));
       totalInt += intCharge;
       var payment  = Math.min(debtPay, bal + intCharge);
       bal = Math.max(bal + intCharge - payment, 0);
       var prog = Math.round(((debt-bal)/debt)*100);
-      planHTML += '<tr' + (m===1?' class="highlight"':'') + '><td>Month ' + m + '</td><td class="num">' + fmt(debt - ((debtPay - Math.round(debt*(estAPR/12))) * (m-1))) + '</td><td class="num grn">' + fmt(payment) + '</td><td class="num red">-' + fmt(intCharge) + '</td><td class="num ' + (bal===0?'grn':'') + '">' + fmt(bal) + '</td><td class="num gold">' + prog + '%</td></tr>';
+      planHTML += '<tr' + (m===1?' class="highlight"':'') + '><td>Month ' + m + '</td><td class="num">' + fmt(openBal) + '</td><td class="num grn">' + fmt(payment) + '</td><td class="num red">-' + fmt(intCharge) + '</td><td class="num ' + (bal===0?'grn':'') + '">' + fmt(bal) + '</td><td class="num gold">' + prog + '%</td></tr>';
       if (bal === 0) break;
     }
-    if (months > 12) planHTML += '<tr><td colspan="5" style="font-size:0.76rem;font-style:italic;color:var(--ink-faint)">...continuing for ' + (months-12) + ' more months at this pace</td><td class="num gold">' + fmt(debtPay) + '/mo</td></tr>';
-    planHTML += '<tr style="background:var(--gold-bg)"><td colspan="3"><strong>Estimated total interest at this pace</strong></td><td class="num red"><strong>-' + fmt(totalInt) + '</strong></td><td colspan="2" style="font-size:0.76rem;font-style:italic;color:var(--gold)">Accelerating by ' + fmt(100) + '/mo saves approx. ' + fmt(Math.round(totalInt*0.25)) + ' in interest</td></tr>';
+    if (months > 12) planHTML += '<tr><td colspan="5" style="font-size:0.76rem;font-style:italic;color:var(--ink-faint)">' + (months >= 999 ? 'At this payment the interest is larger than the repayment, so the balance will not fall. Increase the payment.' : '...continuing for ' + (months-12) + ' more months at this pace') + '</td><td class="num gold">' + fmt(debtPay) + '/mo</td></tr>';
+    planHTML += '<tr style="background:var(--gold-bg)"><td colspan="3"><strong>Estimated total interest at this pace</strong></td><td class="num red"><strong>-' + fmt(_po.interest) + '</strong></td><td colspan="2" style="font-size:0.76rem;font-style:italic;color:var(--gold)">Accelerating by ' + fmt(100) + '/mo saves approx. ' + fmt(Math.max(_po.interest - _payoff(debt, debtPay + 100).interest, 0)) + ' in interest</td></tr>';
   } else {
     planHeader = 'Savings build plan';
-    var target3 = income * 3;
+    var target3 = out * 3;
     planHTML = '<tr><th>Month</th><th>Opening</th><th>Addition</th><th>Closing</th><th>1-mo target</th><th>3-mo target</th></tr>';
     var s = savings;
     for (var sm = 1; sm <= 12; sm++) {
       var sopen = s; s += savPay;
-      var p1 = Math.min(Math.round((s/income)*100),100);
+      var p1 = Math.min(Math.round((s/out)*100),100);
       var p3 = Math.min(Math.round((s/target3)*100),100);
       planHTML += '<tr' + (sm===1?' class="highlight"':'') + '><td>Month ' + sm + '</td><td class="num">' + fmt(sopen) + '</td><td class="num grn">+' + fmt(savPay) + '</td><td class="num grn">' + fmt(s) + '</td><td class="num ' + (p1>=100?'grn':'gold') + '">' + p1 + '%</td><td class="num gold">' + p3 + '%</td></tr>';
     }
   }
 
   /* ── SECTION 5: EMERGENCY BUFFER ── */
-  var bufferHTML = '<tr><th>Target level</th><th>Required</th><th>Current</th><th>Gap</th><th>Months to reach</th><th>Salary coverage</th><th>Status</th></tr>';
+  var bufferHTML = '<tr><th>Target level</th><th>Required</th><th>Current</th><th>Gap</th><th>Months to reach</th><th>Coverage</th><th>Status</th></tr>';
   [[1,'1-month safety'], [3,'3-month safety'], [6,'6-month security']].forEach(function(tgt) {
-    var req      = income * tgt[0];
+    var req      = out * tgt[0];
     var gap      = Math.max(req - savings, 0);
     var moToReach = savPay > 0 ? Math.ceil(gap / savPay) : 999;
     var pctCov   = Math.min(Math.round((savings/req)*100),100);
@@ -1253,7 +1267,7 @@ function buildAIData(intent, income, out, debt, savings, concern) {
 
   /* ── SECTION 7: COHERENCE CONFLICTS ── */
   var conflicts = [];
-  if (hasDebt && mRes < 1) conflicts.push('Goal states debt reduction, but emergency savings cover less than 1 month of income. Without a buffer, unexpected costs will return you to debt — undermining every repayment made.');
+  if (hasDebt && mRes < 1) conflicts.push('Goal states debt reduction, but emergency savings cover less than 1 month of essential outgoings. Without a buffer, unexpected costs will return you to debt — undermining every repayment made.');
   if (debtPay < income * 0.10 && debt > 0) conflicts.push('Debt reduction is a stated priority, but current repayment allocation (' + pct(debtPay,income) + '% of income) is below the recommended 15-20%. Discretionary spend currently exceeds debt repayment velocity.');
   if (hasDisp && disc > income * 0.25) conflicts.push('Disposable income tracking is a stated goal, but ' + pct(disc,income) + '% of income (' + fmt(disc) + '/month) currently leaves without structured tracking. This is the primary leakage point.');
   if (savPay < income * 0.05 && !hasDebt) conflicts.push('Savings are a stated concern, but current allocation of ' + fmt(savPay) + '/month represents only ' + pct(savPay,income) + '% of income — below the minimum recommended threshold of 10%.');
@@ -1272,10 +1286,10 @@ function buildAIData(intent, income, out, debt, savings, concern) {
   scenarios.forEach(function(sc, si) {
     var sdPay = debtPay + sc.debtAdd;
     var ssPay = savPay + sc.savAdd;
-    var sdMo  = sdPay > 0 && debt > 0 ? Math.ceil(debt/sdPay) : 0;
+    var sdMo  = sdPay > 0 && debt > 0 ? _payoff(debt, sdPay).months : 0;
     var sSav  = savings + (ssPay * 12);
-    var sBuf  = income > 0 ? (sSav/income).toFixed(1) : '0.0';
-    var dfTxt = debt === 0 ? 'No debt' : sdMo + ' months';
+    var sBuf  = out > 0 ? (sSav/out).toFixed(1) : '0.0';
+    var dfTxt = debt === 0 ? 'No debt' : (sdMo >= 999 ? 'Not at this pace' : sdMo + ' months');
     var cls   = si === 0 ? 'scenario-current' : si === 1 ? 'scenario-structured' : '';
     scenarioHTML += '<tr class="' + cls + '"><td>' + sc.label + '</td><td class="num">' + fmt(sdPay) + '</td><td class="num ' + (si>0?'grn':'') + '">' + dfTxt + '</td><td class="num">' + fmt(ssPay) + '</td><td class="num ' + (si>0?'grn':'') + '">' + fmt(sSav) + '</td><td class="num gold">' + sBuf + ' months</td></tr>';
   });
@@ -1284,12 +1298,12 @@ function buildAIData(intent, income, out, debt, savings, concern) {
   var recs = [];
   if (hasDebt && debt > 0) {
     var structuredPay = debtPay + Math.round(disc*0.20);
-    var moSaved = Math.ceil(debt/debtPay) - Math.ceil(debt/structuredPay);
+    var moSaved = _payoff(debt, debtPay).months - _payoff(debt, structuredPay).months;
     recs.push({
       title: hasSnowball ? 'Priority 1: Implement the debt snowball this week' : 'Priority 1: Accelerate debt repayment to ' + fmt(structuredPay) + '/month',
       body: hasSnowball
         ? 'List every debt smallest to largest. Automate the minimum on all except the smallest. Throw every available extra pound at the smallest balance. Each debt cleared accelerates the next. At ' + fmt(debtPay) + '/month you are debt-free in ' + dMo + ' months. Adding just ' + fmt(Math.round(disc*0.20)) + '/month from discretionary saves approximately ' + moSaved + ' months and significant interest.'
-        : 'Redirecting ' + fmt(Math.round(disc*0.20)) + '/month from untracked discretionary spend to debt repayment reduces your debt-free timeline by approximately ' + moSaved + ' months. At the structured rate you clear ' + fmt(debt) + ' in ' + Math.ceil(debt/structuredPay) + ' months instead of ' + dMo + '.'
+        : 'Redirecting ' + fmt(Math.round(disc*0.20)) + '/month from untracked discretionary spend to debt repayment reduces your debt-free timeline by approximately ' + moSaved + ' months. At the structured rate you clear ' + fmt(debt) + ' in ' + _payoff(debt, structuredPay).months + ' months instead of ' + dMo + '.'
     });
   }
   if (mRes < 1) {
@@ -1370,8 +1384,8 @@ function buildAIData(intent, income, out, debt, savings, concern) {
   }
 
   /* Interest bleed and runway */
-  var intBleedAnnual = debt > 0 ? Math.round(debt * 0.199) : 0;
-  var runwayMonths   = income > 0 ? Math.round((savings / income) * 10) / 10 : 0;
+  var intBleedAnnual = debt > 0 ? _payoff(debt, debtPay).interest : 0;
+  var runwayMonths   = out > 0 ? Math.round((savings / out) * 10) / 10 : 0;
   var snowPay3 = debtPay + Math.round(disc * 0.15);
   var sBal3 = debt, sInt3 = 0, sMo3 = 0;
   while (sBal3 > 0 && sMo3 < 60) { var si3 = Math.round(sBal3*(0.199/12)); sInt3 += si3; sBal3 = Math.max(sBal3-Math.max(snowPay3-si3,0),0); sMo3++; }
@@ -1388,7 +1402,7 @@ function buildAIData(intent, income, out, debt, savings, concern) {
   metricsHTML += '<div class="section-label" style="margin-bottom:8px;">Interest bleed</div>';
   if (debt > 0) {
     metricsHTML += '<div style="font-family:var(--serif, serif);font-size:2rem;font-weight:300;color:#c83c3c;line-height:1;">&minus;' + fmt(intBleedAnnual) + '</div>';
-    metricsHTML += '<div style="font-size:0.72rem;color:var(--ink-faint);margin-top:4px;">Estimated annual interest at 19.9% APR</div>';
+    metricsHTML += '<div style="font-size:0.72rem;color:var(--ink-faint);margin-top:4px;">Total interest at your current repayment pace (19.9% APR estimate)</div>';
     if (totalIntSaved > 0) {
       metricsHTML += '<div style="margin-top:10px;padding:8px 10px;background:rgba(45,122,90,0.08);border-radius:6px;border-left:2px solid rgba(45,122,90,0.4);">';
       metricsHTML += '<div style="font-size:0.7rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:#2D7A5A;margin-bottom:3px;">By snowballing</div>';
@@ -1514,9 +1528,36 @@ function renderAI(d) {
   out.scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
+/* The page's own plan figures, given to the writer so its advice matches the tables exactly */
+function _planFacts(income, out, debt, savings) {
+  var disp = income - out;
+  var debtPay = debt > 0 ? Math.max(Math.round(disp * 0.4), 50) : 0;
+  var savPay  = Math.max(Math.round(disp * 0.2), 0);
+  var disc    = Math.max(disp - debtPay - savPay, 0);
+  var today   = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  var t = '\n\nTHE PLAN SHOWN ON THE PAGE (use these figures; do not calculate your own):\n'
+    + '- Monthly surplus after essential outgoings: ' + fmt(disp) + '\n'
+    + '- Plan split: debt repayment ' + fmt(debtPay) + ', savings ' + fmt(savPay) + ', everyday discretionary spending ' + fmt(disc) + ' (food out, leisure, shopping and other non-essentials come from this)\n';
+  if (debt > 0) {
+    var cur = _payoff(debt, debtPay);
+    t += '- At ' + fmt(debtPay) + '/month the debt clears in ' + (cur.months >= 999 ? 'never (payment below interest)' : cur.months + ' months') + ', total interest about ' + fmt(cur.interest) + ' (19.9% APR estimate)\n';
+    [100, 200, 300].forEach(function(extra) {
+      var p = debtPay + extra; if (p > disp) return;
+      var o = _payoff(debt, p);
+      t += '- At ' + fmt(p) + '/month: clears in ' + o.months + ' months, total interest about ' + fmt(o.interest) + '\n';
+    });
+  }
+  t += '- Emergency buffer: ' + fmt(savings) + ' covers ' + (out > 0 ? (Math.round(savings / out * 10) / 10) : 0) + ' months of essential outgoings\n'
+    + 'RULES: Today is ' + today + '. Only quote payoff times, interest amounts and savings figures from the list above. '
+    + 'If you suggest a higher debt payment, pick one of the listed options and say what it would come out of (savings or everyday spending). '
+    + 'Never leave less than about ' + fmt(Math.round(disp * 0.2)) + '/month for everyday discretionary spending. Do not exaggerate (no "thousands" unless the figures above show thousands). '
+    + 'Never mention AI.';
+  return t;
+}
+
 function callAPI(intent, income, out, debt, savings, concern, onSuccess) {
   var system = 'You are a senior personal finance advisor. Respond ONLY in valid JSON with no markdown, no preamble, no HTML tags in any field. Plain text only in all fields.';
-  var prompt = 'Provide a personalised financial analysis. Return ONLY this JSON structure with plain text values (no HTML):\n{"diagnosis":"2-3 sentences about their situation referencing actual numbers","pressure":"High or Medium or Low","pressureClass":"high or medium or low","concerns":["concern 1","concern 2","concern 3"],"planHeader":"one sentence describing recommended approach","score":75,"scoreComponents":[{"label":"label","score":70,"max":100}],"conflicts":["conflict 1","conflict 2"],"recs":[{"title":"title","body":"body referencing actual figures"}],"summary":"3-4 sentences honest assessment speaking directly to them referencing actual numbers","intent":"echo their intent"}\n\nSITUATION: ' + intent + '\nMONTHLY INCOME: ' + fmt(income) + '\nMONTHLY OUTGOINGS: ' + fmt(out) + '\nTOTAL DEBT: ' + fmt(debt) + '\nCURRENT SAVINGS: ' + fmt(savings) + '\nPRIMARY CONCERN: ' + concern + '\nSPECIFIC ITEMS: ' + JSON.stringify(_specificSpend) + '\n\nIMPORTANT: Return ONLY the JSON. No HTML in any field. No markdown.';
+  var prompt = 'Provide a personalised financial analysis. Return ONLY this JSON structure with plain text values (no HTML):\n{"diagnosis":"2-3 sentences about their situation referencing actual numbers","pressure":"High or Medium or Low","pressureClass":"high or medium or low","concerns":["concern 1","concern 2","concern 3"],"planHeader":"one sentence describing recommended approach","score":75,"scoreComponents":[{"label":"label","score":70,"max":100}],"conflicts":["conflict 1","conflict 2"],"recs":[{"title":"title","body":"body referencing actual figures"}],"summary":"3-4 sentences honest assessment speaking directly to them referencing actual numbers","intent":"echo their intent"}\n\nSITUATION: ' + intent + '\nMONTHLY INCOME: ' + fmt(income) + '\nMONTHLY OUTGOINGS: ' + fmt(out) + '\nTOTAL DEBT: ' + fmt(debt) + '\nCURRENT SAVINGS: ' + fmt(savings) + '\nPRIMARY CONCERN: ' + concern + '\nSPECIFIC ITEMS: ' + JSON.stringify(_specificSpend) + _planFacts(income, out, debt, savings) + '\n\nIMPORTANT: Return ONLY the JSON. No HTML in any field. No markdown.';
   fetch('https://rcloop-proxy.vercel.app/api/ai-paid', {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ system:system, prompt:prompt })
@@ -1670,7 +1711,7 @@ function dlXLSX() {
   var mRate   = apr/100/12;
   var debtPay = debt>0 ? Math.max(Math.round(surplus*0.4), 10) : 0;
   var savPay  = Math.round(surplus*0.2);
-  var runway  = income>0 ? Math.round(savings/income*10)/10 : 0;
+  var runway  = out>0 ? Math.round(savings/out*10)/10 : 0;
   var intMo   = debt>0 ? Math.round(debt*mRate) : 0;
   var intYr   = intMo*12;
 
@@ -1687,7 +1728,7 @@ function dlXLSX() {
     ['Total debt',            '£'+debt,          debt>0?'Repayment required':'Debt free'],
     ['Monthly interest cost', '£'+intMo,         '£'+intYr+'/yr estimated at 19.9% APR'],
     ['Current savings',       '£'+savings,       runway+' months reserve'],
-    ['Emergency runway',      runway+' months',     savings<income?'Critical — build buffer':'OK'],
+    ['Emergency runway',      runway+' months',     savings<out?'Critical — build buffer':'OK'],
     [],
     ['Recommended debt payment', '£'+debtPay,   Math.round(debtPay/income*100)+'% of income'],
     ['Recommended savings',      '£'+savPay,    Math.round(savPay/income*100)+'% of income'],
@@ -1778,7 +1819,7 @@ function dlGoogleSheets() {
     'Monthly surplus,£'+surplus,
     'Total debt,£'+debt,
     'Current savings,£'+savings,
-    'Emergency runway,'+Math.round(savings/income*10)/10+' months',
+    'Emergency runway,'+(out>0?Math.round(savings/out*10)/10:0)+' months',
   ];
   var blob=new Blob([rows.join('\n')],{type:'text/csv'});
   var a=document.createElement('a');
@@ -1822,8 +1863,8 @@ function buildAIData(intent, income, out, debt, savings, concern) {
   var debtPay = debt > 0 ? Math.max(Math.round(disp * 0.4), 50) : 0;
   var savPay  = Math.max(Math.round(disp * 0.2), 0);
   var disc    = Math.max(disp - debtPay - savPay, 0);
-  var mRes    = income > 0 ? savings / income : 0;
-  var dMo     = debtPay > 0 ? Math.ceil(debt / debtPay) : 0;
+  var mRes    = out > 0 ? savings / out : 0;
+  var dMo     = debtPay > 0 ? _payoff(debt, debtPay).months : 0;
 
   /* Signal detection */
   var hasFood     = /food|grocer|supermarket/.test(lower);
@@ -1873,7 +1914,7 @@ function buildAIData(intent, income, out, debt, savings, concern) {
     + aiRow('Debt repayment',        debtPay,   debtPay*12, pct(debtPay,income), '15-20%', debtPay < income*0.15 && debt > 0 ? '+' + fmt(Math.round(income*0.175-debtPay)) + ' possible' : 'On target', 'gold', 'Allocated')
     + aiRow('Savings allocation',    savPay,    savPay*12,  pct(savPay,income),  '10-20%', savPay < income*0.10 ? '+' + fmt(Math.round(income*0.15-savPay)) + ' recommended' : 'On target', savPay < income*0.10 ? 'gold' : 'grn', 'Target')
     + aiRow('Discretionary',         disc,      disc*12,    pct(disc,income),    '10-20%', '&mdash;', disc<100?'red':'grn', disc<100?'Tight':'Available')
-    + aiRow('Emergency fund total',  savings,   0,          0, mRes.toFixed(1) + ' months', mRes<3?'+' + fmt(Math.round((income*3-savings)/12)) + '/mo to 3-month target':'At target', mRes<1?'red':mRes<2?'gold':'grn', mRes<1?'Critical':mRes<2?'Low':'Healthy');
+    + aiRow('Emergency fund total',  savings,   0,          0, mRes.toFixed(1) + ' months', mRes<3?'+' + fmt(Math.round((out*3-savings)/12)) + '/mo to 3-month target':'At target', mRes<1?'red':mRes<2?'gold':'grn', mRes<1?'Critical':mRes<2?'Low':'Healthy');
 
   /* Add named rows from specific items */
   Object.keys(_specificSpend).forEach(function(k) {
@@ -1926,35 +1967,37 @@ function buildAIData(intent, income, out, debt, savings, concern) {
     planHTML = '<tr><th>Month</th><th>Opening balance</th><th>Payment</th><th>Est. interest</th><th>Closing balance</th><th>% cleared</th></tr>';
     var bal = debt;
     var totalInt = 0;
-    var months = Math.min(Math.ceil(debt/debtPay), 36);
+    var _po = _payoff(debt, debtPay);
+    var months = _po.months;
     for (var m = 1; m <= Math.min(months, 12); m++) {
+      var openBal = bal;
       var intCharge = Math.round(bal * (estAPR/12));
       totalInt += intCharge;
       var payment  = Math.min(debtPay, bal + intCharge);
       bal = Math.max(bal + intCharge - payment, 0);
       var prog = Math.round(((debt-bal)/debt)*100);
-      planHTML += '<tr' + (m===1?' class="highlight"':'') + '><td>Month ' + m + '</td><td class="num">' + fmt(debt - ((debtPay - Math.round(debt*(estAPR/12))) * (m-1))) + '</td><td class="num grn">' + fmt(payment) + '</td><td class="num red">-' + fmt(intCharge) + '</td><td class="num ' + (bal===0?'grn':'') + '">' + fmt(bal) + '</td><td class="num gold">' + prog + '%</td></tr>';
+      planHTML += '<tr' + (m===1?' class="highlight"':'') + '><td>Month ' + m + '</td><td class="num">' + fmt(openBal) + '</td><td class="num grn">' + fmt(payment) + '</td><td class="num red">-' + fmt(intCharge) + '</td><td class="num ' + (bal===0?'grn':'') + '">' + fmt(bal) + '</td><td class="num gold">' + prog + '%</td></tr>';
       if (bal === 0) break;
     }
-    if (months > 12) planHTML += '<tr><td colspan="5" style="font-size:0.76rem;font-style:italic;color:var(--ink-faint)">...continuing for ' + (months-12) + ' more months at this pace</td><td class="num gold">' + fmt(debtPay) + '/mo</td></tr>';
-    planHTML += '<tr style="background:var(--gold-bg)"><td colspan="3"><strong>Estimated total interest at this pace</strong></td><td class="num red"><strong>-' + fmt(totalInt) + '</strong></td><td colspan="2" style="font-size:0.76rem;font-style:italic;color:var(--gold)">Accelerating by ' + fmt(100) + '/mo saves approx. ' + fmt(Math.round(totalInt*0.25)) + ' in interest</td></tr>';
+    if (months > 12) planHTML += '<tr><td colspan="5" style="font-size:0.76rem;font-style:italic;color:var(--ink-faint)">' + (months >= 999 ? 'At this payment the interest is larger than the repayment, so the balance will not fall. Increase the payment.' : '...continuing for ' + (months-12) + ' more months at this pace') + '</td><td class="num gold">' + fmt(debtPay) + '/mo</td></tr>';
+    planHTML += '<tr style="background:var(--gold-bg)"><td colspan="3"><strong>Estimated total interest at this pace</strong></td><td class="num red"><strong>-' + fmt(_po.interest) + '</strong></td><td colspan="2" style="font-size:0.76rem;font-style:italic;color:var(--gold)">Accelerating by ' + fmt(100) + '/mo saves approx. ' + fmt(Math.max(_po.interest - _payoff(debt, debtPay + 100).interest, 0)) + ' in interest</td></tr>';
   } else {
     planHeader = 'Savings build plan';
-    var target3 = income * 3;
+    var target3 = out * 3;
     planHTML = '<tr><th>Month</th><th>Opening</th><th>Addition</th><th>Closing</th><th>1-mo target</th><th>3-mo target</th></tr>';
     var s = savings;
     for (var sm = 1; sm <= 12; sm++) {
       var sopen = s; s += savPay;
-      var p1 = Math.min(Math.round((s/income)*100),100);
+      var p1 = Math.min(Math.round((s/out)*100),100);
       var p3 = Math.min(Math.round((s/target3)*100),100);
       planHTML += '<tr' + (sm===1?' class="highlight"':'') + '><td>Month ' + sm + '</td><td class="num">' + fmt(sopen) + '</td><td class="num grn">+' + fmt(savPay) + '</td><td class="num grn">' + fmt(s) + '</td><td class="num ' + (p1>=100?'grn':'gold') + '">' + p1 + '%</td><td class="num gold">' + p3 + '%</td></tr>';
     }
   }
 
   /* ── SECTION 5: EMERGENCY BUFFER ── */
-  var bufferHTML = '<tr><th>Target level</th><th>Required</th><th>Current</th><th>Gap</th><th>Months to reach</th><th>Salary coverage</th><th>Status</th></tr>';
+  var bufferHTML = '<tr><th>Target level</th><th>Required</th><th>Current</th><th>Gap</th><th>Months to reach</th><th>Coverage</th><th>Status</th></tr>';
   [[1,'1-month safety'], [3,'3-month safety'], [6,'6-month security']].forEach(function(tgt) {
-    var req      = income * tgt[0];
+    var req      = out * tgt[0];
     var gap      = Math.max(req - savings, 0);
     var moToReach = savPay > 0 ? Math.ceil(gap / savPay) : 999;
     var pctCov   = Math.min(Math.round((savings/req)*100),100);
@@ -1986,7 +2029,7 @@ function buildAIData(intent, income, out, debt, savings, concern) {
 
   /* ── SECTION 7: COHERENCE CONFLICTS ── */
   var conflicts = [];
-  if (hasDebt && mRes < 1) conflicts.push('Goal states debt reduction, but emergency savings cover less than 1 month of income. Without a buffer, unexpected costs will return you to debt — undermining every repayment made.');
+  if (hasDebt && mRes < 1) conflicts.push('Goal states debt reduction, but emergency savings cover less than 1 month of essential outgoings. Without a buffer, unexpected costs will return you to debt — undermining every repayment made.');
   if (debtPay < income * 0.10 && debt > 0) conflicts.push('Debt reduction is a stated priority, but current repayment allocation (' + pct(debtPay,income) + '% of income) is below the recommended 15-20%. Discretionary spend currently exceeds debt repayment velocity.');
   if (hasDisp && disc > income * 0.25) conflicts.push('Disposable income tracking is a stated goal, but ' + pct(disc,income) + '% of income (' + fmt(disc) + '/month) currently leaves without structured tracking. This is the primary leakage point.');
   if (savPay < income * 0.05 && !hasDebt) conflicts.push('Savings are a stated concern, but current allocation of ' + fmt(savPay) + '/month represents only ' + pct(savPay,income) + '% of income — below the minimum recommended threshold of 10%.');
@@ -2005,10 +2048,10 @@ function buildAIData(intent, income, out, debt, savings, concern) {
   scenarios.forEach(function(sc, si) {
     var sdPay = debtPay + sc.debtAdd;
     var ssPay = savPay + sc.savAdd;
-    var sdMo  = sdPay > 0 && debt > 0 ? Math.ceil(debt/sdPay) : 0;
+    var sdMo  = sdPay > 0 && debt > 0 ? _payoff(debt, sdPay).months : 0;
     var sSav  = savings + (ssPay * 12);
-    var sBuf  = income > 0 ? (sSav/income).toFixed(1) : '0.0';
-    var dfTxt = debt === 0 ? 'No debt' : sdMo + ' months';
+    var sBuf  = out > 0 ? (sSav/out).toFixed(1) : '0.0';
+    var dfTxt = debt === 0 ? 'No debt' : (sdMo >= 999 ? 'Not at this pace' : sdMo + ' months');
     var cls   = si === 0 ? 'scenario-current' : si === 1 ? 'scenario-structured' : '';
     scenarioHTML += '<tr class="' + cls + '"><td>' + sc.label + '</td><td class="num">' + fmt(sdPay) + '</td><td class="num ' + (si>0?'grn':'') + '">' + dfTxt + '</td><td class="num">' + fmt(ssPay) + '</td><td class="num ' + (si>0?'grn':'') + '">' + fmt(sSav) + '</td><td class="num gold">' + sBuf + ' months</td></tr>';
   });
@@ -2017,12 +2060,12 @@ function buildAIData(intent, income, out, debt, savings, concern) {
   var recs = [];
   if (hasDebt && debt > 0) {
     var structuredPay = debtPay + Math.round(disc*0.20);
-    var moSaved = Math.ceil(debt/debtPay) - Math.ceil(debt/structuredPay);
+    var moSaved = _payoff(debt, debtPay).months - _payoff(debt, structuredPay).months;
     recs.push({
       title: hasSnowball ? 'Priority 1: Implement the debt snowball this week' : 'Priority 1: Accelerate debt repayment to ' + fmt(structuredPay) + '/month',
       body: hasSnowball
         ? 'List every debt smallest to largest. Automate the minimum on all except the smallest. Throw every available extra pound at the smallest balance. Each debt cleared accelerates the next. At ' + fmt(debtPay) + '/month you are debt-free in ' + dMo + ' months. Adding just ' + fmt(Math.round(disc*0.20)) + '/month from discretionary saves approximately ' + moSaved + ' months and significant interest.'
-        : 'Redirecting ' + fmt(Math.round(disc*0.20)) + '/month from untracked discretionary spend to debt repayment reduces your debt-free timeline by approximately ' + moSaved + ' months. At the structured rate you clear ' + fmt(debt) + ' in ' + Math.ceil(debt/structuredPay) + ' months instead of ' + dMo + '.'
+        : 'Redirecting ' + fmt(Math.round(disc*0.20)) + '/month from untracked discretionary spend to debt repayment reduces your debt-free timeline by approximately ' + moSaved + ' months. At the structured rate you clear ' + fmt(debt) + ' in ' + _payoff(debt, structuredPay).months + ' months instead of ' + dMo + '.'
     });
   }
   if (mRes < 1) {
@@ -2103,8 +2146,8 @@ function buildAIData(intent, income, out, debt, savings, concern) {
   }
 
   /* Interest bleed and runway */
-  var intBleedAnnual = debt > 0 ? Math.round(debt * 0.199) : 0;
-  var runwayMonths   = income > 0 ? Math.round((savings / income) * 10) / 10 : 0;
+  var intBleedAnnual = debt > 0 ? _payoff(debt, debtPay).interest : 0;
+  var runwayMonths   = out > 0 ? Math.round((savings / out) * 10) / 10 : 0;
   var snowPay3 = debtPay + Math.round(disc * 0.15);
   var sBal3 = debt, sInt3 = 0, sMo3 = 0;
   while (sBal3 > 0 && sMo3 < 60) { var si3 = Math.round(sBal3*(0.199/12)); sInt3 += si3; sBal3 = Math.max(sBal3-Math.max(snowPay3-si3,0),0); sMo3++; }
@@ -2121,7 +2164,7 @@ function buildAIData(intent, income, out, debt, savings, concern) {
   metricsHTML += '<div class="section-label" style="margin-bottom:8px;">Interest bleed</div>';
   if (debt > 0) {
     metricsHTML += '<div style="font-family:var(--serif, serif);font-size:2rem;font-weight:300;color:#c83c3c;line-height:1;">&minus;' + fmt(intBleedAnnual) + '</div>';
-    metricsHTML += '<div style="font-size:0.72rem;color:var(--ink-faint);margin-top:4px;">Estimated annual interest at 19.9% APR</div>';
+    metricsHTML += '<div style="font-size:0.72rem;color:var(--ink-faint);margin-top:4px;">Total interest at your current repayment pace (19.9% APR estimate)</div>';
     if (totalIntSaved > 0) {
       metricsHTML += '<div style="margin-top:10px;padding:8px 10px;background:rgba(45,122,90,0.08);border-radius:6px;border-left:2px solid rgba(45,122,90,0.4);">';
       metricsHTML += '<div style="font-size:0.7rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:#2D7A5A;margin-bottom:3px;">By snowballing</div>';
@@ -2249,7 +2292,7 @@ function renderAI(d) {
 
 function callAPI(intent, income, out, debt, savings, concern, onSuccess) {
   var system = 'You are a senior personal finance advisor. Respond ONLY in valid JSON with no markdown, no preamble, no HTML tags in any field. Plain text only in all fields.';
-  var prompt = 'Provide a personalised financial analysis. Return ONLY this JSON structure with plain text values (no HTML):\n{"diagnosis":"2-3 sentences about their situation referencing actual numbers","pressure":"High or Medium or Low","pressureClass":"high or medium or low","concerns":["concern 1","concern 2","concern 3"],"planHeader":"one sentence describing recommended approach","score":75,"scoreComponents":[{"label":"label","score":70,"max":100}],"conflicts":["conflict 1","conflict 2"],"recs":[{"title":"title","body":"body referencing actual figures"}],"summary":"3-4 sentences honest assessment speaking directly to them referencing actual numbers","intent":"echo their intent"}\n\nSITUATION: ' + intent + '\nMONTHLY INCOME: ' + fmt(income) + '\nMONTHLY OUTGOINGS: ' + fmt(out) + '\nTOTAL DEBT: ' + fmt(debt) + '\nCURRENT SAVINGS: ' + fmt(savings) + '\nPRIMARY CONCERN: ' + concern + '\nSPECIFIC ITEMS: ' + JSON.stringify(_specificSpend) + '\n\nIMPORTANT: Return ONLY the JSON. No HTML in any field. No markdown.';
+  var prompt = 'Provide a personalised financial analysis. Return ONLY this JSON structure with plain text values (no HTML):\n{"diagnosis":"2-3 sentences about their situation referencing actual numbers","pressure":"High or Medium or Low","pressureClass":"high or medium or low","concerns":["concern 1","concern 2","concern 3"],"planHeader":"one sentence describing recommended approach","score":75,"scoreComponents":[{"label":"label","score":70,"max":100}],"conflicts":["conflict 1","conflict 2"],"recs":[{"title":"title","body":"body referencing actual figures"}],"summary":"3-4 sentences honest assessment speaking directly to them referencing actual numbers","intent":"echo their intent"}\n\nSITUATION: ' + intent + '\nMONTHLY INCOME: ' + fmt(income) + '\nMONTHLY OUTGOINGS: ' + fmt(out) + '\nTOTAL DEBT: ' + fmt(debt) + '\nCURRENT SAVINGS: ' + fmt(savings) + '\nPRIMARY CONCERN: ' + concern + '\nSPECIFIC ITEMS: ' + JSON.stringify(_specificSpend) + _planFacts(income, out, debt, savings) + '\n\nIMPORTANT: Return ONLY the JSON. No HTML in any field. No markdown.';
   fetch('https://rcloop-proxy.vercel.app/api/ai-paid', {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ system:system, prompt:prompt })

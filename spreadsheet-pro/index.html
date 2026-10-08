@@ -1,4 +1,4 @@
-<!-- RC Loop Spreadsheet Pro v8.1 | Updated: 8 Oct 2026 | Paid reports now checked by the proxy (/api/ai-paid): a real Lemon Squeezy order or the owner key is needed; ?unlocked=true alone no longer gives a report. Previous: RC Loop Spreadsheet Pro v8 | Updated: 21 May 2026 -->
+<!-- RC Loop Spreadsheet Pro v8.2 | Updated: 8 Oct 2026 | Accuracy: total interest in the tracker was monthly interest x months (£3,842 for the test case; correct £2,132), now simulated; '£8 months' label fixed; buffer targets, ladder, timeline and scenario runway use essential spend; emergency buffer and runway measured against essential spend (were income); downloads use payoff months that include interest; the written sections are given the page's own figures and today's date so they match the tables; savings total no longer described as monthly. Previous: RC Loop Spreadsheet Pro v8.1 | Updated: 8 Oct 2026 | Paid reports now checked by the proxy (/api/ai-paid): a real Lemon Squeezy order or the owner key is needed; ?unlocked=true alone no longer gives a report. Previous: RC Loop Spreadsheet Pro v8 | Updated: 21 May 2026 -->
 <!-- © 2025 RC Loop. All rights reserved. Unauthorised copying or distribution prohibited. -->
 <!DOCTYPE html>
 <html lang="en">
@@ -2006,7 +2006,7 @@ function dlPDF() {
     ['Savings', fmt(pd.savings), (pd.savings/pd.income).toFixed(1) + ' months reserve', 'red'],
     ['Monthly surplus', fmt(d.surplus||pd.income-pd.ess-pd.disc), 'Available', 'grn'],
     ['Interest bleed', fmt(d.interestBleed||Math.round(pd.debt*pd.apr/100/12)) + '/mo', fmt((d.interestBleed||Math.round(pd.debt*pd.apr/100/12))*12) + '/yr est.', 'red'],
-    ['Financial runway', (d.runway||Math.round(pd.savings/pd.income*10)/10) + ' mo', 'Critical', 'red']
+    ['Financial runway', (d.runwayMo||(pd.ess>0?Math.round(pd.savings/pd.ess*10)/10:0)) + ' mo', 'Critical', 'red']
   ];
   dashRows.forEach(function(r){
     html += '<tr class="highlight"><td><div class="dash-label">'+r[0]+'</div><div class="dash-val'+(r[3]?' '+r[3]:'')+'">'+r[1]+'</div></td><td style="vertical-align:middle;font-size:10px;color:#8a8a80">'+r[2]+'</td></tr>';
@@ -2098,7 +2098,7 @@ function dlXLSX() {
   var discPct   = Math.round((d.disc||0)/d.income*100);
   var savRate   = Math.round(savPay/d.income*100);
   var dti       = Math.round((d.debt||0)/d.income*100/12);
-  var runway    = Math.round((d.savings||0)/d.income*10)/10;
+  var runway    = (d.ess||0)>0 ? Math.round((d.savings||0)/d.ess*10)/10 : 0;
   var score     = r&&r.score ? r.score : 0;
   var intMo     = Math.round((d.debt||0)*mRate);
   var intYr     = Math.round(intMo*12);
@@ -2186,8 +2186,8 @@ function dlXLSX() {
     ['SAFETY LEVEL', 'REQUIRED', 'CURRENT', 'GAP', 'MONTHS TO REACH', 'STATUS'],
     ['Level 1 — Essential cover (1 month)',    '£'+(d.ess||0),    '£'+(d.savings||0), '£'+Math.max(0,(d.ess||0)-(d.savings||0)),    savPay>0?Math.ceil(Math.max(0,(d.ess||0)-(d.savings||0))/savPay):0,    (d.savings||0)>=(d.ess||0)?'OK':'Critical'],
     ['Level 2 — Income replacement (1 month)', '£'+d.income,      '£'+(d.savings||0), '£'+Math.max(0,d.income-(d.savings||0)),        savPay>0?Math.ceil(Math.max(0,d.income-(d.savings||0))/savPay):0,      (d.savings||0)>=d.income?'OK':'Critical'],
-    ['Level 3 — Safety buffer (3 months)',     '£'+(d.income*3),  '£'+(d.savings||0), '£'+Math.max(0,d.income*3-(d.savings||0)),      savPay>0?Math.ceil(Math.max(0,d.income*3-(d.savings||0))/savPay):0,    (d.savings||0)>=d.income*3?'OK':'Critical'],
-    ['Level 4 — Full security (6 months)',     '£'+(d.income*6),  '£'+(d.savings||0), '£'+Math.max(0,d.income*6-(d.savings||0)),      savPay>0?Math.ceil(Math.max(0,d.income*6-(d.savings||0))/savPay):0,    (d.savings||0)>=d.income*6?'OK':'Critical'],
+    ['Level 3 — Safety buffer (3 months)',     '£'+((d.ess||d.income)*3),  '£'+(d.savings||0), '£'+Math.max(0,(d.ess||d.income)*3-(d.savings||0)),      savPay>0?Math.ceil(Math.max(0,(d.ess||d.income)*3-(d.savings||0))/savPay):0,    (d.savings||0)>=(d.ess||d.income)*3?'OK':'Critical'],
+    ['Level 4 — Full security (6 months)',     '£'+((d.ess||d.income)*6),  '£'+(d.savings||0), '£'+Math.max(0,(d.ess||d.income)*6-(d.savings||0)),      savPay>0?Math.ceil(Math.max(0,(d.ess||d.income)*6-(d.savings||0))/savPay):0,    (d.savings||0)>=(d.ess||d.income)*6?'OK':'Critical'],
   ]);
   ws4['!cols'] = [{wch:32},{wch:12},{wch:12},{wch:12},{wch:16},{wch:10}];
   XLSX.utils.book_append_sheet(wb, ws4, 'Emergency Runway');
@@ -2254,9 +2254,9 @@ function dlXLSX() {
     ['3-Scenario Future Projection', mnth],
     [],
     ['SCENARIO',              'MONTHLY DEBT PAY', 'DEBT-FREE IN',                                                    'MONTHLY SAVING',      'SAVINGS AT 12MO',                          'RUNWAY AT 12MO'],
-    ['Current path',          '£'+debtPay,      d.debt&&debtPay>0?Math.ceil(d.debt/debtPay)+' months':'N/A',      '£'+savPay,         '£'+((d.savings||0)+savPay*12),          Math.round(((d.savings||0)+savPay*12)/d.income*10)/10+' months'],
-    ['Optimised',             '£'+Math.round(debtPay*1.3), d.debt&&debtPay>0?Math.ceil(d.debt/(debtPay*1.3))+' months':'N/A', '£'+Math.round(savPay*1.3), '£'+((d.savings||0)+Math.round(savPay*1.3)*12), Math.round(((d.savings||0)+Math.round(savPay*1.3)*12)/d.income*10)/10+' months'],
-    ['Accelerated discipline','£'+Math.round(debtPay*1.6), d.debt&&debtPay>0?Math.ceil(d.debt/(debtPay*1.6))+' months':'N/A', '£'+Math.round(savPay*1.5), '£'+((d.savings||0)+Math.round(savPay*1.5)*12), Math.round(((d.savings||0)+Math.round(savPay*1.5)*12)/d.income*10)/10+' months'],
+    ['Current path',          '£'+debtPay,      _monthsTxt(d.debt, debtPay, d.apr),      '£'+savPay,         '£'+((d.savings||0)+savPay*12),          Math.round(((d.savings||0)+savPay*12)/d.income*10)/10+' months'],
+    ['Optimised',             '£'+Math.round(debtPay*1.3), _monthsTxt(d.debt, Math.round(debtPay*1.3), d.apr), '£'+Math.round(savPay*1.3), '£'+((d.savings||0)+Math.round(savPay*1.3)*12), Math.round(((d.savings||0)+Math.round(savPay*1.3)*12)/d.income*10)/10+' months'],
+    ['Accelerated discipline','£'+Math.round(debtPay*1.6), _monthsTxt(d.debt, Math.round(debtPay*1.6), d.apr), '£'+Math.round(savPay*1.5), '£'+((d.savings||0)+Math.round(savPay*1.5)*12), Math.round(((d.savings||0)+Math.round(savPay*1.5)*12)/d.income*10)/10+' months'],
   ]);
   ws8['!cols'] = [{wch:22},{wch:16},{wch:14},{wch:16},{wch:16},{wch:14}];
   XLSX.utils.book_append_sheet(wb, ws8, 'Scenarios');
@@ -2292,7 +2292,7 @@ function dlGoogleSheets() {
     'Monthly net income,'+d.income,'Essential spend,'+(d.ess||0),
     'Discretionary spend,'+(d.disc||0),'Monthly surplus,'+surplus,
     'Total debt,'+(d.debt||0),'Current savings,'+(d.savings||0),
-    'Emergency runway,'+Math.round((d.savings||0)/d.income*10)/10+' months',
+    'Emergency runway,'+((d.ess||0)>0?Math.round((d.savings||0)/d.ess*10)/10:0)+' months',
     'Coherence score,'+(r&&r.score?r.score:0)+'/100',
     '','INCOME ALLOCATION',
     'Category,Monthly £,% Income,Target %,Status',
@@ -2311,16 +2311,16 @@ function dlGoogleSheets() {
   rows=rows.concat(['','EMERGENCY RUNWAY','Level,Required £,Current £,Gap £,Months,Status',
     'Essential cover (1mo),'+(d.ess||0)+','+(d.savings||0)+','+Math.max(0,(d.ess||0)-(d.savings||0))+','+(savPay>0?Math.ceil(Math.max(0,(d.ess||0)-(d.savings||0))/savPay):0)+','+ ((d.savings||0)>=(d.ess||0)?'OK':'Critical'),
     'Income replacement (1mo),'+d.income+','+(d.savings||0)+','+Math.max(0,d.income-(d.savings||0))+','+(savPay>0?Math.ceil(Math.max(0,d.income-(d.savings||0))/savPay):0)+','+ ((d.savings||0)>=d.income?'OK':'Critical'),
-    'Safety buffer (3mo),'+(d.income*3)+','+(d.savings||0)+','+Math.max(0,d.income*3-(d.savings||0))+','+(savPay>0?Math.ceil(Math.max(0,d.income*3-(d.savings||0))/savPay):0)+','+ ((d.savings||0)>=d.income*3?'OK':'Critical'),
+    'Safety buffer (3mo),'+((d.ess||d.income)*3)+','+(d.savings||0)+','+Math.max(0,(d.ess||d.income)*3-(d.savings||0))+','+(savPay>0?Math.ceil(Math.max(0,(d.ess||d.income)*3-(d.savings||0))/savPay):0)+','+ ((d.savings||0)>=(d.ess||d.income)*3?'OK':'Critical'),
     '','SAVINGS VELOCITY','Scenario,Monthly,3mo,6mo,12mo,24mo'
   ]);
   [[savPay,'Current'],[Math.round(savPay*1.4),'Optimised'],[Math.round(savPay*2),'Accelerated']].forEach(function(sv){
     rows.push(sv[1]+','+sv[0]+','+ ((d.savings||0)+sv[0]*3)+','+ ((d.savings||0)+sv[0]*6)+','+ ((d.savings||0)+sv[0]*12)+','+ ((d.savings||0)+sv[0]*24));
   });
   rows=rows.concat(['','3-SCENARIO PROJECTION','Scenario,Debt Pay,Debt-Free,Saving,Savings 12mo',
-    'Current,'+debtPay+','+(d.debt&&debtPay>0?Math.ceil(d.debt/debtPay)+' mo':'N/A')+','+savPay+','+ ((d.savings||0)+savPay*12),
-    'Optimised,'+Math.round(debtPay*1.3)+','+(d.debt&&debtPay>0?Math.ceil(d.debt/(debtPay*1.3))+' mo':'N/A')+','+Math.round(savPay*1.3)+','+ ((d.savings||0)+Math.round(savPay*1.3)*12),
-    'Accelerated,'+Math.round(debtPay*1.6)+','+(d.debt&&debtPay>0?Math.ceil(d.debt/(debtPay*1.6))+' mo':'N/A')+','+Math.round(savPay*1.5)+','+ ((d.savings||0)+Math.round(savPay*1.5)*12)
+    'Current,'+debtPay+','+_monthsTxt(d.debt, debtPay, d.apr)+','+savPay+','+ ((d.savings||0)+savPay*12),
+    'Optimised,'+Math.round(debtPay*1.3)+','+_monthsTxt(d.debt, Math.round(debtPay*1.3), d.apr)+','+Math.round(savPay*1.3)+','+ ((d.savings||0)+Math.round(savPay*1.3)*12),
+    'Accelerated,'+Math.round(debtPay*1.6)+','+_monthsTxt(d.debt, Math.round(debtPay*1.6), d.apr)+','+Math.round(savPay*1.5)+','+ ((d.savings||0)+Math.round(savPay*1.5)*12)
   ]);
   var blob=new Blob([rows.join('\n')],{type:'text/csv'});
   var a=document.createElement('a');a.href=URL.createObjectURL(blob);
@@ -2487,6 +2487,7 @@ function unlockFull() {
     + '- executiveInsight: One powerful sentence that cuts to the heart of their financial position. Honest, direct, no sugarcoating.\n'
     + '- topPriority: The single most important thing they must do first and why, in 2 sentences referencing their actual figures.\n'
     + '- riskWarning: The biggest financial risk they face if they do nothing, in 1-2 sentences.\n\n'
+    + _proFacts(pd, _proResult) + '\n\n'
     + 'Return ONLY valid JSON: {"summary":"...","executiveInsight":"...","topPriority":"...","riskWarning":"..."}';
 
   fetch('https://rcloop-proxy.vercel.app/api/ai-paid', {
@@ -2522,14 +2523,50 @@ function unlockFull() {
 }
 
 /* ── BUILD ALL 15 SECTIONS (deterministic) ── */
+/* Debt payoff simulated month by month (same method as the plan) */
+function _payoffPro(debt, pay, apr) {
+  var b = debt, m = 0, tot = 0, r = ((apr && apr > 0) ? apr : 19.9) / 100 / 12;
+  if (!(debt > 0) || !(pay > 0)) return { months: 0, interest: 0 };
+  while (b > 0 && m < 600) {
+    var i = Math.round(b * r);
+    if (pay <= i) return { months: 999, interest: 0 };
+    tot += i; b = Math.max(b + i - pay, 0); m++;
+  }
+  return { months: m, interest: tot };
+}
+function _monthsTxt(debt, pay, apr) {
+  if (!(debt > 0) || !(pay > 0)) return 'N/A';
+  var o = _payoffPro(debt, pay, apr);
+  return o.months >= 999 ? 'Not at this pace' : o.months + ' months';
+}
+/* The page's own figures, given to the writer so its words match the tables */
+function _proFacts(pd, pr) {
+  var apr = pd.apr || 19.9;
+  var today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  var t = '\n\nTHE PLAN SHOWN ON THE PAGE (use these figures; do not calculate your own):\n'
+    + '- Income ' + fmt(pd.income) + '/month, essential spend ' + fmt(pd.ess) + ', discretionary ' + fmt(pd.disc) + ', surplus ' + fmt(pr.surplus) + '\n'
+    + '- Recommended: debt repayment ' + fmt(pr.recDebtPay) + '/month, savings ' + fmt(pr.recSavPay) + '/month\n';
+  if (pd.debt > 0) {
+    var cur = _payoffPro(pd.debt, pr.recDebtPay, apr);
+    t += '- Debt ' + fmt(pd.debt) + ' at ' + apr + '% APR: at ' + fmt(pr.recDebtPay) + '/month it clears in ' + (cur.months >= 999 ? 'never (payment below interest)' : cur.months + ' months') + ', total interest about ' + fmt(cur.interest) + '\n';
+    [100, 200].forEach(function(extra) {
+      var p = pr.recDebtPay + extra; var o = _payoffPro(pd.debt, p, apr);
+      if (o.months < 999) t += '- At ' + fmt(p) + '/month: clears in ' + o.months + ' months, total interest about ' + fmt(o.interest) + '\n';
+    });
+  }
+  t += '- Savings now ' + fmt(pd.savings) + ' (a total, not monthly) = ' + pr.runwayMo + ' months of essential spend\n'
+    + 'RULES: Today is ' + today + '. Only quote payoff times, interest and savings figures from the list above. Do not exaggerate. Never mention AI.';
+  return t;
+}
+
 function buildProData(intent, income, debt, savings, ess, disc, savGoal, apr, rent, deps, emTarget, invest, concern) {
   var lower    = intent.toLowerCase();
   var surplus  = income - ess - disc;
   var annInc   = income * 12;
   var dtiPct   = income > 0 ? Math.round((debt / annInc) * 100) : 0;
-  var runwayMo = income > 0 ? Math.round((savings / income) * 10) / 10 : 0;
+  var runwayMo = ess > 0 ? Math.round((savings / ess) * 10) / 10 : 0;
   var mRes     = runwayMo;
-  var emReq    = income * (emTarget || 3);
+  var emReq    = ess * (emTarget || 3);
   var emGap    = Math.max(emReq - savings, 0);
 
   /* Debt mechanics */
@@ -2623,7 +2660,7 @@ function buildProData(intent, income, debt, savings, ess, disc, savGoal, apr, re
   /* PASS 3: Conflicts */
   var conflicts = [];
   if (hasDebt && mRes < 1) {
-    conflicts.push('You state debt reduction as the priority, but emergency savings cover less than one month of income. Without a buffer, unexpected costs will return you to debt \u2014 negating every repayment made.');
+    conflicts.push('You state debt reduction as the priority, but emergency savings cover less than one month of essential spending. Without a buffer, unexpected costs will return you to debt \u2014 negating every repayment made.');
   }
   if (recDebtPay < income * 0.10 && debt > 0) {
     conflicts.push('Your stated goal is debt reduction, but current repayment allocation represents only ' + pct(recDebtPay, income) + '% of income \u2014 below the recommended 15\u201320%. Discretionary spend currently exceeds debt velocity.');
@@ -2650,7 +2687,7 @@ function buildProData(intent, income, debt, savings, ess, disc, savGoal, apr, re
   if (debt > 0 && mRes < 1) {
     recs.push({
       title: 'Build a one-month emergency buffer before aggressive debt repayment',
-      body: 'Your current savings of ' + fmt(savings) + ' cover ' + mRes.toFixed(1) + ' months of income. A single unexpected event will return you to debt, resetting every repayment made. Target ' + fmt(income) + ' in a separate accessible account first. At ' + fmt(recSavPay) + '/month you reach this in ' + Math.ceil((income - savings) / Math.max(recSavPay, 1)) + ' months.'
+      body: 'Your current savings of ' + fmt(savings) + ' cover ' + mRes.toFixed(1) + ' months of essential spending. A single unexpected event will return you to debt, resetting every repayment made. Target ' + fmt(ess) + ' (one month of essential spending) in a separate accessible account first. At ' + fmt(recSavPay) + '/month you reach this in ' + Math.ceil(Math.max(ess - savings, 0) / Math.max(recSavPay, 1)) + ' months.'
     });
   }
   if (debt > 0) {
@@ -2670,7 +2707,7 @@ function buildProData(intent, income, debt, savings, ess, disc, savGoal, apr, re
   if (mRes < 3 && (hasSavings || concern === 'Build emergency fund')) {
     recs.push({
       title: 'Automate ' + fmt(recSavPay) + ' savings transfer on payday',
-      body: 'Treating savings as a fixed outgoing rather than a discretionary decision is the single most reliable behaviour change. Transfer ' + fmt(recSavPay) + ' to a separate account the day income arrives. At this rate you reach a 3-month buffer (' + fmt(income * 3) + ') in ' + Math.ceil((income * 3 - savings) / Math.max(recSavPay, 1)) + ' months.'
+      body: 'Treating savings as a fixed outgoing rather than a discretionary decision is the single most reliable behaviour change. Transfer ' + fmt(recSavPay) + ' to a separate account the day income arrives. At this rate you reach a 3-month buffer (' + fmt(ess * 3) + ') in ' + Math.ceil(Math.max(ess * 3 - savings, 0) / Math.max(recSavPay, 1)) + ' months.'
     });
   }
   if (hasTakeaway || hasNights) {
@@ -2696,7 +2733,7 @@ function buildProData(intent, income, debt, savings, ess, disc, savGoal, apr, re
   /* ACTION LADDER */
   var actions = [];
   if (mRes < 1 && debt > 0) {
-    actions.push({ title: 'Open a dedicated emergency savings account', body: 'Separate from your current account. Not for debt. Not for anything else. Target: ' + fmt(income) + '.' });
+    actions.push({ title: 'Open a dedicated emergency savings account', body: 'Separate from your current account. Not for debt. Not for anything else. Target: ' + fmt(ess) + ' (one month of essential spending).' });
   }
   if (debt > 0) {
     actions.push({ title: 'Set up automatic debt payment of ' + fmt(recDebtPay) + ' on payday', body: 'Automate before you can spend it. Highest-interest balance first.' });
@@ -2724,7 +2761,7 @@ function buildProData(intent, income, debt, savings, ess, disc, savGoal, apr, re
       }
       timeSavings += recSavPay;
     }
-    var tRun = income > 0 ? Math.round((timeSavings / income) * 10) / 10 : 0;
+    var tRun = ess > 0 ? Math.round((timeSavings / ess) * 10) / 10 : 0;
     var tStress = timeDebt === 0 && tRun >= 3 ? 'Low' : timeDebt > 0 && tRun < 1 ? 'High' : 'Moderate';
     var tClass  = tStress === 'Low' ? 'tag-grn' : tStress === 'High' ? 'tag-red' : 'tag-amb';
     timeline.push({
@@ -2837,7 +2874,7 @@ function renderFull(d) {
       { metric: 'Monthly interest charge', val: fmt(d.monthlyInt), assess: fmt(d.annualInt) + '/year', cls: 'red' },
       { metric: 'Recommended payment', val: fmt(d.recDebtPay) + '/mo', assess: 'Clears in ~' + d.debtMo + ' months', cls: 'grn' },
       { metric: 'Debt pressure level', val: d.debtPressure, assess: d.debtPressure === 'High' ? 'Requires immediate priority' : 'Manageable with structure', cls: d.debtPressure==='High'?'red':d.debtPressure==='Moderate'?'amb':'grn' },
-      { metric: 'Acceleration potential', val: fmt(d.intSaved) + ' saved', assess: fmt(d.moSaved) + ' months faster', cls: 'grn' }
+      { metric: 'Acceleration potential', val: fmt(d.intSaved) + ' saved', assess: d.moSaved + ' months faster', cls: 'grn' }
     ];
     debtData.forEach(function(row) {
       debtRows += '<tr>' + td(row.metric) + td(row.val, 'num') + td(row.assess, row.cls) + '</tr>';
@@ -2881,7 +2918,7 @@ function renderFull(d) {
       snowRows += '</tr>';
     }
     /* Interest summary row */
-    var totalBaseInt = d.monthlyInt * d.debtMo;
+    var totalBaseInt = _payoffPro(d.debt, d.recDebtPay, d.estAPR * 100).interest;
     snowRows += '<tr class="hl">';
     snowRows += td('Total interest at this pace', 'gld');
     snowRows += td(fmt(totalBaseInt), 'num red');
@@ -2898,8 +2935,8 @@ function renderFull(d) {
   var runwayLevels = [
     { label: 'Level 1 \u2014 Essential cover (1 month)', req: d.ess },
     { label: 'Level 2 \u2014 Income replacement (1 month)', req: d.income },
-    { label: 'Level 3 \u2014 Safety buffer (' + d.emTarget + ' months income)', req: d.emReq },
-    { label: 'Level 4 \u2014 Full security (6 months)', req: d.income * 6 }
+    { label: 'Level 3 \u2014 Safety buffer (' + d.emTarget + ' months essential spend)', req: d.emReq },
+    { label: 'Level 4 \u2014 Full security (6 months essential spend)', req: d.ess * 6 }
   ];
   runwayLevels.forEach(function(level) {
     var gap = Math.max(level.req - d.savings, 0);
@@ -3084,7 +3121,7 @@ function renderFull(d) {
       sDf++;
     }
     var sSav  = d.savings + sc.sPay * 12;
-    var sRun  = d.income > 0 ? (sSav / d.income).toFixed(1) : '0.0';
+    var sRun  = d.ess > 0 ? (sSav / d.ess).toFixed(1) : '0.0';
     var dfTxt = d.debt === 0 ? 'No debt' : sDf + ' months';
     scenRows += '<tr class="' + sc.cls + '">';
     scenRows += td(sc.label + (si === 1 ? ' \u2605' : ''));
@@ -3181,7 +3218,7 @@ document.addEventListener('DOMContentLoaded', function() {
       var msgs2 = ['Rendering your financial position dashboard...','Building debt snowball and avalanche tables...','Calculating opportunity cost engine...','Projecting 3-scenario trajectories...','Completing your stability timeline...'];
       var idx2 = 0; var el2 = document.getElementById('ai-loader-msg');
       var iv2 = setInterval(function(){ idx2=(idx2+1)%msgs2.length; if(el2) el2.textContent=msgs2[idx2]; }, 700);
-      var prompt2 = 'You are a senior personal finance advisor writing for a premium £29 financial clarity product. Refine these sections for someone whose situation is: "' + _proData.intent + '"\nIncome: £' + _proData.income + '/mo | Debt: £' + _proData.debt + ' | Savings: £' + _proData.savings + '/mo\n\nSUMMARY (3-4 sentences, honest, specific, reference actual numbers):\n' + _proResult.summary + '\n\nAlso write:\n- executiveInsight: One powerful sentence cutting to the heart of their position.\n- topPriority: Most important action in 2 sentences referencing actual figures.\n- riskWarning: Biggest risk if they do nothing, 1-2 sentences.\n\nReturn ONLY valid JSON: {"summary":"...","executiveInsight":"...","topPriority":"...","riskWarning":"..."}';
+      var prompt2 = 'You are a senior personal finance advisor writing for a premium £29 financial clarity product. Refine these sections for someone whose situation is: "' + _proData.intent + '"\nIncome: £' + _proData.income + '/mo | Debt: £' + _proData.debt + ' | Savings: £' + _proData.savings + ' (total)\n\nSUMMARY (3-4 sentences, honest, specific, reference actual numbers):\n' + _proResult.summary + '\n\nAlso write:\n- executiveInsight: One powerful sentence cutting to the heart of their position.\n- topPriority: Most important action in 2 sentences referencing actual figures.\n- riskWarning: Biggest risk if they do nothing, 1-2 sentences.' + _proFacts(_proData, _proResult) + '\n\nReturn ONLY valid JSON: {"summary":"...","executiveInsight":"...","topPriority":"...","riskWarning":"..."}';
       fetch('https://rcloop-proxy.vercel.app/api/ai-paid', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
