@@ -1,4 +1,4 @@
-<!-- RC Loop Resume Pro v7.3 | Updated: 8 Oct 2026 | Paid reports now checked by the proxy (/api/ai-paid): a real Lemon Squeezy order or the owner key is needed; ?unlocked=true alone no longer gives a report. Previous: RC Loop Resume Pro v7.2 | Updated: 30 May 2026 | removed dev pill and price from unlock button -->
+<!-- RC Loop Resume Pro v7.4 | Updated: 8 Oct 2026 | Accuracy rules added to both writing prompts (on-page and return-from-checkout): today's date (past dates not called "future"), no changed titles/employers/dates/numbers/qualifications, no raised skill levels, in-progress certifications kept, achievements not assigned to the wrong job. Nothing else changed. Previous: RC Loop Resume Pro v7.3 | Updated: 8 Oct 2026 | Paid reports now checked by the proxy (/api/ai-paid): a real Lemon Squeezy order or the owner key is needed; ?unlocked=true alone no longer gives a report. Previous: RC Loop Resume Pro v7.2 | Updated: 30 May 2026 | removed dev pill and price from unlock button -->
 <!-- © 2025 RC Loop. All rights reserved. Unauthorised copying or distribution prohibited. -->
 <!DOCTYPE html>
 <html lang="en">
@@ -1506,7 +1506,10 @@ function unlockFull() {
     + 'Write a professional CV summary and cover letter for the person below. '
     + 'Your job is to extract the strongest points from their raw inputs, correct any grammar or weak phrasing, '
     + 'reframe passive language as ownership and leadership, and produce clean professional output. '
-    + 'Do not invent facts. Work only with what is provided. If an input is vague, make it as strong as possible within what is stated.\n\n'
+    + 'Do not invent facts. Work only with what is provided. If an input is vague, make it as strong as possible within what is stated.\n'
+    + 'ACCURACY RULES: Today is ' + new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) + '; any date up to today is in the past, never call it a future date. '
+    + 'Never change job titles, employers, dates, numbers or qualifications. Never raise a skill level. Keep certifications that are in progress, with their status. '
+    + 'The achievements are not labelled by job, so never state which employer or role an achievement happened in unless the achievement itself says so.\n\n'
     + 'NAME: ' + pd.name + '\n'
     + 'TARGET ROLE: ' + pd.target + '\n'
     + 'CURRENT ROLE: ' + (pd.current || '') + '\n'
@@ -1933,7 +1936,10 @@ document.addEventListener('DOMContentLoaded', function() {
           var prompt = 'You are a senior CV writer and career positioning expert. '
             + 'Write a professional CV summary and cover letter from the raw inputs below. '
             + 'Correct all grammar. Remove passive language. Reframe weak phrasing as ownership and leadership. '
-            + 'Do not invent facts. Do not truncate sentences. Every sentence must be complete.\n\n'
+            + 'Do not invent facts. Do not truncate sentences. Every sentence must be complete.\n'
+            + 'ACCURACY RULES: Today is ' + new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) + '; any date up to today is in the past, never call it a future date. '
+            + 'Never change job titles, employers, dates, numbers or qualifications. Never raise a skill level. Keep certifications that are in progress, with their status. '
+            + 'The achievements are not labelled by job, so never state which employer or role an achievement happened in unless the achievement itself says so.\n\n'
             + 'NAME: ' + pd.name + '\n'
             + 'TARGET ROLE: ' + pd.target + '\n'
             + 'CURRENT ROLE: ' + (pd.current || '') + '\n'

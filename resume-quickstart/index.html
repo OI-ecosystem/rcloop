@@ -1,4 +1,4 @@
-<!-- RC Loop Resume QuickStart v4.6 | Updated: 8 Oct 2026 | Paid reports now checked by the proxy (/api/ai-paid): a real Lemon Squeezy order or the owner key is needed; ?unlocked=true alone no longer gives a report. Previous: RC Loop Resume QuickStart v4.5 | Updated: 18 May 2026 06:48 -->
+<!-- RC Loop Resume QuickStart v4.7 | Updated: 8 Oct 2026 | Accuracy: the full CV text is now sent with the request; every job is kept with its own dates and its own achievements (no moving results between jobs), skill levels never raised, in-progress qualifications kept, today's date given so past dates are not called "future". Downloads use the same jobs. Customer wording no longer says "AI"; Resume Pro price corrected to £39. Previous: RC Loop Resume QuickStart v4.6 | Updated: 8 Oct 2026 | Paid reports now checked by the proxy (/api/ai-paid): a real Lemon Squeezy order or the owner key is needed; ?unlocked=true alone no longer gives a report. Previous: RC Loop Resume QuickStart v4.5 | Updated: 18 May 2026 06:48 -->
 <!-- © 2025 RC Loop. All rights reserved. Unauthorised copying or distribution prohibited. -->
 <!DOCTYPE html>
 <html lang="en">
@@ -460,7 +460,7 @@ function _olPass() { return window.location.search.indexOf('unlocked=true') !== 
   <div id="free-output">
     <div class="output-banner">
       <h3>Your positioned CV is ready.</h3>
-      <p>Built from your stated experience. <strong>Unlock the full AI-enhanced version</strong> below &mdash; rewritten bullets, elevated summary and a targeted cover letter.</p>
+      <p>Built from your stated experience. <strong>Unlock the full enhanced version</strong> below &mdash; rewritten bullets, elevated summary and a targeted cover letter.</p>
     </div>
 
     <div class="resume-preview" id="free-resume"></div>
@@ -473,7 +473,7 @@ function _olPass() { return window.location.search.indexOf('unlocked=true') !== 
     <div class="blurred-section">
       <div class="blurred-inner">
         <div class="ai-resume" style="padding:20px;">
-          <div style="font-size:0.65rem;color:var(--ink-faint);margin-bottom:12px;letter-spacing:0.1em;text-transform:uppercase;">AI-Enhanced Output</div>
+          <div style="font-size:0.65rem;color:var(--ink-faint);margin-bottom:12px;letter-spacing:0.1em;text-transform:uppercase;">Enhanced Output</div>
           <div style="font-family:var(--serif);font-size:1.4rem;margin-bottom:3px;">Your Name</div>
           <div style="font-size:0.88rem;color:var(--gold);margin-bottom:16px;">Senior Operations Director</div>
           <div style="font-size:0.84rem;color:var(--ink-mid);line-height:1.75;margin-bottom:14px;">A commercially-focused operations leader with a demonstrable track record in strategic transformation, P&L management and high-performance team building across regulated environments...</div>
@@ -482,17 +482,17 @@ function _olPass() { return window.location.search.indexOf('unlocked=true') !== 
           <div style="font-size:0.78rem;color:var(--ink-mid);">&bull; Championed enterprise transformation delivered 3 weeks ahead of schedule</div>
         </div>
       </div>
-      <div class="blurred-overlay">AI-rewritten bullets, stronger positioning and a targeted cover letter unlock below.</div>
+      <div class="blurred-overlay">Rewritten bullets, stronger positioning and a targeted cover letter unlock below.</div>
     </div>
   </div>
 
   <!-- UNLOCK -->
   <div class="unlock-card" id="unlock-card" style="display:none;">
     <div class="dev-pill">DEV MODE &mdash; Mock response. Zero tokens.</div>
-    <p class="unlock-heading">Get your AI-enhanced resume.</p>
+    <p class="unlock-heading">Get your enhanced resume.</p>
     <p class="unlock-sub">Rewritten achievement bullets with stronger verbs and positioning language, an elevated professional summary, a fully personalised cover letter and a signal strength analysis.</p>
     <div class="unlock-features">
-      <span class="unlock-feature">AI-rewritten bullets</span>
+      <span class="unlock-feature">Rewritten bullets</span>
       <span class="unlock-feature">Elevated summary</span>
       <span class="unlock-feature">Targeted cover letter</span>
       <span class="unlock-feature">Signal strength analysis</span>
@@ -514,7 +514,7 @@ function _olPass() { return window.location.search.indexOf('unlocked=true') !== 
 
     <div class="ai-resume" id="ai-resume-wrap">
       <div class="doc-header">
-        <h4>Resume &mdash; AI-positioned</h4>
+        <h4>Resume &mdash; positioned for your target role</h4>
         <div class="dl-row">
           <button class="dl-btn" onclick="dlCVDoc()">&#8595; Download CV (.doc)</button>
           <button class="dl-btn sec" onclick="dlCVGoogleDocs()">&#8595; Google Docs</button>
@@ -547,7 +547,7 @@ function _olPass() { return window.location.search.indexOf('unlocked=true') !== 
     </div>
 
     <div class="output-footer">
-      <p>Want deeper identity positioning, narrative coherence scoring and a 5-pass refinement engine? RC Loop Resume Pro from &pound;29.</p>
+      <p>Want deeper identity positioning, narrative coherence scoring and a 5-pass refinement engine? RC Loop Resume Pro from &pound;39.</p>
       <div class="output-footer-btns">
         <button class="btn-p">Explore Resume Pro &rarr;</button>
         <button class="btn-s" onclick="goBack()">Start again</button>
@@ -1212,6 +1212,7 @@ function buildCVData() {
     skills:    skills || '',
     edu:       edu || '',
     sector:    sector || '',
+    cv:        (typeof cvText === 'string' ? cvText : '').slice(0, 9000),
     metrics:   withMetrics.length,
     total:     ranked.length
   };
@@ -1277,7 +1278,7 @@ function buildFreeOutput() {
   resumeHTML += '<div class="strengths-wrap">' + strengthHTML + '</div>';
   resumeHTML += '</div>';
   resumeHTML += '<div class="resume-section">';
-  resumeHTML += '<div class="resume-sec-head">Key achievements <span style="font-size:0.72rem;font-weight:300;color:var(--ink-faint);">(top 3 shown \u2014 full list in AI-enhanced version)</span></div>';
+  resumeHTML += '<div class="resume-sec-head">Key achievements <span style="font-size:0.72rem;font-weight:300;color:var(--ink-faint);">(top 3 shown \u2014 full list in the enhanced version)</span></div>';
   resumeHTML += '<div class="resume-role-label">' + d.current + '</div>';
   resumeHTML += '<ul class="resume-bullets">' + bulletsHTML + '</ul>';
   resumeHTML += '</div>';
@@ -1386,7 +1387,7 @@ function buildFreeRecs(d) {
   } else {
     recs.push({
       title: d.metrics + ' metric-rich bullet' + (d.metrics !== 1 ? 's' : '') + ' detected and prioritised',
-      body: 'These have been moved to the top of your experience section. The AI-enhanced version expands each one and ensures every metric is framed for maximum impact relative to the target role.'
+      body: 'These have been moved to the top of your experience section. The enhanced version expands each one and ensures every metric is framed for maximum impact relative to the target role.'
     });
   }
   if (d.strengths.length < 3) {
@@ -1401,8 +1402,8 @@ function buildFreeRecs(d) {
     });
   }
   recs.push({
-    title: 'Unlock the AI-enhanced version for full rewriting',
-    body: 'The AI layer rewrites every achievement bullet with stronger verbs and positioning language, generates a complete personalised cover letter and produces a signal strength analysis showing how well your CV is positioned for the target role.'
+    title: 'Unlock the enhanced version for full rewriting',
+    body: 'The enhanced version rewrites every achievement bullet with stronger verbs and positioning language, generates a complete personalised cover letter and produces a signal strength analysis showing how well your CV is positioned for the target role.'
   });
   /* ATS check */
   var allText = d.ranked.join(' ');
@@ -1410,7 +1411,7 @@ function buildFreeRecs(d) {
   if (bannedFound.length > 0) {
     recs.push({
       title: 'ATS warning: weak language detected',
-      body: 'The following phrases reduce ATS and recruiter impact: “' + bannedFound.slice(0,3).join('”, “') + '”. These have been removed or replaced in the AI-enhanced version. ATS systems and recruiters respond to ownership language, measurable outcomes and operational specificity — not generic descriptors.'
+      body: 'The following phrases reduce ATS and recruiter impact: “' + bannedFound.slice(0,3).join('”, “') + '”. These have been removed or replaced in the enhanced version. ATS systems and recruiters respond to ownership language, measurable outcomes and operational specificity — not generic descriptors.'
     });
   }
   return recs.slice(0, 4);
@@ -1558,6 +1559,19 @@ function buildAIOutput(d) {
   };
 }
 
+/* ── ROLES (each job with its own dates and bullets) ── */
+function rolesFrom(pr) {
+  if (!pr || !pr.roles || !pr.roles.length) return null;
+  var out = [];
+  for (var i = 0; i < pr.roles.length; i++) {
+    var r = pr.roles[i] || {};
+    var head = [r.title, r.company, r.location].filter(function(x) { return x && String(x).trim(); }).join(', ');
+    if (!head) continue;
+    out.push({ head: head, dates: r.dates ? String(r.dates) : '', bullets: (r.bullets || []).filter(function(b) { return b && String(b).trim(); }) });
+  }
+  return out.length ? out : null;
+}
+
 /* ── RENDER AI OUTPUT ── */
 function renderAIOutput(data) {
   _proResult = data; /* Store AI result for downloads */
@@ -1577,7 +1591,7 @@ function renderAIOutput(data) {
     bulletsHTML += '<li' + cls + '>' + b + '</li>';
   });
 
-  var resumeHTML = '<div class="pass-badge">AI-enhanced &mdash; 3-pass transformation</div>';
+  var resumeHTML = '<div class="pass-badge">Enhanced &mdash; 3-pass transformation</div>';
   resumeHTML += '<div class="resume-name-display">' + data.name + '</div>';
   resumeHTML += '<div class="resume-role-display">' + data.target + '</div>';
   resumeHTML += '<div class="resume-section">';
@@ -1590,11 +1604,23 @@ function renderAIOutput(data) {
   resumeHTML += '</div>';
   resumeHTML += '<div class="resume-section">';
   resumeHTML += '<div class="resume-sec-head">Professional experience</div>';
+  var _roles = rolesFrom(data);
+  if (_roles) {
+    _roles.forEach(function(r, ri) {
+      if (ri > 0) resumeHTML += '</div><div class="resume-section">';
+      resumeHTML += '<div class="resume-role-label">' + r.head + (r.dates ? ' <span style="font-weight:300;color:var(--ink-faint);">&middot; ' + r.dates + '</span>' : '') + '</div>';
+      var rb = '';
+      r.bullets.forEach(function(b) { rb += '<li' + (hasMetric(b) ? ' class="bullet-metric"' : '') + '>' + b + '</li>'; });
+      resumeHTML += '<ul class="resume-bullets">' + rb + '</ul>';
+    });
+    resumeHTML += '</div>';
+  } else {
   resumeHTML += '<div class="resume-role-label">' + data.current + '</div>';
   resumeHTML += '<ul class="resume-bullets">' + bulletsHTML + '</ul>';
   resumeHTML += '</div>';
+  }
 
-  if (data.prev) {
+  if (!_roles && data.prev) {
     var prevBullets = data.rewrittenBullets.slice(6, 9);
     if (prevBullets.length > 0) {
       var prevHTML = '';
@@ -1673,7 +1699,18 @@ function renderAIOutput(data) {
 /* ── PRODUCTION API CALL ── */
 function callAnthropicAPI(d, onSuccess) {
   var system = 'You are a senior CV writer and career positioning specialist with 20 years of experience writing CVs for UK professionals that secure interviews at top organisations. You write with precision, authority and clarity. Every sentence is complete, grammatically correct and purposeful. You never use filler phrases, never truncate sentences, and never produce generic output. Respond ONLY in valid JSON with no markdown, no preamble, no explanation.';
-  var prompt = 'Write a professionally positioned CV and cover letter. Every field must be complete, polished and ready to send to a recruiter.\n\nCANDIDATE: ' + d.name + '\nTARGET ROLE: ' + d.target + '\nCURRENT ROLE: ' + d.current + '\n' + (d.prev ? 'PREVIOUS ROLE: ' + d.prev + '\n' : '') + 'SECTOR: ' + (d.sector || 'not specified') + '\nCORE STRENGTHS: ' + d.strengths.join(', ') + '\nKEY ACHIEVEMENTS:\n' + d.ranked.map(function(b,i){ return (i+1)+'. '+b; }).join('\n') + '\n' + (d.skills ? 'SKILLS: ' + d.skills + '\n' : '') + (d.edu ? 'EDUCATION: ' + d.edu + '\n' : '') + (d.intent ? 'POSITIONING INTENT: ' + d.intent + '\n' : '') + '\nINSTRUCTIONS:\n1. aiSummary: 3-4 complete sentences. Open with name and target role. Reference strongest metric achievement. Close with what makes them distinctive. No ellipsis. No generic phrases like results-driven or dynamic.\n2. rewrittenBullets: Rewrite every achievement. Start each with a strong past-tense action verb (Spearheaded, Delivered, Architected, Championed etc). Keep all metrics. Complete grammatical sentence under 160 chars. Never truncate with ellipsis.\n3. coverLetter: 4 paragraphs. Para 1: interest and career summary in 2 sentences. Para 2: 2-3 specific achievements with metrics woven naturally into narrative. Para 3: why this role and sector. Para 4: confident close. Sign off Yours sincerely then name. Natural human voice not template.\n4. metricScore, strengthScore, verbScore, positionScore: 0-100 each.\n5. recs: 3-4 specific actionable recommendations.\n\nReturn ONLY this JSON, no other text: {"name":"","target":"","current":"","prev":"","aiSummary":"","strengths":[],"skills":"","edu":"","rewrittenBullets":[],"coverLetter":"","metricScore":0,"strengthScore":0,"verbScore":0,"positionScore":0,"recs":[{"title":"","body":""}]}';
+  var today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  var hasCV = d.cv && d.cv.length > 30;
+  var rules = '\nACCURACY RULES (these override everything else):\n'
+    + '- TODAY IS ' + today + '. Any date up to today is in the past. Never describe a date on or before today as a future date.\n'
+    + '- Use only facts the candidate gave. Never invent or change employers, job titles, dates, numbers, qualifications or tools.\n'
+    + '- Keep every achievement in the job where it actually happened. Never move a result, team size, budget or metric from one job to another.\n'
+    + '- Never raise a skill level (Excel stays Excel, basic stays basic).\n'
+    + '- Keep every qualification, including ones still in progress, with their status and dates.\n'
+    + '- Stronger verbs, clearer wording and reordering for impact are fine. Facts are not to be changed.\n';
+  var cvBlock = hasCV ? '\nORIGINAL CV TEXT (the only source of facts):\n"""\n' + d.cv + '\n"""\n' : '';
+  var rolesInstr = hasCV ? '\n6. roles: EVERY job in the original CV, most recent first. For each: title, company, location, dates (exactly as written in the CV) and bullets = that job\'s OWN achievements rewritten with the same rules as rewrittenBullets (3-6 per job; fewer if the CV has fewer). Do not leave any job out.\n7. edu: every qualification exactly as in the CV, including in-progress ones (e.g. "... (in progress, due 2027)"), separated by " | ".\n8. skills: as stated in the CV, comma-separated, no level upgrades.\n' : '';
+  var prompt = 'Write a professionally positioned CV and cover letter. Every field must be complete, polished and ready to send to a recruiter.\n' + rules + cvBlock + '\nCANDIDATE: ' + d.name + '\nTARGET ROLE: ' + d.target + '\nCURRENT ROLE: ' + d.current + '\n' + (d.prev ? 'PREVIOUS ROLE: ' + d.prev + '\n' : '') + 'SECTOR: ' + (d.sector || 'not specified') + '\nCORE STRENGTHS: ' + d.strengths.join(', ') + '\nKEY ACHIEVEMENTS:\n' + d.ranked.map(function(b,i){ return (i+1)+'. '+b; }).join('\n') + '\n' + (d.skills ? 'SKILLS: ' + d.skills + '\n' : '') + (d.edu ? 'EDUCATION: ' + d.edu + '\n' : '') + (d.intent ? 'POSITIONING INTENT: ' + d.intent + '\n' : '') + '\nINSTRUCTIONS:\n1. aiSummary: 3-4 complete sentences. Open with name and target role. Reference strongest metric achievement. Close with what makes them distinctive. No ellipsis. No generic phrases like results-driven or dynamic.\n2. rewrittenBullets: Rewrite every achievement. Start each with a strong past-tense action verb (Spearheaded, Delivered, Architected, Championed etc). Keep all metrics. Complete grammatical sentence under 160 chars. Never truncate with ellipsis.\n3. coverLetter: 4 paragraphs. Para 1: interest and career summary in 2 sentences. Para 2: 2-3 specific achievements with metrics woven naturally into narrative. Para 3: why this role and sector. Para 4: confident close. Sign off Yours sincerely then name. Natural human voice not template.\n4. metricScore, strengthScore, verbScore, positionScore: 0-100 each.\n5. recs: 3-4 specific actionable recommendations. Base them only on what the candidate actually wrote.\n' + rolesInstr + '\nReturn ONLY this JSON, no other text: {"name":"","target":"","current":"","prev":"","aiSummary":"","strengths":[],"skills":"","edu":"","rewrittenBullets":[],' + (hasCV ? '"roles":[{"title":"","company":"","location":"","dates":"","bullets":[]}],' : '') + '"coverLetter":"","metricScore":0,"strengthScore":0,"verbScore":0,"positionScore":0,"recs":[{"title":"","body":""}]}';
   fetch('https://rcloop-proxy.vercel.app/api/ai-paid', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -1682,7 +1719,10 @@ function callAnthropicAPI(d, onSuccess) {
   .then(function(r) { return r.json(); })
   .then(function(data) {
     var text = data.content && data.content[0] ? data.content[0].text : '';
-    onSuccess(JSON.parse(text.replace(/```json|```/g, '').trim()));
+    var clean = text.replace(/```json|```/g, '').trim();
+    var js = clean.indexOf('{'), je = clean.lastIndexOf('}');
+    if (js !== -1 && je !== -1) clean = clean.substring(js, je + 1);
+    onSuccess(JSON.parse(clean));
   })
   .catch(function() {
     document.getElementById('ai-loader').style.display = 'none';
@@ -1716,12 +1756,20 @@ function buildCVHTML(d, pr) {
   html += '<h1>' + (d.name||'') + '</h1><div class="role">' + (d.target||'') + '</div>';
   html += '<h2>Professional Summary</h2><p>' + summary + '</p>';
   if (strengths) { html += '<h2>Core Strengths</h2><p>' + strengths + '</p>'; }
+  var roles = rolesFrom(pr);
+  if (roles) {
+    html += '<h2>Professional Experience</h2>';
+    roles.forEach(function(r){ html += '<p><strong>' + r.head + '</strong>' + (r.dates ? ' &middot; ' + r.dates : '') + '</p><ul>'; r.bullets.forEach(function(b){ html += '<li>' + b + '</li>'; }); html += '</ul>'; });
+  } else {
   html += '<h2>Professional Experience</h2><p><strong>' + (d.current||'') + '</strong></p><ul>';
   bullets.slice(0,6).forEach(function(b){ html += '<li>' + b + '</li>'; });
   html += '</ul>';
   if (d.prev) { var pb = bullets.slice(6,9); if(pb.length){ html += '<p><strong>'+d.prev+'</strong></p><ul>'; pb.forEach(function(b){ html+='<li>'+b+'</li>'; }); html+='</ul>'; } }
-  if (d.skills) { html += '<h2>Technical Skills</h2><p>' + d.skills + '</p>'; }
-  if (d.edu) { html += '<h2>Education</h2><p>' + d.edu + '</p>'; }
+  }
+  var skillsOut = (roles && pr.skills) ? pr.skills : d.skills;
+  var eduOut = (roles && pr.edu) ? pr.edu : d.edu;
+  if (skillsOut) { html += '<h2>Technical Skills</h2><p>' + skillsOut + '</p>'; }
+  if (eduOut) { html += '<h2>Education</h2><p>' + eduOut + '</p>'; }
   html += '</body></html>';
   return html;
 }
@@ -1786,9 +1834,14 @@ function dlATS() {
   lines.push(summary);
   lines.push('');
   lines.push('EXPERIENCE');
+  var atsRoles = rolesFrom(pr);
+  if (atsRoles) {
+    atsRoles.forEach(function(r, ri){ if (ri > 0) lines.push(''); lines.push(r.head + (r.dates ? ' | ' + r.dates : '')); r.bullets.forEach(function(b){ lines.push('- ' + atsClean(b)); }); });
+  } else {
   lines.push(d.current || '');
   bullets.slice(0,6).forEach(function(b){ lines.push('- ' + atsClean(b)); });
-  if (d.prev) {
+  }
+  if (!atsRoles && d.prev) {
     var prevBullets = bullets.slice(6,9);
     if (prevBullets.length > 0) {
       lines.push('');
@@ -1801,8 +1854,10 @@ function dlATS() {
     lines.push('CORE COMPETENCIES');
     lines.push(d.strengths.join(' | '));
   }
-  if (d.skills) { lines.push(''); lines.push('TECHNICAL SKILLS'); lines.push(d.skills); }
-  if (d.edu) { lines.push(''); lines.push('EDUCATION'); lines.push(d.edu); }
+  var atsSkills = (atsRoles && pr.skills) ? pr.skills : d.skills;
+  var atsEdu = (atsRoles && pr.edu) ? pr.edu : d.edu;
+  if (atsSkills) { lines.push(''); lines.push('TECHNICAL SKILLS'); lines.push(atsSkills); }
+  if (atsEdu) { lines.push(''); lines.push('EDUCATION'); lines.push(atsEdu); }
   if (pr.coverLetter) { lines.push(''); lines.push('--- COVER LETTER ---'); lines.push(pr.coverLetter); }
   var blob = new Blob([lines.join('\n')], { type: 'text/plain' });
   var url  = URL.createObjectURL(blob);
