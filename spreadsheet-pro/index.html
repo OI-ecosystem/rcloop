@@ -1,4 +1,4 @@
-<!-- RC Loop Spreadsheet Pro v8.2 | Updated: 8 Oct 2026 | Accuracy: total interest in the tracker was monthly interest x months (£3,842 for the test case; correct £2,132), now simulated; '£8 months' label fixed; buffer targets, ladder, timeline and scenario runway use essential spend; emergency buffer and runway measured against essential spend (were income); downloads use payoff months that include interest; the written sections are given the page's own figures and today's date so they match the tables; savings total no longer described as monthly. Previous: RC Loop Spreadsheet Pro v8.1 | Updated: 8 Oct 2026 | Paid reports now checked by the proxy (/api/ai-paid): a real Lemon Squeezy order or the owner key is needed; ?unlocked=true alone no longer gives a report. Previous: RC Loop Spreadsheet Pro v8 | Updated: 21 May 2026 -->
+<!-- RC Loop Spreadsheet Pro v8.3 | Updated: 8 Oct 2026 | Prices now match Lemon Squeezy: Resume QuickStart £29, Resume Pro £79, Spreadsheet QuickStart £19, Spreadsheet Pro £49. Previous: RC Loop Spreadsheet Pro v8.2 | Updated: 8 Oct 2026 | Accuracy: total interest in the tracker was monthly interest x months (£3,842 for the test case; correct £2,132), now simulated; '£8 months' label fixed; buffer targets, ladder, timeline and scenario runway use essential spend; emergency buffer and runway measured against essential spend (were income); downloads use payoff months that include interest; the written sections are given the page's own figures and today's date so they match the tables; savings total no longer described as monthly. Previous: RC Loop Spreadsheet Pro v8.1 | Updated: 8 Oct 2026 | Paid reports now checked by the proxy (/api/ai-paid): a real Lemon Squeezy order or the owner key is needed; ?unlocked=true alone no longer gives a report. Previous: RC Loop Spreadsheet Pro v8 | Updated: 21 May 2026 -->
 <!-- © 2025 RC Loop. All rights reserved. Unauthorised copying or distribution prohibited. -->
 <!DOCTYPE html>
 <html lang="en">
@@ -1078,7 +1078,7 @@ footer {
 /* RC Loop paid access config */
 var ONELINE_MODULE = 'rcloop-spreadsheet-pro';
 var ONELINE_CHECKOUT = 'https://opportunity-intelligence.lemonsqueezy.com/checkout/buy/ba1d0c7f-97ed-4347-b887-e285df8c1a8c';
-var ONELINE_PRICE = '£29';
+var ONELINE_PRICE = '£49';
 </script>
 <script>
 /* ── 1LINE PAID ACCESS (shared, 8 Oct 2026) ─────────────────────────────
@@ -1412,7 +1412,7 @@ function _olPass() { return window.location.search.indexOf('unlocked=true') !== 
       <span class="unlock-feature">Action priority ladder</span>
       <span class="unlock-feature">24-month stability timeline</span>
     </div>
-    <button class="unlock-btn" onclick="unlockFull()">Unlock my full positioning &mdash; &pound;29</button>
+    <button class="unlock-btn" onclick="unlockFull()">Unlock my full positioning &mdash; &pound;49</button>
     <span class="unlock-price">One-time &middot; Instant &middot; No account needed</span>
   </div>
 
@@ -1577,7 +1577,7 @@ function _olPass() { return window.location.search.indexOf('unlocked=true') !== 
     </div>
 
     <div class="output-footer">
-      <p>RC Loop Spreadsheet Pro &mdash; 5-pass financial coherence engine. QuickStart also available from &pound;15.</p>
+      <p>RC Loop Spreadsheet Pro &mdash; 5-pass financial coherence engine. QuickStart also available from &pound;19.</p>
       <div class="output-footer-btns">
         <button class="btn-p">Explore RC Loop Resume Pro &rarr;</button>
         <button class="btn-s" onclick="goBack()">Start again</button>
@@ -2480,7 +2480,7 @@ function unlockFull() {
 
   /* AI refinement pass — Pro level */
   var pd = _proData;
-  var proPrompt = 'You are a senior personal finance advisor writing for a premium £29 financial clarity product. Refine these sections for someone whose situation is: "' + pd.intent + '"\n'
+  var proPrompt = 'You are a senior personal finance advisor writing for a premium £49 financial clarity product. Refine these sections for someone whose situation is: "' + pd.intent + '"\n'
     + 'Income: £' + pd.income + '/mo | Debt: £' + pd.debt + ' | Savings: £' + pd.savings + ' | Essential spend: £' + pd.ess + '/mo\n\n'
     + 'SUMMARY (3-4 sentences, honest, specific, reference actual numbers, speak directly to them):\n' + _proResult.summary + '\n\n'
     + 'Write also:\n'
@@ -3218,7 +3218,7 @@ document.addEventListener('DOMContentLoaded', function() {
       var msgs2 = ['Rendering your financial position dashboard...','Building debt snowball and avalanche tables...','Calculating opportunity cost engine...','Projecting 3-scenario trajectories...','Completing your stability timeline...'];
       var idx2 = 0; var el2 = document.getElementById('ai-loader-msg');
       var iv2 = setInterval(function(){ idx2=(idx2+1)%msgs2.length; if(el2) el2.textContent=msgs2[idx2]; }, 700);
-      var prompt2 = 'You are a senior personal finance advisor writing for a premium £29 financial clarity product. Refine these sections for someone whose situation is: "' + _proData.intent + '"\nIncome: £' + _proData.income + '/mo | Debt: £' + _proData.debt + ' | Savings: £' + _proData.savings + ' (total)\n\nSUMMARY (3-4 sentences, honest, specific, reference actual numbers):\n' + _proResult.summary + '\n\nAlso write:\n- executiveInsight: One powerful sentence cutting to the heart of their position.\n- topPriority: Most important action in 2 sentences referencing actual figures.\n- riskWarning: Biggest risk if they do nothing, 1-2 sentences.' + _proFacts(_proData, _proResult) + '\n\nReturn ONLY valid JSON: {"summary":"...","executiveInsight":"...","topPriority":"...","riskWarning":"..."}';
+      var prompt2 = 'You are a senior personal finance advisor writing for a premium £49 financial clarity product. Refine these sections for someone whose situation is: "' + _proData.intent + '"\nIncome: £' + _proData.income + '/mo | Debt: £' + _proData.debt + ' | Savings: £' + _proData.savings + ' (total)\n\nSUMMARY (3-4 sentences, honest, specific, reference actual numbers):\n' + _proResult.summary + '\n\nAlso write:\n- executiveInsight: One powerful sentence cutting to the heart of their position.\n- topPriority: Most important action in 2 sentences referencing actual figures.\n- riskWarning: Biggest risk if they do nothing, 1-2 sentences.' + _proFacts(_proData, _proResult) + '\n\nReturn ONLY valid JSON: {"summary":"...","executiveInsight":"...","topPriority":"...","riskWarning":"..."}';
       fetch('https://rcloop-proxy.vercel.app/api/ai-paid', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
