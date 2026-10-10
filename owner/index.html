@@ -1,4 +1,4 @@
-<!-- RC Loop Owner v1.1 | Updated: 8 Oct 2026 | Added "Send a free trial": makes a one-use 100%-off Lemon Squeezy link for any product (via /api/trial, owner key checked by the server), with Copy and Open email buttons. Previous: 1LINE Owner v1.0 | Updated: 06 Oct 2026 12:30 | Private: saves the owner key in this browser so paid modules run without checkout. The proxy checks the key; this page cannot unlock anything by itself. -->
+<!-- RC Loop Owner v1.2 | Updated: 10 Oct 2026 | Added "Open the paid pages": direct links to the four product pages. Previous: RC Loop Owner v1.1 | Updated: 8 Oct 2026 | Added "Send a free trial": makes a one-use 100%-off Lemon Squeezy link for any product (via /api/trial, owner key checked by the server), with Copy and Open email buttons. Previous: 1LINE Owner v1.0 | Updated: 06 Oct 2026 12:30 | Private: saves the owner key in this browser so paid modules run without checkout. The proxy checks the key; this page cannot unlock anything by itself. -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -31,6 +31,10 @@ h2{font-size:21px;font-weight:600;color:#1A2744;margin:48px 0 6px;padding-top:32
 .result{margin-top:20px;padding:16px;border-radius:12px;background:#fff;border:1px solid rgba(26,39,68,0.25);font-size:15px;display:none}
 .result code{display:block;word-break:break-all;font-size:13px;background:#F3F1EC;padding:10px 12px;border-radius:8px;margin:10px 0}
 .err{color:#9A2B2B}
+.open-links{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.open-links a{display:block;padding:13px 14px;font-size:15px;font-weight:600;color:#1A2744;background:#fff;border:1.5px solid #948E82;border-radius:10px;text-decoration:none;text-align:center}
+.open-links a:hover{border-color:#1A2744}
+@media (max-width:420px){.open-links{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -46,6 +50,15 @@ h2{font-size:21px;font-weight:600;color:#1A2744;margin:48px 0 6px;padding-top:32
   </div>
 
   <div class="status off" id="status"></div>
+
+  <h2>Open the paid pages</h2>
+  <p>The RC Loop front page only has Buy Now buttons, which always go to checkout. Use these links to open each product page directly; with your key saved, its unlock button runs without checkout.</p>
+  <div class="open-links">
+    <a href="../resume-quickstart/" target="_blank" rel="noopener">Resume QuickStart</a>
+    <a href="../resume-pro/" target="_blank" rel="noopener">Resume Pro</a>
+    <a href="../spreadsheet-quickstart/" target="_blank" rel="noopener">Spreadsheet QuickStart</a>
+    <a href="../spreadsheet-pro/" target="_blank" rel="noopener">Spreadsheet Pro</a>
+  </div>
 
   <h2>Send a free trial</h2>
   <p>Makes a one-use link for one product with a 100% discount already applied. The person pays £0, gets the normal receipt email, and their report runs. Each link works once and then expires.</p>

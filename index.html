@@ -1,4 +1,4 @@
-<!-- RC Loop Unified Landing v3.2 | Updated: 9 Oct 2026 | Added price comparison lines: professionally written CV £100-£300 vs from £29; adviser £100-£350 an hour vs from £19. Previous: RC Loop Unified Landing v3.1 | Updated: 8 Oct 2026 | Prices now match Lemon Squeezy: Resume QuickStart £29, Resume Pro £79, Spreadsheet QuickStart £19, Spreadsheet Pro £49; plus "AI" wording replaced with plain wording (tailored output) on this page. Previous: RC Loop Unified Landing v3.0 | Updated: 28 May 2026 | Pricing updated, output previews added -->
+<!-- RC Loop Unified Landing v3.3 | Updated: 10 Oct 2026 | Owner shortcut: with the owner key saved in this browser, the four product buy buttons open the product page instead of checkout; customers unchanged. Previous: RC Loop Unified Landing v3.2 | Updated: 9 Oct 2026 | Added price comparison lines: professionally written CV £100-£300 vs from £29; adviser £100-£350 an hour vs from £19. Previous: RC Loop Unified Landing v3.1 | Updated: 8 Oct 2026 | Prices now match Lemon Squeezy: Resume QuickStart £29, Resume Pro £79, Spreadsheet QuickStart £19, Spreadsheet Pro £49; plus "AI" wording replaced with plain wording (tailored output) on this page. Previous: RC Loop Unified Landing v3.0 | Updated: 28 May 2026 | Pricing updated, output previews added -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -606,5 +606,23 @@ function activateGate() {
 </script>
 
 <script data-goatcounter="https://signal333.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<script>
+/* -- Owner shortcut: with the owner key saved in this browser, the RC Loop buy buttons open the product page
+   instead of checkout (customers without the key go to checkout exactly as before) -- */
+(function() {
+var _OWNER_PAGES = {'5bc08e9b-b517-4189-ada7-aa904f57d3b6':'https://oi-ecosystem.github.io/rcloop/resume-quickstart/','b3d2ecf8-1700-45eb-81cc-2f1a40d4302f':'https://oi-ecosystem.github.io/rcloop/resume-pro/','ea665de2-5fa6-4d40-9f93-e92a47f027d4':'https://oi-ecosystem.github.io/rcloop/spreadsheet-quickstart/','ba1d0c7f-97ed-4347-b887-e285df8c1a8c':'https://oi-ecosystem.github.io/rcloop/spreadsheet-pro/'};
+function _ownerSaved() { try { return !!localStorage.getItem('1line_owner'); } catch (e) { return false; } }
+function _ownerPageFor(url) {
+  if (!url || typeof url !== 'string' || !_ownerSaved()) return '';
+  for (var id in _OWNER_PAGES) { if (url.indexOf('/checkout/buy/' + id) !== -1) return _OWNER_PAGES[id]; }
+  return '';
+}
+  var _open = window.open;
+  window.open = function(url, target, features) {
+    var page = _ownerPageFor(url);
+    return _open.call(window, page || url, target, features);
+  };
+})();
+</script>
 </body>
 </html>
